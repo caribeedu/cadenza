@@ -1,0 +1,18 @@
+{
+  "name": "cadenza-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cadenza Electron + Three.js waterfall visualiser.",
+  "type": "module",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron . --enable-gpu-rasterization --force-gpu-rasterization --ignore-gpu-blocklist --enable-zero-copy --disable-software-rasterizer",
+    "test": "node --test --test-reporter=spec test"
+  },
+  "dependencies": {
+    "three": "^0.184.0"
+  },
+  "devDependencies": {
+    "electron": "^41.2.1"
+  }
+}

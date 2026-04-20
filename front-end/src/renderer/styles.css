@@ -1,0 +1,192 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0d17;
+  --panel: #151826;
+  --panel-2: #1f2336;
+  --fg: #e8ecf7;
+  --muted: #8892b0;
+  --accent: #6cd0ff;
+  --good: #3fd97f;
+  --bad: #ff5a6c;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  /* Lock the outer scrollbar: the only scrolling surface should be the
+     log panel. Without this the hard-coded calc() below used to overshoot
+     the real topbar height and produce a second scrollbar on the body. */
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid #272b40;
+  flex: 0 0 auto;
+}
+
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.brand .logo { color: var(--accent); font-size: 22px; }
+.brand .name { letter-spacing: 0.5px; }
+
+.controls {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.field { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); }
+.field input, .field select {
+  background: var(--panel-2);
+  color: var(--fg);
+  border: 1px solid #2e3350;
+  border-radius: 6px;
+  padding: 6px 8px;
+  min-width: 180px;
+}
+#backend-url { min-width: 220px; }
+
+.field.tolerance .tolerance-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.field.tolerance input[type="range"] {
+  min-width: 140px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: var(--accent);
+}
+.tolerance-value {
+  min-width: 52px;
+  text-align: right;
+  color: var(--fg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+
+button {
+  background: var(--panel-2);
+  color: var(--fg);
+  border: 1px solid #2e3350;
+  border-radius: 6px;
+  padding: 7px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: #08131c; border-color: var(--accent); font-weight: 600; }
+button.primary:hover { filter: brightness(1.1); }
+
+.status { display: flex; gap: 8px; }
+.chip {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #2e3350;
+  background: var(--panel-2);
+  color: var(--muted);
+}
+.chip-on { color: #08131c; background: var(--good); border-color: var(--good); }
+.chip-off { color: var(--muted); }
+.chip-err { color: white; background: var(--bad); border-color: var(--bad); }
+
+main {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  flex: 1 1 auto;
+  /* Without min-height: 0 the grid's default auto-sizing lets its children
+     push the container past the viewport and the body grows a scrollbar.
+     Same reason min-width: 0 is needed on #log so that long log lines
+     don't expand the column. */
+  min-height: 0;
+}
+
+/* Left column holds the waterfall canvas on top and the piano at the bottom.
+   The `auto` row keeps the piano at its intrinsic height and lets the
+   canvas take the remaining space; `min-height: 0` is required so the grid
+   doesn't inflate past the viewport. */
+.playfield {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+#stage { display: block; width: 100%; height: 100%; min-height: 0; }
+
+#piano {
+  position: relative;
+  height: clamp(110px, 15vh, 170px);
+  padding: 0;
+  margin: 0;
+  background: #0f1220;
+  border-top: 1px solid #272b40;
+  user-select: none;
+  overflow: hidden;
+}
+#piano svg { display: block; width: 100%; height: 100%; }
+
+.key-white {
+  fill: #eceef5;
+  stroke: #1a1c2c;
+  stroke-width: 1;
+  transition: fill 120ms ease-out;
+}
+.key-white:hover { fill: #d7dbe8; }
+
+.key-black {
+  fill: #14161f;
+  stroke: #000;
+  stroke-width: 0.75;
+  transition: fill 120ms ease-out;
+}
+.key-black:hover { fill: #262a3c; }
+
+.key-pressed-good    { fill: var(--good); }
+.key-pressed-bad     { fill: var(--bad); }
+.key-pressed-neutral { fill: var(--accent); }
+.key-target          { fill: #2f3656; }
+
+.key-label {
+  fill: var(--muted);
+  font-size: 10px;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  pointer-events: none;
+}
+
+#log {
+  background: var(--panel);
+  border-left: 1px solid #272b40;
+  padding: 12px;
+  overflow: auto;
+  min-height: 0;
+  min-width: 0;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+#log .ok { color: var(--good); }
+#log .err { color: var(--bad); }
+#log .dim { color: var(--muted); }

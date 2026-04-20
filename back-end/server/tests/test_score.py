@@ -1,0 +1,291 @@
+"""Unit tests for the score/timeline builder."""
+
+from __future__ import annotations
+
+import math
+
+import pytest
+
+from cadenza_server.score import (
+    DEFAULT_BPM,
+    Score,
+    ScoreNote,
+    build_score_from_payload,
+)
+
+
+def approx(value: float, expected: float, tol: float = 1e-3) -> bool:
+    return math.isclose(value, expected, abs_tol=tol)
+
+
+class TestBuildScoreFromPayload:
+    def test_empty_payload_defaults_to_120_bpm(self) -> None:
+        score = build_score_from_payload({})
+        assert score.bpm == DEFAULT_BPM
+        assert score.notes == []
+        assert score.duration_ms == 0.0
+
+    def test_offsets_converted_to_milliseconds_at_120_bpm(self) -> None:
+        # At 120 BPM, 1 quarter = 500 ms.
+        payload = {
+            "bpm": 120,
+            "notes": [
+                {"pitch": 60, "offset_ql": 0.0, "duration_ql": 1.0},
+                {"pitch": 62, "offset_ql": 1.0, "duration_ql": 0.5},
+                {"pitch": 64, "offset_ql": 2.0, "duration_ql": 2.0},
+            ],
+        }
+        score = build_score_from_payload(payload)
+
+        assert [n.pitch for n in score.notes] == [60, 62, 64]
+        assert approx(score.notes[0].start_ms, 0.0)
+        assert approx(score.notes[1].start_ms, 500.0)
+        assert approx(score.notes[2].start_ms, 1000.0)
+        assert approx(score.notes[0].duration_ms, 500.0)
+        assert approx(score.notes[1].duration_ms, 250.0)
+        assert approx(score.notes[2].duration_ms, 1000.0)
+
+    def test_scales_with_bpm(self) -> None:
+        payload = {
+            "bpm": 60,
+            "notes": [{"pitch": 60, "offset_ql": 1.0, "duration_ql": 1.0}],
+        }
+        score = build_score_from_payload(payload)
+        # At 60 BPM, 1 quarter = 1000 ms.
+        assert approx(score.notes[0].start_ms, 1000.0)
+        assert approx(score.notes[0].duration_ms, 1000.0)
+
+    def test_skips_malformed_notes(self) -> None:
+        payload = {
+            "bpm": 120,
+            "notes": [
+                {"pitch": 60, "offset_ql": 0.0, "duration_ql": 1.0},
+                {"pitch": "oops", "offset_ql": 1.0, "duration_ql": 1.0},
+                {"pitch": 200, "offset_ql": 2.0, "duration_ql": 1.0},
+                {"offset_ql": 3.0, "duration_ql": 1.0},
+                {"pitch": 62, "offset_ql": -1.0, "duration_ql": 1.0},
+            ],
+        }
+        score = build_score_from_payload(payload)
+        assert [n.pitch for n in score.notes] == [60]
+
+    def test_rejects_invalid_bpm(self) -> None:
+        with pytest.raises(ValueError):
+            build_score_from_payload({"bpm": 0, "notes": []})
+
+    def test_notes_are_sorted_and_duration_is_max_end(self) -> None:
+        payload = {
+            "bpm": 120,
+            "notes": [
+                {"pitch": 64, "offset_ql": 2.0, "duration_ql": 1.0},
+                {"pitch": 60, "offset_ql": 0.0, "duration_ql": 1.0},
+            ],
+        }
+        score = build_score_from_payload(payload)
+        assert [n.pitch for n in score.notes] == [60, 64]
+        assert approx(score.duration_ms, 1500.0)  # last note ends at 1000 + 500
+
+
+class TestTempoMap:
+    """Regression suite for TD-03 — the timeline must honour every entry
+    of the plugin's ``tempo_map``, not just the first tempo. A scalar
+    ``bpm`` alone must remain a valid (single-tempo) payload."""
+
+    def test_absent_tempo_map_behaves_like_single_tempo(self) -> None:
+        # At 60 BPM, 1 quarter = 1000 ms. Regression: make sure the
+        # tempo_map branch doesn't change behaviour for legacy payloads.
+        payload = {
+            "bpm": 60,
+            "notes": [
+                {"pitch": 60, "offset_ql": 0.0, "duration_ql": 1.0},
+                {"pitch": 62, "offset_ql": 1.0, "duration_ql": 1.0},
+            ],
+        }
+        score = build_score_from_payload(payload)
+        assert approx(score.notes[0].start_ms, 0.0)
+        assert approx(score.notes[1].start_ms, 1000.0)
+
+    def test_tempo_change_mid_piece_shifts_subsequent_notes(self) -> None:
+        # Four quarter notes. First two are at 120 BPM (500 ms/quarter);
+        # starting at offset_ql=2.0 the tempo halves to 60 BPM
+        # (1000 ms/quarter).
+        #
+        #   note  offset_ql  tempo  expected_start_ms
+        #     0       0      120        0
+        #     1       1      120      500
+        #     2       2       60     1000   (first note under the new tempo)
+        #     3       3       60     2000
+        payload = {
+            "bpm": 120,
+            "tempo_map": [
+                {"offset_ql": 0.0, "bpm": 120},
+                {"offset_ql": 2.0, "bpm": 60},
+            ],
+            "notes": [
+                {"pitch": 60, "offset_ql": 0.0, "duration_ql": 1.0},
+                {"pitch": 60, "offset_ql": 1.0, "duration_ql": 1.0},
+                {"pitch": 60, "offset_ql": 2.0, "duration_ql": 1.0},
+                {"pitch": 60, "offset_ql": 3.0, "duration_ql": 1.0},
+            ],
+        }
+        score = build_score_from_payload(payload)
+        starts = [n.start_ms for n in score.notes]
+        assert approx(starts[0], 0.0)
+        assert approx(starts[1], 500.0)
+        assert approx(starts[2], 1000.0), (
+            f"First note under the second tempo landed at {starts[2]} ms — "
+            "the tempo change at offset_ql=2.0 was not honoured."
+        )
+        assert approx(starts[3], 2000.0)
+
+    def test_initial_bpm_covers_notes_before_first_map_entry(self) -> None:
+        # tempo_map starts at offset_ql=2.0. Notes before that must be
+        # timed using the payload's scalar ``bpm`` (120), not music21's
+        # opaque default.
+        payload = {
+            "bpm": 120,
+            "tempo_map": [
+                {"offset_ql": 2.0, "bpm": 60},
+            ],
+            "notes": [
+                {"pitch": 60, "offset_ql": 0.0, "duration_ql": 1.0},
+                {"pitch": 60, "offset_ql": 1.0, "duration_ql": 1.0},
+            ],
+        }
+        score = build_score_from_payload(payload)
+        assert approx(score.notes[0].start_ms, 0.0)
+        assert approx(score.notes[1].start_ms, 500.0)
+
+    def test_malformed_tempo_entries_are_silently_dropped(self) -> None:
+        payload = {
+            "bpm": 120,
+            "tempo_map": [
+                {"offset_ql": 0.0, "bpm": 120},
+                {"offset_ql": -1.0, "bpm": 90},   # dropped: negative offset
+                {"offset_ql": 1.0, "bpm": 0},     # dropped: non-positive bpm
+                {"offset_ql": 1.0},                # dropped: missing bpm
+                "not a dict",                      # dropped: wrong type
+                {"offset_ql": 2.0, "bpm": 60},
+            ],
+            "notes": [
+                {"pitch": 60, "offset_ql": 3.0, "duration_ql": 1.0},
+            ],
+        }
+        score = build_score_from_payload(payload)
+        # After the cleanup, the only effective tempos are 120 @ 0 and
+        # 60 @ 2. Note at offset 3 sits under the 60 BPM region:
+        # time = 2 * 500 ms (first 2 quarters at 120) + 1 * 1000 ms
+        # (one quarter at 60) = 2000 ms.
+        assert approx(score.notes[0].start_ms, 2000.0)
+
+    def test_duplicate_offsets_use_last_seen_tempo(self) -> None:
+        payload = {
+            "bpm": 120,
+            "tempo_map": [
+                {"offset_ql": 0.0, "bpm": 120},
+                {"offset_ql": 0.0, "bpm": 60},   # wins — matches Cadenza.qml dedup
+            ],
+            "notes": [
+                {"pitch": 60, "offset_ql": 1.0, "duration_ql": 1.0},
+            ],
+        }
+        score = build_score_from_payload(payload)
+        # At 60 BPM, 1 quarter = 1000 ms.
+        assert approx(score.notes[0].start_ms, 1000.0)
+
+    def test_unsorted_tempo_map_input_is_normalised(self) -> None:
+        # Plugin walks the score top-to-bottom so the map arrives
+        # sorted; the backend must still behave correctly if an
+        # ad-hoc test or external tool posts an unsorted map.
+        payload = {
+            "bpm": 120,
+            "tempo_map": [
+                {"offset_ql": 2.0, "bpm": 60},
+                {"offset_ql": 0.0, "bpm": 120},
+            ],
+            "notes": [
+                {"pitch": 60, "offset_ql": 2.0, "duration_ql": 1.0},
+            ],
+        }
+        score = build_score_from_payload(payload)
+        assert approx(score.notes[0].start_ms, 1000.0)
+
+
+class TestScoreNoteIds:
+    """Regression suite for TD-04 — every scored note must carry a
+    unique, stable integer id so the frontend can key its mesh map by
+    id rather than the collision-prone ``(pitch, start_ms)`` composite.
+    """
+
+    def test_ids_are_unique_and_contiguous(self) -> None:
+        payload = {
+            "bpm": 120,
+            "notes": [
+                {"pitch": 60, "offset_ql": 0.0, "duration_ql": 1.0},
+                {"pitch": 62, "offset_ql": 1.0, "duration_ql": 1.0},
+                {"pitch": 64, "offset_ql": 2.0, "duration_ql": 1.0},
+            ],
+        }
+        score = build_score_from_payload(payload)
+        ids = [n.id for n in score.notes]
+        assert ids == sorted(set(ids)), "ids must be unique"
+        assert ids == list(range(len(ids))), (
+            "ids must be contiguous starting at 0 so the frontend can "
+            "pre-size data structures if it wants to."
+        )
+
+    def test_collapsed_timing_notes_keep_distinct_ids(self) -> None:
+        # Two same-pitch notes 0.3 ms apart — the exact collision case
+        # TD-04 calls out: both would hash to the same mesh key under
+        # ``(pitch, round(start_ms))``. Distinct ids are the escape hatch.
+        payload = {
+            "bpm": 120,
+            "notes": [
+                {"pitch": 60, "offset_ql": 0.0, "duration_ql": 0.1},
+                # 0.3 ms at 120 BPM ≈ 0.0006 quarter-lengths.
+                {"pitch": 60, "offset_ql": 0.0006, "duration_ql": 0.1},
+            ],
+        }
+        score = build_score_from_payload(payload)
+        assert len(score.notes) == 2
+        assert score.notes[0].id != score.notes[1].id
+        # And round(start_ms) collapses them — proving the fallback key
+        # really would collide without ids.
+        assert round(score.notes[0].start_ms) == round(score.notes[1].start_ms)
+
+    def test_to_dict_includes_id(self) -> None:
+        payload = {
+            "bpm": 120,
+            "notes": [{"pitch": 60, "offset_ql": 0.0, "duration_ql": 1.0}],
+        }
+        score = build_score_from_payload(payload)
+        wire = score.to_dict()
+        assert "notes" in wire and len(wire["notes"]) == 1
+        assert wire["notes"][0]["id"] == 0
+
+    def test_malformed_notes_dont_consume_ids(self) -> None:
+        # Ids must reflect the *emitted* note order, not the raw-payload
+        # order. A skipped malformed note should not leave an id gap.
+        payload = {
+            "bpm": 120,
+            "notes": [
+                {"pitch": 60, "offset_ql": 0.0, "duration_ql": 1.0},
+                {"pitch": "oops", "offset_ql": 1.0, "duration_ql": 1.0},  # dropped
+                {"pitch": 62, "offset_ql": 2.0, "duration_ql": 1.0},
+            ],
+        }
+        score = build_score_from_payload(payload)
+        assert [n.id for n in score.notes] == [0, 1]
+
+
+class TestScore:
+    def test_notes_in_window(self) -> None:
+        score = Score(
+            bpm=120.0,
+            notes=[
+                ScoreNote(pitch=60, start_ms=0.0, duration_ms=500.0),
+                ScoreNote(pitch=62, start_ms=500.0, duration_ms=500.0),
+                ScoreNote(pitch=64, start_ms=1000.0, duration_ms=500.0),
+            ],
+        )
+        assert [n.pitch for n in score.notes_in_window(400.0, 1100.0)] == [62, 64]

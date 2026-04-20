@@ -1,0 +1,36 @@
+[project]
+name = "cadenza-server"
+version = "0.1.0"
+description = "Cadenza backend: WebSocket hub, MIDI input, and score validator for the waterfall piano trainer."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Cadenza" }]
+license = { text = "MIT" }
+dependencies = [
+    "websockets>=16.0",
+    "mido>=1.3.2",
+    "python-rtmidi>=1.5.8",
+    "music21>=9.3.0",
+]
+
+[project.scripts]
+cadenza-server = "cadenza_server.__main__:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cadenza_server"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q"
+testpaths = ["tests"]
+asyncio_mode = "auto"

@@ -1,0 +1,91 @@
+# --- OS ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- Editors / IDE ---
+.idea/
+*.swp
+*.swo
+*~
+
+# Optionally keep shared VS Code settings uncommented:
+# .vscode/
+
+# --- Environment & secrets ---
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+secrets/
+
+# --- Python (back-end server, future FastAPI, tooling) ---
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.so
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+wheels/
+pip-wheel-metadata/
+
+# Virtual environments (uv / venv / conda)
+.venv/
+venv/
+ENV/
+env/
+
+# uv / hatch / pytest / typing / lint caches
+.python-version-local
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.hypothesis/
+coverage.xml
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+nox/
+
+# --- JavaScript / Node (Electron today, React / Vite later) ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Bundler / SPA build outputs (Vite, CRA, webpack, Next static export, etc.)
+dist/
+build/
+.next/
+out/
+.nuxt/
+.turbo/
+.parcel-cache/
+.cache/
+.vite/
+*.tsbuildinfo
+
+# ESLint / optional caches
+.eslintcache
+.stylelintcache
+
+# --- Frontend test / Playwright (if added later) ---
+test-results/
+playwright-report/
+playwright/.cache/
+
+# --- Electron packager / forge (packaged apps; keep source only) ---
+release/
+
+# --- Misc logs & temp ---
+*.log
+tmp/
+temp/
+*.tmp
