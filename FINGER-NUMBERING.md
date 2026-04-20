@@ -160,7 +160,7 @@ for (var p = 0; p < score.parts.length; ++p) {
 
 ### Backend
 
-New module `back-end/src/cadenza_server/fingering.py`:
+New module:
 
 ```python
 """Wrap pianoplayer to annotate a music21 Stream with fingering numbers.

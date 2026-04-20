@@ -1,4 +1,4 @@
-// JSON message helpers that mirror `back-end/src/cadenza_server/protocol.py`.
+// JSON message helpers that mirror `back-end/cadenza_server/core/protocol.py`.
 
 export const MSG_HELLO = "hello";
 export const MSG_SCORE = "score";
