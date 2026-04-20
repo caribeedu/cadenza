@@ -10,6 +10,10 @@ export interface ScoreTimeline {
   bpm: number;
   duration_ms: number;
   notes: ScoreNote[];
+  // Optional human-readable title extracted from ``meta.title`` by the
+  // plugin. ``null`` / ``undefined`` when the score has no title; the
+  // UI should fall back to "Untitled" or similar.
+  title?: null | string;
 }
 
 // Payload for MSG_NOTE_PLAYED / MSG_NOTE_TRIGGER. ``correct`` is

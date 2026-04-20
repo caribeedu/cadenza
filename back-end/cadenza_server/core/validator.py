@@ -172,9 +172,7 @@ class Validator:
                 best_idx = idx
         return best_idx
 
-    def _closest_unconsumed_within_tolerance(
-        self, played_time_ms: float
-    ) -> ScoreNote | None:
+    def _closest_unconsumed_within_tolerance(self, played_time_ms: float) -> ScoreNote | None:
         """Closest unconsumed scored note *of any pitch* within tolerance."""
         best_note: ScoreNote | None = None
         best_delta: float | None = None
@@ -190,17 +188,22 @@ class Validator:
         return best_note
 
     def _purge_expired_active_hits(self, now_ms: float) -> None:
+        # Half-open window ``[start, start + duration)``: the moment
+        # ``now_ms`` reaches the note's scored end time, the hold is
+        # over and the next press belongs to the next beat rather than
+        # violating the previous hold. Using strict ``>`` here would
+        # cause Phase 2 to steal ``t == start_ms + duration_ms`` from
+        # Phase 3 (the near-target miss for the *next* note), which is
+        # both musically wrong and what the regression suite asserts.
         expired = [
             idx
             for idx, (_hit, note) in self._active_hits.items()
-            if now_ms > note.start_ms + note.duration_ms
+            if now_ms >= note.start_ms + note.duration_ms
         ]
         for idx in expired:
             del self._active_hits[idx]
 
-    def _violated_active_hit(
-        self, played_time_ms: float
-    ) -> tuple[float, ScoreNote] | None:
+    def _violated_active_hit(self, played_time_ms: float) -> tuple[float, ScoreNote] | None:
         """Return ``(hit_time, note)`` for any active hit whose hold
         window covers ``played_time_ms``.
 
@@ -221,9 +224,7 @@ class Validator:
         return best
 
 
-def unvalidated_reason(
-    validator: Validator | None, *, playing: bool, paused: bool
-) -> str | None:
+def unvalidated_reason(validator: Validator | None, *, playing: bool, paused: bool) -> str | None:
     """Why an incoming MIDI event is *not* being validated right now.
 
     Returns ``None`` when validation can proceed, otherwise one of:

@@ -3,11 +3,13 @@ import type { ReactElement } from "react";
 import { usePlayback } from "@app/providers/PlaybackProvider";
 import { useWebSocket } from "@app/providers/WebSocketProvider";
 import { MidiDeviceSelector } from "@features/midi/components/MidiDeviceSelector";
+import { PlaybackSpeedSlider } from "@features/score-config/components/PlaybackSpeedSlider";
 import { ToleranceSlider } from "@features/score-config/components/ToleranceSlider";
 import { BackendUrlInput } from "@features/websocket/components/BackendUrlInput";
 import { type ChipState, StatusChip } from "@shared/components/StatusChip";
 import "@features/score-config/components/score-config.css";
 
+import { ScoreInfoChip } from "./ScoreInfoChip";
 import "./TopBar.css";
 
 interface ScoreChipArgs {
@@ -76,11 +78,13 @@ export function TopBar(): ReactElement {
           {pauseLabel}
         </button>
         <ToleranceSlider />
+        <PlaybackSpeedSlider />
       </div>
       <div className="status">
         <StatusChip label={wsLabel} state={wsChipState} />
         <StatusChip label={midiLabel} state={midiState} />
         <StatusChip label={scoreChip.label} state={scoreChip.state} />
+        <ScoreInfoChip />
       </div>
     </header>
   );

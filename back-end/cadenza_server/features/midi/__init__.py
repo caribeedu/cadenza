@@ -2,6 +2,7 @@
 
 from cadenza_server.features.midi.input import (
     DEFAULT_MIDI_CALL_TIMEOUT_S,
+    DEFAULT_PLAYBACK_SPEED,
     MidiCallTimeout,
     MidiEvent,
     MidiInput,
@@ -11,6 +12,7 @@ from cadenza_server.features.midi.input import (
 
 __all__ = [
     "DEFAULT_MIDI_CALL_TIMEOUT_S",
+    "DEFAULT_PLAYBACK_SPEED",
     "MidiCallTimeout",
     "MidiEvent",
     "MidiInput",

@@ -79,6 +79,11 @@ class Hub:
             return
         self._loop = asyncio.get_running_loop()
         self._midi = MidiInput(self._loop)
+        # If the hub was configured (e.g. speed pre-seeded by a test or
+        # a future persistence layer) before start(), seed the new
+        # MidiInput so the first note_on is already scaled correctly.
+        if self._state.playback_speed != 1.0:
+            self._midi.set_speed(self._state.playback_speed)
         self._midi_task = asyncio.create_task(self._drain_midi(), name="cadenza.midi")
         await self._log_startup_ports()
 
@@ -125,9 +130,7 @@ class Hub:
         self._state.score = score
         # Honour the currently-configured tolerance so the user-chosen
         # slider value persists across score reloads.
-        self._state.validator = Validator(
-            score, tolerance_ms=self._state.tolerance_ms
-        )
+        self._state.validator = Validator(score, tolerance_ms=self._state.tolerance_ms)
         log.info(
             "Score received: %d notes @ %.1f BPM (tolerance=%.0f ms)",
             len(score.notes),
@@ -156,6 +159,7 @@ class Hub:
             MessageType.RESUME.value: self._on_resume,
             MessageType.STOP.value: self._on_stop,
             MessageType.SET_TOLERANCE.value: self._on_set_tolerance,
+            MessageType.SET_PLAYBACK_SPEED.value: self._on_set_playback_speed,
         }
 
     async def _on_hello(self, client: Client, msg: dict[str, Any]) -> None:
@@ -171,34 +175,24 @@ class Hub:
             ports = await list_input_ports_async()
         except MidiCallTimeout as exc:
             log.warning("list_midi: %s", exc)
-            await self._send(
-                client, {"type": MessageType.ERROR, "error": str(exc)}
-            )
+            await self._send(client, {"type": MessageType.ERROR, "error": str(exc)})
             return
-        await self._send(
-            client, {"type": MessageType.MIDI_PORTS, "ports": ports}
-        )
+        await self._send(client, {"type": MessageType.MIDI_PORTS, "ports": ports})
 
     async def _on_select_midi(self, client: Client, msg: dict[str, Any]) -> None:
         port = msg.get("port")
         if not port:
-            await self._send(
-                client, {"type": MessageType.ERROR, "error": "Missing port"}
-            )
+            await self._send(client, {"type": MessageType.ERROR, "error": "Missing port"})
             return
         try:
             await self.midi.open_async(str(port))
         except MidiCallTimeout as exc:
             log.warning("select_midi: %s", exc)
-            await self._send(
-                client, {"type": MessageType.ERROR, "error": str(exc)}
-            )
+            await self._send(client, {"type": MessageType.ERROR, "error": str(exc)})
             return
         except Exception as exc:
             log.exception("Failed to open MIDI port")
-            await self._send(
-                client, {"type": MessageType.ERROR, "error": str(exc)}
-            )
+            await self._send(client, {"type": MessageType.ERROR, "error": str(exc)})
             return
         await self._broadcast_status()
 
@@ -260,6 +254,45 @@ class Hub:
         if self._state.validator is not None:
             self._state.validator.tolerance_ms = parsed
         log.info("Hit-timing tolerance set to %.0f ms", parsed)
+        await self._broadcast_status()
+
+    async def _on_set_playback_speed(self, client: Client, msg: dict[str, Any]) -> None:
+        """Apply a new replay-speed multiplier.
+
+        Validation matches ``_on_set_tolerance`` in spirit: reject
+        booleans (``bool`` is an ``int`` subclass), non-numerics, and
+        anything that isn't strictly positive. The MIDI clock is
+        rebased inside :meth:`MidiInput.set_speed` so a live change
+        doesn't skip the playhead.
+        """
+        value = msg.get("playback_speed")
+        parsed: float | None
+        try:
+            parsed = float(value)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            parsed = None
+        if (
+            parsed is None
+            or isinstance(value, bool)
+            or not (parsed > 0)
+            or parsed != parsed  # NaN guard; ``float('nan') > 0`` is False anyway
+        ):
+            await self._send(
+                client,
+                {
+                    "type": MessageType.ERROR,
+                    "error": "playback_speed must be a positive finite number",
+                },
+            )
+            return
+        self._state.playback_speed = parsed
+        if self._midi is not None:
+            try:
+                self._midi.set_speed(parsed)
+            except ValueError as exc:  # defensive; validator above rejects first
+                await self._send(client, {"type": MessageType.ERROR, "error": str(exc)})
+                return
+        log.info("Playback speed set to %.3fx", parsed)
         await self._broadcast_status()
 
     async def _drain_midi(self) -> None:
@@ -338,16 +371,10 @@ class Hub:
             # surface disconnects via its own loop and call ``unregister``.
             pass
 
-    async def _broadcast_to_role(
-        self, role: ClientRole, message: dict[str, Any]
-    ) -> None:
+    async def _broadcast_to_role(self, role: ClientRole, message: dict[str, Any]) -> None:
         payload = protocol.encode(message)
         await asyncio.gather(
-            *(
-                c.conn.send_text(payload)
-                for c in list(self._state.clients)
-                if c.role == role
-            ),
+            *(c.conn.send_text(payload) for c in list(self._state.clients) if c.role == role),
             return_exceptions=True,
         )
 
@@ -366,6 +393,7 @@ class Hub:
             "paused": self._state.paused,
             "score_loaded": self._state.score is not None,
             "tolerance_ms": self._state.tolerance_ms,
+            "playback_speed": self._state.playback_speed,
             "clients": {
                 role.value: sum(1 for c in self._state.clients if c.role == role)
                 for role in (

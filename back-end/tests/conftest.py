@@ -37,9 +37,7 @@ def _stub_midi_enumeration() -> Iterator[None]:
     # ``_log_startup_ports`` and any list_midi dispatch path both see
     # the stub. We only replace it for the *default* call site; tests
     # that construct their own MidiInput can still drive the real code.
-    with patch(
-        "cadenza_server.features.hub.service.list_input_ports_async", _empty_list
-    ):
+    with patch("cadenza_server.features.hub.service.list_input_ports_async", _empty_list):
         yield
 
 

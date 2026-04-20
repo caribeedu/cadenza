@@ -12,6 +12,7 @@ import {
   MSG_PAUSE,
   MSG_RESUME,
   MSG_SELECT_MIDI,
+  MSG_SET_PLAYBACK_SPEED,
   MSG_SET_TOLERANCE,
   MSG_START,
 } from "@shared/lib/protocol";
@@ -49,6 +50,7 @@ type PlaybackAction =
   | { payload: StatusMessage; type: "status" };
 
 export interface PlaybackContextValue extends PlaybackState {
+  commitPlaybackSpeed: (factor: number) => void;
   commitTolerance: (valueMs: number) => void;
   pause: () => void;
   refreshMidi: () => void;
@@ -116,17 +118,28 @@ export function PlaybackProvider({
     subscribeDropped,
   } = useWebSocket();
   const { log } = useEventLog();
-  const { setToleranceMs, toleranceMs } = useScoreConfig();
+  const {
+    playbackSpeed,
+    setPlaybackSpeed,
+    setToleranceMs,
+    toleranceMs,
+  } = useScoreConfig();
 
   // Track the tolerance value the server last confirmed so we don't
   // bounce the user's slider back on their own echoed status frame.
   const serverToleranceRef = useRef<null | number>(null);
+  // Same pattern for playback speed — the server echoes via status.
+  const serverPlaybackSpeedRef = useRef<null | number>(null);
   // Mirror toleranceMs so handlers that fire outside render (message
   // subscribers) can read the current value without re-subscribing.
   const toleranceRef = useRef(toleranceMs);
   useEffect(() => {
     toleranceRef.current = toleranceMs;
   }, [toleranceMs]);
+  const playbackSpeedRef = useRef(playbackSpeed);
+  useEffect(() => {
+    playbackSpeedRef.current = playbackSpeed;
+  }, [playbackSpeed]);
 
   const lastUnvalidatedReasonRef = useRef<null | string>(null);
 
@@ -138,6 +151,16 @@ export function PlaybackProvider({
         serverToleranceRef.current = status.tolerance_ms;
         if (Math.abs(toleranceRef.current - status.tolerance_ms) >= 1) {
           setToleranceMs(status.tolerance_ms);
+        }
+      }
+      if (typeof status.playback_speed === "number") {
+        serverPlaybackSpeedRef.current = status.playback_speed;
+        // Same 1-step-of-slider dead band as tolerance so an echo
+        // doesn't reset the user's in-flight drag.
+        if (
+          Math.abs(playbackSpeedRef.current - status.playback_speed) >= 0.01
+        ) {
+          setPlaybackSpeed(status.playback_speed);
         }
       }
     });
@@ -170,7 +193,7 @@ export function PlaybackProvider({
       unsubError();
       unsubNote();
     };
-  }, [subscribe, log, setToleranceMs]);
+  }, [subscribe, log, setToleranceMs, setPlaybackSpeed]);
 
   // Log WebSocket lifecycle events once per transition so users see
   // the connection state changing without needing DevTools. The
@@ -204,6 +227,17 @@ export function PlaybackProvider({
       if (serverToleranceRef.current === clamped) return;
       send({ tolerance_ms: clamped, type: MSG_SET_TOLERANCE });
       log(`Tolerance → ${clamped} ms`, "dim");
+    },
+    [send, log],
+  );
+
+  const commitPlaybackSpeed = useCallback(
+    (factor: number) => {
+      const numeric = Number(factor);
+      if (!Number.isFinite(numeric) || numeric <= 0) return;
+      if (serverPlaybackSpeedRef.current === numeric) return;
+      send({ playback_speed: numeric, type: MSG_SET_PLAYBACK_SPEED });
+      log(`Playback speed → ${numeric.toFixed(2)}×`, "dim");
     },
     [send, log],
   );
@@ -246,6 +280,7 @@ export function PlaybackProvider({
   const value = useMemo<PlaybackContextValue>(
     () => ({
       ...state,
+      commitPlaybackSpeed,
       commitTolerance,
       pause,
       refreshMidi,
@@ -263,6 +298,7 @@ export function PlaybackProvider({
       refreshMidi,
       selectMidi,
       commitTolerance,
+      commitPlaybackSpeed,
     ],
   );
 

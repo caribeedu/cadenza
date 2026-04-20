@@ -28,18 +28,13 @@ def test_no_score_returns_no_score() -> None:
 
 
 def test_paused_beats_not_started(fake_validator: MagicMock) -> None:
-    assert (
-        unvalidated_reason(fake_validator, playing=False, paused=True) == "paused"
-    )
+    assert unvalidated_reason(fake_validator, playing=False, paused=True) == "paused"
 
 
 def test_not_started_when_score_loaded_but_not_playing(
     fake_validator: MagicMock,
 ) -> None:
-    assert (
-        unvalidated_reason(fake_validator, playing=False, paused=False)
-        == "not_started"
-    )
+    assert unvalidated_reason(fake_validator, playing=False, paused=False) == "not_started"
 
 
 def test_none_when_ready_to_validate(fake_validator: MagicMock) -> None:
@@ -49,6 +44,4 @@ def test_none_when_ready_to_validate(fake_validator: MagicMock) -> None:
 def test_playing_and_paused_together_still_blocks(
     fake_validator: MagicMock,
 ) -> None:
-    assert (
-        unvalidated_reason(fake_validator, playing=True, paused=True) == "paused"
-    )
+    assert unvalidated_reason(fake_validator, playing=True, paused=True) == "paused"

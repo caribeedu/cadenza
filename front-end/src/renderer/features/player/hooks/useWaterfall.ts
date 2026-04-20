@@ -8,6 +8,7 @@ export interface UseWaterfallOptions {
   canvasRef: RefObject<HTMLCanvasElement | null>;
   laneGeometry: LaneGeometry | null;
   latestNotePlayed: NotePlayed | null;
+  playbackSpeed: number;
   score: null | ScoreTimeline;
   serverPaused: boolean;
   serverPlaying: boolean;
@@ -22,6 +23,7 @@ export function useWaterfall({
   canvasRef,
   laneGeometry,
   latestNotePlayed,
+  playbackSpeed,
   score,
   serverPaused,
   serverPlaying,
@@ -32,21 +34,31 @@ export function useWaterfall({
   const previousNoteRef = useRef<NotePlayed | null>(null);
 
   // Mount once per canvas. The renderer self-observes canvas size, so
-  // resizes don't need to tear it down.
+  // resizes don't need to tear it down. We seed the initial speed so
+  // there's no first-frame flash of 1x before the effect below fires.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !laneGeometry) return undefined;
 
-    const renderer = new WaterfallRenderer(canvas, laneGeometry);
+    const renderer = new WaterfallRenderer(canvas, laneGeometry, {
+      playbackSpeed,
+    });
     rendererRef.current = renderer;
     return () => {
       renderer.destroy();
       rendererRef.current = null;
     };
-    // Intentionally ignore laneGeometry identity: swaps are handled by
-    // the dedicated effect below so we avoid tearing down WebGL state.
+    // Intentionally ignore laneGeometry / playbackSpeed identity:
+    // swaps are handled by dedicated effects below so we avoid
+    // tearing down WebGL state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canvasRef]);
+
+  useEffect(() => {
+    const renderer = rendererRef.current;
+    if (!renderer) return;
+    renderer.setPlaybackSpeed(playbackSpeed);
+  }, [playbackSpeed]);
 
   useEffect(() => {
     const renderer = rendererRef.current;

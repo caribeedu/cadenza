@@ -5,6 +5,15 @@ export const TOLERANCE_MIN_MS = 20;
 export const TOLERANCE_MAX_MS = 300;
 export const TOLERANCE_STEP_MS = 5;
 
+// Replay-speed bounds for the practice slider. Below 0.25x the
+// falling bars become unreadable at typical canvas sizes; above
+// 1.5x beginners lose the point of the feature. ``step = 0.05``
+// lines up with slider thumb pixels at slider widths we ship today.
+export const DEFAULT_PLAYBACK_SPEED = 1.0;
+export const PLAYBACK_SPEED_MIN = 0.25;
+export const PLAYBACK_SPEED_MAX = 1.5;
+export const PLAYBACK_SPEED_STEP = 0.05;
+
 // Visualisation modes surface a dropdown today, but the enum lives here
 // so future feature work (staff / piano-roll / spectrogram views) can
 // add entries without touching the player feature.

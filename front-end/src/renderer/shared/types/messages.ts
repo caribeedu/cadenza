@@ -15,6 +15,7 @@ import type {
   MSG_SCORE,
   MSG_SCORE_TIMELINE,
   MSG_SELECT_MIDI,
+  MSG_SET_PLAYBACK_SPEED,
   MSG_SET_TOLERANCE,
   MSG_START,
   MSG_STATUS,
@@ -57,6 +58,11 @@ export interface SetToleranceMessage {
   type: typeof MSG_SET_TOLERANCE;
 }
 
+export interface SetPlaybackSpeedMessage {
+  playback_speed: number;
+  type: typeof MSG_SET_PLAYBACK_SPEED;
+}
+
 export interface ScoreMessage {
   [key: string]: unknown;
   type: typeof MSG_SCORE;
@@ -69,6 +75,7 @@ export type ClientMessage =
   | ResumeMessage
   | ScoreMessage
   | SelectMidiMessage
+  | SetPlaybackSpeedMessage
   | SetToleranceMessage
   | StartMessage
   | StopMessage;
@@ -77,6 +84,7 @@ export interface StatusMessage {
   midi_open: boolean;
   midi_port: null | string;
   paused: boolean;
+  playback_speed?: number;
   playing: boolean;
   score_loaded: boolean;
   tolerance_ms?: number;

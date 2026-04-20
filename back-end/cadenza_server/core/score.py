@@ -56,10 +56,16 @@ class ScoreNote:
 
 @dataclass
 class Score:
-    """Immutable-ish score timeline, sorted by ``start_ms``."""
+    """Immutable-ish score timeline, sorted by ``start_ms``.
+
+    ``title`` is optional metadata (typically the MuseScore filename or
+    the composer's movement title). It travels over ``score_timeline``
+    so the frontend can surface the current piece in the status bar.
+    """
 
     bpm: float
     notes: list[ScoreNote] = field(default_factory=list)
+    title: str | None = None
 
     def __post_init__(self) -> None:
         self.notes.sort(key=lambda n: (n.start_ms, n.pitch))
@@ -71,6 +77,7 @@ class Score:
     def to_dict(self) -> dict[str, Any]:
         return {
             "bpm": self.bpm,
+            "title": self.title,
             "duration_ms": self.duration_ms,
             "notes": [n.to_dict() for n in self.notes],
         }
@@ -147,6 +154,7 @@ def build_score_from_payload(payload: dict[str, Any]) -> Score:
 
     raw_notes: Iterable[dict[str, Any]] = payload.get("notes") or []
     tempo_map = _normalise_tempo_map(payload.get("tempo_map"))
+    title = _extract_title(payload.get("meta"))
 
     stream = m21_stream.Stream()
     if tempo_map:
@@ -209,4 +217,20 @@ def build_score_from_payload(payload: dict[str, Any]) -> Score:
         )
         next_id += 1
 
-    return Score(bpm=bpm, notes=resolved)
+    return Score(bpm=bpm, notes=resolved, title=title)
+
+
+def _extract_title(raw_meta: Any) -> str | None:
+    """Pull ``meta.title`` out of a plugin payload, defensively.
+
+    Returns ``None`` when missing, empty, whitespace-only, or not a
+    string. We deliberately *don't* fall back to e.g. ``meta.composer``
+    — an empty title is a better signal to the UI than a wrong one.
+    """
+    if not isinstance(raw_meta, dict):
+        return None
+    raw_title = raw_meta.get("title")
+    if not isinstance(raw_title, str):
+        return None
+    cleaned = raw_title.strip()
+    return cleaned or None

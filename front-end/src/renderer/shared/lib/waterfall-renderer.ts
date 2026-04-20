@@ -51,8 +51,11 @@ function midiFromName(text: string): number {
 
 export interface WaterfallOptions {
   leadMs?: number;
+  playbackSpeed?: number;
   pxPerMs?: number;
 }
+
+const DEFAULT_PLAYBACK_SPEED = 1.0;
 
 type NoteStatus = "bad" | "good" | "pending";
 
@@ -90,12 +93,20 @@ export class WaterfallRenderer {
   readonly leadMs: number;
   readonly noteGroup: THREE.Group;
   readonly noteMeshes: Map<string, THREE.Group> = new Map();
+  // ``pausedElapsedMs`` holds the **virtual** (score-ms) playhead
+  // position at the moment of the last ``pause()``; ``startTimestamp``
+  // is the wall ``performance.now()`` at the last ``start()``/``resume()``.
+  // Virtual now = ``(performance.now() - startTimestamp) * _speed`` while
+  // playing, or ``pausedElapsedMs`` while paused. At ``_speed === 1``
+  // the arithmetic is identical to the pre-feature code, so legacy
+  // behaviour is preserved byte-for-byte.
   pausedElapsedMs: null | number = null;
   readonly pxPerMs: number;
   readonly renderer: THREE.WebGLRenderer;
   readonly scene: THREE.Scene;
   score: ScoreTimeline = { bpm: 120, duration_ms: 0, notes: [] };
   startTimestamp: null | number = null;
+  private _speed: number;
   private readonly _resizeObserver: ResizeObserver;
   private readonly labelMaterials: Map<string, THREE.SpriteMaterial> =
     new Map();
@@ -103,7 +114,11 @@ export class WaterfallRenderer {
   constructor(
     canvas: HTMLCanvasElement,
     laneGeometry: LaneGeometry,
-    { leadMs = DEFAULT_LEAD_MS, pxPerMs = DEFAULT_PX_PER_MS }: WaterfallOptions = {},
+    {
+      leadMs = DEFAULT_LEAD_MS,
+      playbackSpeed = DEFAULT_PLAYBACK_SPEED,
+      pxPerMs = DEFAULT_PX_PER_MS,
+    }: WaterfallOptions = {},
   ) {
     if (!laneGeometry) {
       throw new Error("WaterfallRenderer requires a lane-geometry provider");
@@ -113,6 +128,7 @@ export class WaterfallRenderer {
     this.laneGeometry = laneGeometry;
     this.pxPerMs = pxPerMs;
     this.leadMs = leadMs;
+    this._speed = playbackSpeed > 0 ? playbackSpeed : DEFAULT_PLAYBACK_SPEED;
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
     this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -155,8 +171,29 @@ export class WaterfallRenderer {
 
   pause(): void {
     if (this.startTimestamp == null) return;
-    this.pausedElapsedMs = performance.now() - this.startTimestamp;
+    this.pausedElapsedMs =
+      (performance.now() - this.startTimestamp) * this._speed;
     this.startTimestamp = null;
+  }
+
+  get playbackSpeed(): number {
+    return this._speed;
+  }
+
+  // Rebase the clock so the currently-displayed playhead position is
+  // continuous across the change: without this the falling bars would
+  // jump to a different frame as soon as the user releases the slider.
+  setPlaybackSpeed(nextSpeed: number): void {
+    if (!Number.isFinite(nextSpeed) || nextSpeed <= 0) return;
+    if (this.startTimestamp != null) {
+      const virtualNowMs =
+        (performance.now() - this.startTimestamp) * this._speed;
+      this.startTimestamp = performance.now() - virtualNowMs / nextSpeed;
+    }
+    // When paused, ``pausedElapsedMs`` already stores virtual ms, so
+    // there is nothing to rebase — the next ``resume()`` will honour
+    // the new factor automatically.
+    this._speed = nextSpeed;
   }
 
   reportPlayback(msg: NotePlayed): void {
@@ -185,7 +222,8 @@ export class WaterfallRenderer {
 
   resume(): void {
     if (this.pausedElapsedMs == null) return;
-    this.startTimestamp = performance.now() - this.pausedElapsedMs;
+    this.startTimestamp =
+      performance.now() - this.pausedElapsedMs / this._speed;
     this.pausedElapsedMs = null;
   }
 
@@ -381,7 +419,7 @@ export class WaterfallRenderer {
   private _tick(): void {
     const nowMs =
       this.startTimestamp != null
-        ? performance.now() - this.startTimestamp
+        ? (performance.now() - this.startTimestamp) * this._speed
         : this.pausedElapsedMs != null
           ? this.pausedElapsedMs
           : 0;

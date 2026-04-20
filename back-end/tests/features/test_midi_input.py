@@ -108,9 +108,7 @@ class TestMidiInputCallbackResilience:
         assert event.velocity == 80
         assert event.timestamp_ms == pytest.approx(500.0)
 
-    def test_note_on_velocity_zero_is_treated_as_note_off(
-        self, loop_with_fake_clock
-    ) -> None:
+    def test_note_on_velocity_zero_is_treated_as_note_off(self, loop_with_fake_clock) -> None:
         loop, _ = loop_with_fake_clock
         midi = MidiInput(loop)
         midi.mark_time_zero()
@@ -121,9 +119,7 @@ class TestMidiInputCallbackResilience:
         loop.run_until_complete(asyncio.sleep(0))
         assert midi.events.empty(), "velocity-0 note_on must not enqueue an event"
 
-    def test_callback_swallows_exceptions_and_logs_them(
-        self, loop_with_fake_clock, caplog
-    ) -> None:
+    def test_callback_swallows_exceptions_and_logs_them(self, loop_with_fake_clock, caplog) -> None:
         loop, _ = loop_with_fake_clock
         midi = MidiInput(loop)
         midi.mark_time_zero()
@@ -133,20 +129,14 @@ class TestMidiInputCallbackResilience:
         with caplog.at_level(logging.ERROR, logger="cadenza_server.features.midi.input"):
             midi._on_message(bad_msg)
 
-        assert any(
-            "MIDI callback crashed" in rec.message for rec in caplog.records
-        )
+        assert any("MIDI callback crashed" in rec.message for rec in caplog.records)
 
-    def test_non_note_messages_are_logged_but_not_enqueued(
-        self, loop_with_fake_clock
-    ) -> None:
+    def test_non_note_messages_are_logged_but_not_enqueued(self, loop_with_fake_clock) -> None:
         loop, _ = loop_with_fake_clock
         midi = MidiInput(loop)
         midi.mark_time_zero()
 
-        midi._on_message(
-            SimpleNamespace(type="control_change", control=64, value=127)
-        )
+        midi._on_message(SimpleNamespace(type="control_change", control=64, value=127))
         midi._on_message(SimpleNamespace(type="clock"))
         midi._on_message(SimpleNamespace(type="active_sensing"))
 
@@ -182,10 +172,13 @@ class TestListInputPortsAsync:
             time.sleep(2.0)
             return ["never reached"]
 
-        with patch(
-            "cadenza_server.features.midi.input.mido.get_input_names",
-            side_effect=slow_enumerate,
-        ), pytest.raises(MidiCallTimeout):
+        with (
+            patch(
+                "cadenza_server.features.midi.input.mido.get_input_names",
+                side_effect=slow_enumerate,
+            ),
+            pytest.raises(MidiCallTimeout),
+        ):
             asyncio.run(list_input_ports_async(timeout_s=0.05))
 
     def test_event_loop_stays_responsive_during_blocking_call(self) -> None:
@@ -231,9 +224,7 @@ class TestMidiInputOpenAsync:
         try:
             midi = MidiInput(loop)
             with patch.object(MidiInput, "open", autospec=True) as mock_open:
-                loop.run_until_complete(
-                    midi.open_async("Fake Piano", timeout_s=1.0)
-                )
+                loop.run_until_complete(midi.open_async("Fake Piano", timeout_s=1.0))
             mock_open.assert_called_once_with(midi, "Fake Piano")
         finally:
             loop.close()
@@ -250,12 +241,8 @@ class TestMidiInputOpenAsync:
             def slow_open(self: MidiInput, name: str) -> None:
                 time.sleep(2.0)
 
-            with patch.object(MidiInput, "open", slow_open), pytest.raises(
-                MidiCallTimeout
-            ):
-                loop.run_until_complete(
-                    midi.open_async("Wedged Backend", timeout_s=0.05)
-                )
+            with patch.object(MidiInput, "open", slow_open), pytest.raises(MidiCallTimeout):
+                loop.run_until_complete(midi.open_async("Wedged Backend", timeout_s=0.05))
         finally:
             loop.close()
 

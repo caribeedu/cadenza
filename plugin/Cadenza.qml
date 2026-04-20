@@ -132,6 +132,26 @@ MuseScore {
         return notes;
     }
 
+    // Prefer the authored "Work Title" (File → Project Properties) over
+    // ``curScore.title``, which in MuseScore 4 typically resolves to the
+    // filename without extension. Falls back to ``curScore.title`` and
+    // then to an empty string so the backend never sees ``undefined``.
+    // Defensive try/catch: ``metaTag`` is not present on every MuseScore
+    // build and throws rather than returning undefined when missing.
+    function resolveTitle(score) {
+        try {
+            if (typeof score.metaTag === "function") {
+                var workTitle = score.metaTag("workTitle");
+                if (workTitle && workTitle.length > 0) {
+                    return workTitle;
+                }
+            }
+        } catch (err) {
+            console.log("[Cadenza] metaTag lookup failed:", err);
+        }
+        return score.title || "";
+    }
+
     function buildPayload() {
         if (!curScore) {
             return null;
@@ -144,7 +164,7 @@ MuseScore {
             tempo_map: tempo.tempoMap,
             notes: notes,
             meta: {
-                title: curScore.title || "",
+                title: resolveTitle(curScore),
                 composer: (curScore.composer !== undefined) ? curScore.composer : "",
                 parts: curScore.parts.length
             }

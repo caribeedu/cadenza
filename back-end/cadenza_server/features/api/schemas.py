@@ -39,6 +39,13 @@ class ScorePayload(BaseModel):
             "[{pitch, offset_ql, duration_ql, track?}, ...]."
         ),
     )
+    meta: dict[str, Any] | None = Field(
+        default=None,
+        description=(
+            "Free-form metadata from the plugin. Today only meta.title "
+            "is surfaced downstream (forwarded in score_timeline)."
+        ),
+    )
 
 
 class ScoreAck(BaseModel):

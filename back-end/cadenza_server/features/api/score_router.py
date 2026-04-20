@@ -54,9 +54,7 @@ def build_score_router(hub: Hub) -> APIRouter:
             score = await hub.apply_score(raw)
         except ValueError as exc:
             log.warning("Rejected score payload: %s", exc)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
-            ) from exc
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
         # Client info is optional — we only log the remote address when
         # it's present (it's ``None`` under some TestClient configurations).

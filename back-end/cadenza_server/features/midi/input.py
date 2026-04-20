@@ -29,6 +29,12 @@ log = logging.getLogger(__name__)
 # override per-site.
 DEFAULT_MIDI_CALL_TIMEOUT_S = 3.0
 
+# Replay-speed multiplier applied to event timestamps so the validator
+# can compare played time to scored ``start_ms`` without caring about
+# wall-clock vs. score-clock. ``1.0`` means real-time; ``0.5`` means
+# half speed (one wall-second advances the score by 500 ms).
+DEFAULT_PLAYBACK_SPEED = 1.0
+
 
 class MidiCallTimeout(TimeoutError):
     """Raised when a blocking MIDI call (enumerate/open) exceeds its timeout.
@@ -63,9 +69,7 @@ def list_input_ports() -> list[str]:
         return []
 
 
-async def list_input_ports_async(
-    *, timeout_s: float = DEFAULT_MIDI_CALL_TIMEOUT_S
-) -> list[str]:
+async def list_input_ports_async(*, timeout_s: float = DEFAULT_MIDI_CALL_TIMEOUT_S) -> list[str]:
     """Async wrapper around :func:`list_input_ports` with a hard timeout.
 
     The sync call can stall for tens of seconds when the OS MIDI
@@ -75,13 +79,9 @@ async def list_input_ports_async(
     an unbounded wait.
     """
     try:
-        return await asyncio.wait_for(
-            asyncio.to_thread(list_input_ports), timeout=timeout_s
-        )
+        return await asyncio.wait_for(asyncio.to_thread(list_input_ports), timeout=timeout_s)
     except asyncio.TimeoutError as exc:
-        raise MidiCallTimeout(
-            f"MIDI port enumeration timed out after {timeout_s:.1f}s"
-        ) from exc
+        raise MidiCallTimeout(f"MIDI port enumeration timed out after {timeout_s:.1f}s") from exc
 
 
 class MidiInput:
@@ -107,10 +107,12 @@ class MidiInput:
         self._port_name: str | None = None
         self._lock = threading.Lock()
         self._start_time = self._loop.time()
-        # When paused, we remember how much time had elapsed *before* the
-        # pause so we can resume from the same logical offset instead of
-        # restarting the clock.
+        # ``_paused_elapsed_s`` is stored in **virtual** (score) seconds
+        # so that a speed change during pause doesn't teleport the
+        # playhead on resume. At ``_speed == 1.0`` it degenerates to the
+        # previous wall-seconds behaviour.
         self._paused_elapsed_s: float | None = None
+        self._speed: float = DEFAULT_PLAYBACK_SPEED
         self.events: asyncio.Queue[MidiEvent] = asyncio.Queue()
 
     @property
@@ -125,10 +127,33 @@ class MidiInput:
     def is_paused(self) -> bool:
         return self._paused_elapsed_s is not None
 
+    @property
+    def speed(self) -> float:
+        return self._speed
+
     def mark_time_zero(self) -> None:
         """Reset the time origin used to timestamp incoming events."""
         self._start_time = self._loop.time()
         self._paused_elapsed_s = None
+
+    def set_speed(self, new_speed: float) -> None:
+        """Update the replay-speed multiplier without teleporting the playhead.
+
+        When the session is running we rebase ``_start_time`` so the
+        virtual time we report to the validator is continuous across
+        the change; when paused we leave the stored virtual elapsed
+        untouched (it's already expressed in score-seconds).
+
+        Raises :class:`ValueError` for non-positive or non-finite values
+        so callers can surface a structured error to the UI.
+        """
+        if not (new_speed > 0) or new_speed != new_speed:  # reject 0, -x, NaN
+            raise ValueError("playback speed must be a positive finite number")
+        if self._paused_elapsed_s is None:
+            now = self._loop.time()
+            virtual_elapsed_s = (now - self._start_time) * self._speed
+            self._start_time = now - virtual_elapsed_s / new_speed
+        self._speed = float(new_speed)
 
     def pause(self) -> None:
         """Freeze the logical clock at its current elapsed value.
@@ -142,13 +167,14 @@ class MidiInput:
         """
         if self._paused_elapsed_s is not None:
             return
-        self._paused_elapsed_s = self._loop.time() - self._start_time
+        wall_elapsed_s = self._loop.time() - self._start_time
+        self._paused_elapsed_s = wall_elapsed_s * self._speed
 
     def resume(self) -> None:
         """Continue from the last :meth:`pause` position. No-op if not paused."""
         if self._paused_elapsed_s is None:
             return
-        self._start_time = self._loop.time() - self._paused_elapsed_s
+        self._start_time = self._loop.time() - self._paused_elapsed_s / self._speed
         self._paused_elapsed_s = None
 
     def open(self, port_name: str) -> None:
@@ -190,9 +216,7 @@ class MidiInput:
         process. We log a warning so this state is at least visible.
         """
         try:
-            await asyncio.wait_for(
-                asyncio.to_thread(self.open, port_name), timeout=timeout_s
-            )
+            await asyncio.wait_for(asyncio.to_thread(self.open, port_name), timeout=timeout_s)
         except asyncio.TimeoutError as exc:
             log.warning(
                 "MIDI open(%r) still running after %.1fs — worker thread "
@@ -234,10 +258,11 @@ class MidiInput:
 
             if msg.type != "note_on" or msg.velocity == 0:
                 return
+            virtual_elapsed_ms = (self._loop.time() - self._start_time) * self._speed * 1000.0
             event = MidiEvent(
                 pitch=int(msg.note),
                 velocity=int(msg.velocity),
-                timestamp_ms=(self._loop.time() - self._start_time) * 1000.0,
+                timestamp_ms=virtual_elapsed_ms,
             )
             self._loop.call_soon_threadsafe(self.events.put_nowait, event)
         except Exception:  # pragma: no cover - background thread safety net

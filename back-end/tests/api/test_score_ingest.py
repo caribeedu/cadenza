@@ -86,9 +86,7 @@ class TestScoreIngestBroadcasts:
     WebSocket-connected frontend as a ``score_timeline`` frame. This is
     what justifies keeping both transports on the same FastAPI app."""
 
-    def test_http_score_broadcasts_to_websocket_frontend(
-        self, client: TestClient
-    ) -> None:
+    def test_http_score_broadcasts_to_websocket_frontend(self, client: TestClient) -> None:
         with client.websocket_connect("/") as ws:
             # Initial status frame is sent on connect; drain it.
             first = ws.receive_json()

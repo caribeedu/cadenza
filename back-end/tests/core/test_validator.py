@@ -196,3 +196,28 @@ class TestValidatorActiveHitPenalty:
 
         again = v.validate(pitch=60, played_time_ms=0.0)
         assert again.correct is True
+
+    def test_press_at_exact_end_of_hold_window_is_next_beat_not_penalty(
+        self,
+    ) -> None:
+        """Boundary regression: ``played_time_ms == start_ms + duration_ms``.
+
+        The hold window is half-open ``[start, start + duration)``; at
+        the exact end the previous note is done and the press belongs
+        to the next beat. Before the fix this pressed time landed in
+        Phase 2 (violated hold) instead of Phase 3 (near-target miss
+        for the next scored note), reporting ``expected_id`` of the
+        *previous* note instead of the *next* one.
+        """
+        v = Validator(_score(), tolerance_ms=100.0)
+        v.validate(pitch=60, played_time_ms=0.0)
+
+        boundary = v.validate(pitch=63, played_time_ms=500.0)
+
+        assert boundary.correct is False
+        assert boundary.expected is not None
+        assert boundary.expected.id == 1, (
+            "Press at t == previous note's end must resolve against "
+            "the next scored note, not violate the just-ended hold."
+        )
+        assert boundary.expected.start_ms == 500.0

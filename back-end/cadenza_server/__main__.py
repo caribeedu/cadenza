@@ -27,9 +27,7 @@ def _parse_args(argv: list[str] | None = None) -> AppConfig:
         ),
     )
     parser.add_argument("--host", default=DEFAULT_HOST)
-    parser.add_argument(
-        "--port", type=int, default=DEFAULT_PORT, help="Port for both WS and HTTP."
-    )
+    parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="Port for both WS and HTTP.")
     parser.add_argument(
         "--log-level",
         default=DEFAULT_LOG_LEVEL,

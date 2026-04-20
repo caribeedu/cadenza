@@ -1,4 +1,5 @@
 import { usePlayback } from "@app/providers/PlaybackProvider";
+import { useScoreConfig } from "@app/providers/ScoreConfigProvider";
 import { useElementSize } from "@shared/hooks/useElementSize";
 import { type ReactElement, useRef } from "react";
 
@@ -20,11 +21,13 @@ export function Waterfall(): ReactElement {
   const layout = useKeyboardLayout({ width: pianoSize?.width });
 
   const { latestNotePlayed, score, serverPaused, serverPlaying } = usePlayback();
+  const { playbackSpeed } = useScoreConfig();
 
   useWaterfall({
     canvasRef,
     laneGeometry: layout,
     latestNotePlayed,
+    playbackSpeed,
     score,
     serverPaused,
     serverPlaying,

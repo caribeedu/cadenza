@@ -11,6 +11,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from cadenza_server.core.validator import DEFAULT_TOLERANCE_MS, Validator
+from cadenza_server.features.midi import DEFAULT_PLAYBACK_SPEED
 
 if TYPE_CHECKING:
     from cadenza_server.core.score import Score
@@ -64,3 +65,6 @@ class HubState:
     # tolerance survives score reloads (the plugin can push a new
     # timeline at any time; the slider should not reset).
     tolerance_ms: float = DEFAULT_TOLERANCE_MS
+    # Replay-speed multiplier. Authoritative on the server so every
+    # connected UI sees the same factor echoed via status frames.
+    playback_speed: float = DEFAULT_PLAYBACK_SPEED

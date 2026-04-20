@@ -43,9 +43,7 @@ def build_ws_router(hub: Hub) -> APIRouter:
                     msg = protocol.decode(raw)
                 except (ValueError, UnicodeDecodeError) as exc:
                     await ws.send_text(
-                        protocol.encode(
-                            {"type": MessageType.ERROR, "error": str(exc)}
-                        )
+                        protocol.encode({"type": MessageType.ERROR, "error": str(exc)})
                     )
                     continue
                 await hub.handle_message(client, msg)

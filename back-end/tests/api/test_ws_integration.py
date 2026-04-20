@@ -47,12 +47,8 @@ class TestHelloHandshake:
 
 
 class TestScoreOverWebsocket:
-    def test_plugin_score_reaches_frontend_as_timeline(
-        self, client: TestClient
-    ) -> None:
-        with client.websocket_connect("/") as frontend, client.websocket_connect(
-            "/"
-        ) as plugin:
+    def test_plugin_score_reaches_frontend_as_timeline(self, client: TestClient) -> None:
+        with client.websocket_connect("/") as frontend, client.websocket_connect("/") as plugin:
             _drain_status(frontend)
             _drain_status(plugin)
 
@@ -81,9 +77,7 @@ class TestScoreOverWebsocket:
 
 
 class TestUnknownMessageType:
-    def test_hub_replies_with_error_for_unknown_type(
-        self, client: TestClient
-    ) -> None:
+    def test_hub_replies_with_error_for_unknown_type(self, client: TestClient) -> None:
         with client.websocket_connect("/") as ws:
             _drain_status(ws)
             ws.send_json({"type": "does_not_exist"})
@@ -116,3 +110,58 @@ class TestToleranceFlow:
             ws.send_json({"type": "set_tolerance", "tolerance_ms": True})
             err = _recv_of_type(ws, "error")
             assert "non-negative" in err["error"]
+
+
+class TestPlaybackSpeedFlow:
+    def test_default_speed_is_reported_in_status(self, client: TestClient) -> None:
+        with client.websocket_connect("/") as ws:
+            initial = _drain_status(ws)
+            assert initial["playback_speed"] == 1.0
+
+    def test_set_playback_speed_updates_status(self, client: TestClient) -> None:
+        with client.websocket_connect("/") as ws:
+            _drain_status(ws)
+
+            ws.send_json({"type": "set_playback_speed", "playback_speed": 0.5})
+            status = _recv_of_type(ws, "status")
+            assert status["playback_speed"] == 0.5
+
+    def test_zero_speed_rejected(self, client: TestClient) -> None:
+        with client.websocket_connect("/") as ws:
+            _drain_status(ws)
+
+            ws.send_json({"type": "set_playback_speed", "playback_speed": 0})
+            err = _recv_of_type(ws, "error")
+            assert "playback_speed" in err["error"]
+
+    def test_bool_speed_rejected(self, client: TestClient) -> None:
+        # ``True`` is numerically 1.0 but semantically wrong — reject loudly.
+        with client.websocket_connect("/") as ws:
+            _drain_status(ws)
+
+            ws.send_json({"type": "set_playback_speed", "playback_speed": True})
+            err = _recv_of_type(ws, "error")
+            assert "playback_speed" in err["error"]
+
+
+class TestScoreTitleBroadcast:
+    def test_title_forwarded_in_score_timeline(self, client: TestClient) -> None:
+        with client.websocket_connect("/") as frontend, client.websocket_connect("/") as plugin:
+            _drain_status(frontend)
+            _drain_status(plugin)
+            frontend.send_json({"type": "hello", "role": "frontend"})
+            plugin.send_json({"type": "hello", "role": "plugin"})
+            _recv_of_type(frontend, "status")
+
+            plugin.send_json(
+                {
+                    "type": "score",
+                    "bpm": 120,
+                    "notes": [{"pitch": 60, "offset_ql": 0.0, "duration_ql": 1.0}],
+                    "meta": {"title": "Minuet in G"},
+                }
+            )
+
+            timeline = _recv_of_type(frontend, "score_timeline")
+            assert timeline["title"] == "Minuet in G"
+            assert len(timeline["notes"]) == 1
