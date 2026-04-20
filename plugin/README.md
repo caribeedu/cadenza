@@ -36,12 +36,12 @@ Then enable it in **Plugins → Plugin Manager** and **restart MuseScore**
 
 ## Run
 
-1. Start the backend: `cd back-end/server && uv run cadenza-server`.
-   This opens **two** local listeners:
-   - `ws://127.0.0.1:8765` — WebSocket hub for the Electron frontend.
-   - `http://127.0.0.1:8766/score` — HTTP ingest for this plugin.
+1. Start the backend: `cd back-end && uv run cadenza-server`.
+   It binds a single FastAPI app to `127.0.0.1:8765` exposing:
+   - `ws://127.0.0.1:8765/` — WebSocket hub for the Electron frontend.
+   - `http://127.0.0.1:8765/score` — HTTP ingest for this plugin.
 2. Open a score in MuseScore 4 and run **Plugins → Cadenza Sender**.
-3. The plugin POSTs a single JSON document to `http://127.0.0.1:8766/score`:
+3. The plugin POSTs a single JSON document to `http://127.0.0.1:8765/score`:
 
 ```json
 {
@@ -69,15 +69,15 @@ MuseScore log.
 The plugin is QML and is exercised end-to-end by loading it inside
 MuseScore. Core data-transformation logic (tempo scaling, validation,
 payload normalisation, HTTP ingest) lives in the Python backend and is
-covered by `back-end/server`'s `pytest` suite — run `uv run pytest` from
-`back-end/server/` to execute it. The HTTP ingest path is covered by
-`tests/test_http_ingest.py` and
-`tests/test_server_integration.py::test_plugin_score_via_http_reaches_frontend_as_timeline`.
+covered by `back-end`'s `pytest` suite — run `uv run pytest` from
+`back-end/` to execute it. The HTTP ingest path is covered by
+`tests/api/test_score_ingest.py` and the end-to-end WebSocket broadcast
+fan-out is covered by `tests/api/test_ws_integration.py`.
 
 ## Customising
 
 - `backendUrl` (QML property at the top of `Cadenza.qml`) changes the
-  target URL. Default: `http://127.0.0.1:8766/score`.
+  target URL. Default: `http://127.0.0.1:8765/score`.
 - The plugin only reads the first staff/voice per part (`track =
   partIdx * 4`). Adjust the loop in `collectNotes` if you need to
   include additional voices.
@@ -94,7 +94,7 @@ Windows; it writes it to a log file:
 On Linux/macOS, launching MuseScore from a terminal also surfaces the
 log on stderr. Key lines to look for:
 
-- `[Cadenza] collected N notes ... → POSTing to http://127.0.0.1:8766/score`
+- `[Cadenza] collected N notes ... → POSTing to http://127.0.0.1:8765/score`
   — the plugin ran and built a payload.
 - `[Cadenza] score accepted by backend: {...}` — success (HTTP 200).
 - `[Cadenza] connection failed — is the backend running ...` — the

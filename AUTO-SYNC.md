@@ -33,14 +33,14 @@ and optionally **Elastic**.
 
 Relevant files:
 
-- `back-end/server/src/cadenza_server/server.py` — on `MSG_START`
+- `back-end/src/cadenza_server/server.py` — on `MSG_START`
   calls `self._midi.mark_time_zero()` and flips `playing = True`. From
   that moment MIDI events carry `timestamp_ms = now - t0`.
-- `back-end/server/src/cadenza_server/validator.py` — `Validator.validate(pitch, played_time_ms)`
+- `back-end/src/cadenza_server/validator.py` — `Validator.validate(pitch, played_time_ms)`
   finds the nearest unconsumed note within `tolerance_ms` (100 ms).
   Time is treated as ground truth; the validator is a pure function of
   `(pitch, time)`.
-- `back-end/server/src/cadenza_server/score.py` — `ScoreNote.start_ms`
+- `back-end/src/cadenza_server/score.py` — `ScoreNote.start_ms`
   is absolute from t=0 at the score's BPM.
 - `front-end/src/renderer/waterfall.js` — renders at `pxPerMs` against
   a wall-clock running in the frontend; animation is driven by
@@ -106,7 +106,7 @@ New messages (additive, backward compatible):
 
 ### Backend changes
 
-New module `back-end/server/src/cadenza_server/follower.py`:
+New module `back-end/src/cadenza_server/follower.py`:
 
 ```python
 class ScoreFollower:

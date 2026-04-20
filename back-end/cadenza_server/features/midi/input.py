@@ -11,9 +11,12 @@ import asyncio
 import logging
 import threading
 from dataclasses import dataclass
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import mido
+
+if TYPE_CHECKING:
+    from mido.ports import BaseInput  # type: ignore[import-not-found]
 
 log = logging.getLogger(__name__)
 
@@ -93,34 +96,39 @@ class MidiInput:
         midi.close()
     """
 
-    def __init__(self, loop: asyncio.AbstractEventLoop):
+    # Message types we'd rather not spam the log with, regardless of level.
+    # MIDI clock (0xF8) and active-sensing (0xFE) are emitted continuously
+    # by many devices and would drown real signal in noise.
+    _NOISY_TYPES: frozenset[str] = frozenset({"clock", "active_sensing"})
+
+    def __init__(self, loop: asyncio.AbstractEventLoop) -> None:
         self._loop = loop
-        self._port: Optional[mido.ports.BaseInput] = None
-        self._port_name: Optional[str] = None
+        self._port: BaseInput | None = None
+        self._port_name: str | None = None
         self._lock = threading.Lock()
         self._start_time = self._loop.time()
         # When paused, we remember how much time had elapsed *before* the
         # pause so we can resume from the same logical offset instead of
         # restarting the clock.
-        self._paused_elapsed_s: Optional[float] = None
+        self._paused_elapsed_s: float | None = None
         self.events: asyncio.Queue[MidiEvent] = asyncio.Queue()
 
     @property
-    def port_name(self) -> Optional[str]:
+    def port_name(self) -> str | None:
         return self._port_name
 
     @property
     def is_open(self) -> bool:
         return self._port is not None
 
+    @property
+    def is_paused(self) -> bool:
+        return self._paused_elapsed_s is not None
+
     def mark_time_zero(self) -> None:
         """Reset the time origin used to timestamp incoming events."""
         self._start_time = self._loop.time()
         self._paused_elapsed_s = None
-
-    @property
-    def is_paused(self) -> bool:
-        return self._paused_elapsed_s is not None
 
     def pause(self) -> None:
         """Freeze the logical clock at its current elapsed value.
@@ -156,7 +164,8 @@ class MidiInput:
             self._port = mido.open_input(port_name, callback=self._on_message)
             self._port_name = port_name
             log.info(
-                "Opened MIDI input: %r — callback wired on thread %s. Waiting for note_on events...",
+                "Opened MIDI input: %r — callback wired on thread %s. "
+                "Waiting for note_on events...",
                 port_name,
                 threading.current_thread().name,
             )
@@ -208,12 +217,7 @@ class MidiInput:
             self._port = None
             self._port_name = None
 
-    # Message types we'd rather not spam the log with, regardless of level.
-    # MIDI clock (0xF8) and active-sensing (0xFE) are emitted continuously
-    # by many devices and would drown real signal in noise.
-    _NOISY_TYPES: frozenset[str] = frozenset({"clock", "active_sensing"})
-
-    def _on_message(self, msg: "mido.Message") -> None:
+    def _on_message(self, msg: mido.Message) -> None:
         """mido's background-thread callback.
 
         Every branch is wrapped in ``try``/``except`` because mido silently
@@ -223,16 +227,11 @@ class MidiInput:
         receiving any notes from MIDI".
         """
         try:
-            # INFO-level trace for meaningful traffic so the default log
-            # level already answers the question "is the server seeing
-            # anything from my keyboard?". Clock/active-sensing stay at
-            # DEBUG so they don't drown the useful signal.
             if msg.type in self._NOISY_TYPES:
                 log.debug("MIDI raw: %s", msg)
             else:
                 log.info("MIDI raw: %s", msg)
 
-            # ``note_on`` with velocity 0 is conventionally a note-off.
             if msg.type != "note_on" or msg.velocity == 0:
                 return
             event = MidiEvent(
@@ -240,7 +239,6 @@ class MidiInput:
                 velocity=int(msg.velocity),
                 timestamp_ms=(self._loop.time() - self._start_time) * 1000.0,
             )
-            # Cross-thread-safe hand-off back to the event loop.
             self._loop.call_soon_threadsafe(self.events.put_nowait, event)
         except Exception:  # pragma: no cover - background thread safety net
             log.exception("MIDI callback crashed on message: %r", msg)

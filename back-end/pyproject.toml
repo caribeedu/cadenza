@@ -1,0 +1,93 @@
+[project]
+name = "cadenza-server"
+version = "0.2.0"
+description = "Cadenza backend: FastAPI hub exposing a WebSocket endpoint for the Electron frontend and an HTTP score ingest for the MuseScore plugin."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Cadenza" }]
+license = { text = "MIT" }
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "websockets>=13.0",
+    "pydantic>=2.9",
+    "mido>=1.3.2",
+    "python-rtmidi>=1.5.8",
+    "music21>=9.3.0",
+]
+
+[project.scripts]
+cadenza-server = "cadenza_server.__main__:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.27",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cadenza_server"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+extend-exclude = [".venv", "build", "dist"]
+
+[tool.ruff.lint]
+# E/F/W = pycodestyle+pyflakes, I = isort, UP = pyupgrade, B = bugbear,
+# SIM = simplify, N = naming, RUF = ruff-specific, PL = pylint subset,
+# ANN = annotations, PT = pytest style. We stop short of the very noisy
+# rulesets (D docstrings, ERA commented-out code) because the goal is
+# signal, not churn.
+select = [
+    "E", "F", "W", "I", "UP", "B", "SIM", "N", "RUF", "PT", "ASYNC",
+]
+ignore = [
+    "E501",    # line-length is enforced by the formatter; the linter would double-report
+    "B008",    # FastAPI `Depends(...)` in defaults is idiomatic
+    "UP038",   # `X | Y` in isinstance — deferred until all deps are 3.12+
+    "SIM108",  # forcing ternary hurts readability in dispatch branches
+    "PT011",   # `pytest.raises(ValueError)` without match is fine for explicit cases
+    "N818",    # exception class naming — `MidiCallTimeout` reads better than `MidiCallTimeoutError`
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests reach into privates on purpose to exercise contracts.
+"tests/**" = ["SLF001", "PLR2004", "ANN"]
+# __init__.py is allowed to re-export without marking each name.
+"**/__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["cadenza_server"]
+combine-as-imports = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+# music21 / mido don't ship py.typed — and writing stubs here would be
+# busywork. Allow implicit Any for these two boundaries only.
+warn_unused_configs = true
+warn_unused_ignores = true
+disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+module = ["music21.*", "mido", "mido.*"]
+ignore_missing_imports = true

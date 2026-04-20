@@ -4,10 +4,10 @@
 //  Extracts pitch, duration (quarterLength) and offset (quarterLength) for
 //  every note in the currently open score and streams the result as JSON
 //  over HTTP POST to the Cadenza Python backend at
-//  http://127.0.0.1:8766/score.
+//  http://127.0.0.1:8765/score.
 //
 //  MuseScore 4 does NOT ship the Qt.WebSockets QML module on Windows or
-//  macOS builds (see back-end/server TECH-DEBTS TD-05). ``XMLHttpRequest``
+//  macOS builds (see back-end TECH-DEBTS TD-05). ``XMLHttpRequest``
 //  is always available in any QtQml runtime, so we use plain HTTP.
 //
 //  Nothing is written to disk.
@@ -30,7 +30,7 @@ MuseScore {
     categoryCode: "composing-arranging-tools"
     requiresScore: true
 
-    property string backendUrl: "http://127.0.0.1:8766/score"
+    property string backendUrl: "http://127.0.0.1:8765/score"
 
     // Walk the score and collect every tempo annotation.
     //

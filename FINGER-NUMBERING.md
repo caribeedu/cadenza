@@ -116,7 +116,7 @@ Higher accuracy, much heavier dep footprint. Overkill for the MVP.
 
 ### Dependency
 
-Add to `back-end/server/pyproject.toml`:
+Add to `back-end/pyproject.toml`:
 
 ```toml
 dependencies = [
@@ -160,7 +160,7 @@ for (var p = 0; p < score.parts.length; ++p) {
 
 ### Backend
 
-New module `back-end/server/src/cadenza_server/fingering.py`:
+New module `back-end/src/cadenza_server/fingering.py`:
 
 ```python
 """Wrap pianoplayer to annotate a music21 Stream with fingering numbers.

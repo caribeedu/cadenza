@@ -11,7 +11,7 @@ CSP) while the main process owns the Bluetooth mitigation
 
 - Node.js **20.19+** or **22.12+** (required by electron-vite and Vite 6).
 - A GPU capable of running WebGL.
-- The Cadenza backend (`back-end/server`) for live data.
+- The Cadenza backend (`back-end`) for live data.
 
 ## Install
 

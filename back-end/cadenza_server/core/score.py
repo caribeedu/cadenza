@@ -10,13 +10,13 @@ All computation is done in-memory. Nothing is persisted to disk.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any
 
 from music21 import note as m21_note
 from music21 import stream as m21_stream
 from music21 import tempo as m21_tempo
-
 
 DEFAULT_BPM = 120.0
 
@@ -80,16 +80,7 @@ class Score:
         return [n for n in self.notes if start_ms <= n.start_ms <= end_ms]
 
 
-def _ql_to_ms(quarter_length: float, bpm: float) -> float:
-    """Convert a quarter-note length to milliseconds at a constant ``bpm``."""
-    if bpm <= 0:
-        raise ValueError("bpm must be positive")
-    return float(quarter_length) * (60_000.0 / float(bpm))
-
-
-def _normalise_tempo_map(
-    raw_tempo_map: Any, default_bpm: float
-) -> list[tuple[float, float]]:
+def _normalise_tempo_map(raw_tempo_map: Any) -> list[tuple[float, float]]:
     """Coerce a plugin-provided tempo map to ``[(offset_ql, bpm), ...]``.
 
     Rules:
@@ -148,18 +139,6 @@ def build_score_from_payload(payload: dict[str, Any]) -> Score:
 
     Any unknown keys are ignored. Notes and tempo-map entries missing or
     with invalid required fields are silently dropped.
-
-    ``tempo_map`` (TD-03) lets the plugin express accelerando, ritardando,
-    or any mid-piece tempo change. Each entry becomes a ``MetronomeMark``
-    inserted at ``offset_ql``; music21's ``secondsMap`` then honours the
-    piecewise tempo when resolving absolute note timings. When
-    ``tempo_map`` is absent or empty, a single MetronomeMark at offset 0
-    with ``bpm`` is inserted — behaviour identical to pre-TD-03 payloads.
-
-    The ``bpm`` scalar is kept for backward compatibility. When both
-    ``bpm`` and a non-empty ``tempo_map`` are present, the map wins for
-    timing; ``bpm`` is only used as the ``Score.bpm`` attribute for the
-    frontend HUD, and should match the tempo at offset 0.
     """
     raw_bpm = payload.get("bpm")
     bpm = float(raw_bpm) if raw_bpm is not None else DEFAULT_BPM
@@ -167,7 +146,7 @@ def build_score_from_payload(payload: dict[str, Any]) -> Score:
         raise ValueError("bpm must be positive")
 
     raw_notes: Iterable[dict[str, Any]] = payload.get("notes") or []
-    tempo_map = _normalise_tempo_map(payload.get("tempo_map"), bpm)
+    tempo_map = _normalise_tempo_map(payload.get("tempo_map"))
 
     stream = m21_stream.Stream()
     if tempo_map:

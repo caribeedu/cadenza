@@ -8,7 +8,7 @@ In classical music, a **cadenza** is the solo passage where the player steps for
 
 ## Open source & free
 
-Cadenza is **open-source** and **free to use**. The code is published under a permissive license (see the repository’s `LICENSE` if present, or `back-end/server/pyproject.toml` for the backend’s stated license). No paywall for practice—fork it, run it locally, and improve it with us.
+Cadenza is **open-source** and **free to use**. The code is published under a permissive license (see the repository’s `LICENSE` if present, or `back-end/pyproject.toml` for the backend’s stated license). No paywall for practice—fork it, run it locally, and improve it with us.
 
 ## Layout
 
@@ -27,7 +27,7 @@ Each sub-folder has its own README with install, run, and test instructions.
 
 ```bash
 # 1. Backend (requires uv)
-cd ./back-end/server
+cd ./back-end
 uv sync --all-groups
 uv run cadenza-server
 
@@ -64,7 +64,7 @@ MuseScore QML plugin  ──ws──▶  Python backend  ──ws──▶  Elec
 
 ```bash
 # Python
-cd ./back-end/server && uv run pytest
+cd ./back-end && uv run pytest
 
 # JavaScript
 cd ./front-end && npm test

@@ -1,7 +1,9 @@
 """Validation logic: compare an incoming MIDI hit against expected notes.
 
-The validator is intentionally deterministic and side-effect free so it can
-be unit-tested without a server loop.
+The validator is deterministic and side-effect free so it can be unit-tested
+without a server loop. ``unvalidated_reason`` lives alongside it because it
+is the pure decision function that tells the hub whether a MIDI event is
+eligible for validation at all.
 
 Four-phase decision tree, applied to every MIDI note_on:
 
@@ -31,10 +33,9 @@ Four-phase decision tree, applied to every MIDI note_on:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any
 
-from .score import Score, ScoreNote
-
+from cadenza_server.core.score import Score, ScoreNote
 
 DEFAULT_TOLERANCE_MS = 100.0
 
@@ -46,10 +47,10 @@ class ValidationResult:
     correct: bool
     played_pitch: int
     played_time_ms: float
-    expected: Optional[ScoreNote]
-    delta_ms: Optional[float]
+    expected: ScoreNote | None
+    delta_ms: float | None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "correct": self.correct,
             "played_pitch": self.played_pitch,
@@ -77,7 +78,7 @@ class Validator:
     the note without re-pressing and without playing over it".
     """
 
-    def __init__(self, score: Score, tolerance_ms: float = DEFAULT_TOLERANCE_MS):
+    def __init__(self, score: Score, tolerance_ms: float = DEFAULT_TOLERANCE_MS) -> None:
         if tolerance_ms < 0:
             raise ValueError("tolerance_ms must be >= 0")
         self._score = score
@@ -112,7 +113,6 @@ class Validator:
         """Return the result of matching ``pitch`` played at ``played_time_ms``."""
         self._purge_expired_active_hits(played_time_ms)
 
-        # Phase 1: legitimate hit on a new scored note.
         match_idx = self._find_match(pitch, played_time_ms)
         if match_idx is not None:
             self._consumed.add(match_idx)
@@ -126,7 +126,6 @@ class Validator:
                 delta_ms=note.start_ms - played_time_ms,
             )
 
-        # Phase 2: violated hold window of a previously-hit note.
         violated = self._violated_active_hit(played_time_ms)
         if violated is not None:
             _hit_time, note = violated
@@ -138,7 +137,6 @@ class Validator:
                 delta_ms=note.start_ms - played_time_ms,
             )
 
-        # Phase 3: wrong pitch near an unconsumed scored note.
         closest = self._closest_unconsumed_within_tolerance(played_time_ms)
         if closest is not None:
             return ValidationResult(
@@ -149,7 +147,6 @@ class Validator:
                 delta_ms=closest.start_ms - played_time_ms,
             )
 
-        # Phase 4: unrelated press — nothing to colour.
         return ValidationResult(
             correct=False,
             played_pitch=pitch,
@@ -158,14 +155,10 @@ class Validator:
             delta_ms=None,
         )
 
-    # ------------------------------------------------------------------
-    # Internals
-    # ------------------------------------------------------------------
-
-    def _find_match(self, pitch: int, played_time_ms: float) -> Optional[int]:
+    def _find_match(self, pitch: int, played_time_ms: float) -> int | None:
         """Closest unconsumed scored note at ``pitch`` within tolerance."""
-        best_idx: Optional[int] = None
-        best_delta: Optional[float] = None
+        best_idx: int | None = None
+        best_delta: float | None = None
         for idx, note in enumerate(self._score.notes):
             if idx in self._consumed:
                 continue
@@ -181,10 +174,10 @@ class Validator:
 
     def _closest_unconsumed_within_tolerance(
         self, played_time_ms: float
-    ) -> Optional[ScoreNote]:
+    ) -> ScoreNote | None:
         """Closest unconsumed scored note *of any pitch* within tolerance."""
-        best_note: Optional[ScoreNote] = None
-        best_delta: Optional[float] = None
+        best_note: ScoreNote | None = None
+        best_delta: float | None = None
         for idx, note in enumerate(self._score.notes):
             if idx in self._consumed:
                 continue
@@ -207,7 +200,7 @@ class Validator:
 
     def _violated_active_hit(
         self, played_time_ms: float
-    ) -> Optional[tuple[float, ScoreNote]]:
+    ) -> tuple[float, ScoreNote] | None:
         """Return ``(hit_time, note)`` for any active hit whose hold
         window covers ``played_time_ms``.
 
@@ -217,13 +210,35 @@ class Validator:
         be "under" the hit-line right now. Sorted by index as a stable
         tie-breaker.
         """
-        best: Optional[tuple[float, ScoreNote]] = None
-        best_end: Optional[float] = None
+        best: tuple[float, ScoreNote] | None = None
+        best_end: float | None = None
         for idx in sorted(self._active_hits):
             hit_time, note = self._active_hits[idx]
             end = note.start_ms + note.duration_ms
-            if hit_time <= played_time_ms <= end:
-                if best_end is None or end > best_end:
-                    best_end = end
-                    best = (hit_time, note)
+            if hit_time <= played_time_ms <= end and (best_end is None or end > best_end):
+                best_end = end
+                best = (hit_time, note)
         return best
+
+
+def unvalidated_reason(
+    validator: Validator | None, *, playing: bool, paused: bool
+) -> str | None:
+    """Why an incoming MIDI event is *not* being validated right now.
+
+    Returns ``None`` when validation can proceed, otherwise one of:
+
+    * ``"no_score"``    — no MuseScore timeline has been ingested yet.
+    * ``"paused"``      — session was paused via ``MessageType.PAUSE``.
+    * ``"not_started"`` — score loaded but playback hasn't been started.
+
+    Pure function (no side effects) so it's directly unit-testable without
+    spinning up the hub.
+    """
+    if validator is None:
+        return "no_score"
+    if paused:
+        return "paused"
+    if not playing:
+        return "not_started"
+    return None

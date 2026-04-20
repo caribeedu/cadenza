@@ -29,7 +29,7 @@ can still follow the trail.
 All three synchronous call sites (`list_midi` handler, `select_midi`
 handler, startup enumeration in `run()`) now route through
 `list_input_ports_async` / `MidiInput.open_async` in
-`back-end/server/src/cadenza_server/midi_input.py`. Each wraps the
+`back-end/src/cadenza_server/midi_input.py`. Each wraps the
 blocking `python-rtmidi` call in `asyncio.to_thread(...)` guarded by
 `asyncio.wait_for(timeout=3.0s)` and raises `MidiCallTimeout` on stall.
 
@@ -39,7 +39,7 @@ blocking `python-rtmidi` call in `asyncio.to_thread(...)` guarded by
   MIDI backend no longer prevents the WebSocket listener from accepting
   connections.
 
-Regression tests: `back-end/server/tests/test_midi_input.py` →
+Regression tests: `back-end/tests/test_midi_input.py` →
 `TestListInputPortsAsync` (includes a loop-responsiveness heartbeat
 test) and `TestMidiInputOpenAsync`.
 
@@ -58,22 +58,22 @@ lazy-init fix. Tracked against that release.
   `tempo_map: [{offset_ql, bpm}, ...]` alongside the scalar `bpm`.
   Duplicate offsets dedup last-wins, matching MuseScore's own
   rendering precedence.
-- `back-end/server/src/cadenza_server/score.py` inserts one music21
+- `back-end/src/cadenza_server/score.py` inserts one music21
   `MetronomeMark` per entry into the stream; `secondsMap` then
   resolves absolute timings across the piecewise tempo. Backward
   compatible: payloads without `tempo_map` still produce the previous
   single-tempo behaviour.
 
-Regression tests: `back-end/server/tests/test_score.py` →
+Regression tests: `back-end/tests/test_score.py` →
 `TestTempoMap` (covers mid-piece tempo change, unsorted input,
 duplicates, malformed entries, absent-map backward compat).
 
 ### TD-04 · Frontend waterfall can collide notes with identical key — *shipped*
 
-- `ScoreNote` now carries a stable `id` (`back-end/server/.../score.py`),
+- `ScoreNote` now carries a stable `id` (`back-end/.../score.py`),
   assigned in ingest order and included in `to_dict()`.
 - `ValidationResult.to_dict()` emits `expected_id`
-  (`back-end/server/.../validator.py`) for every outcome that
+  (`back-end/.../validator.py`) for every outcome that
   identifies a target bar, including the Phase-2 penalty path.
 - Frontend uses `noteMeshKey(note)` in `front-end/src/renderer/timeline.js`:
   prefers `id`, falls back to `(pitch, round(start_ms))` for legacy
@@ -81,9 +81,9 @@ duplicates, malformed entries, absent-map backward compat).
   through this single helper so mesh creation and repaint can never
   disagree.
 
-Regression tests: `back-end/server/tests/test_score.py` →
+Regression tests: `back-end/tests/test_score.py` →
 `TestScoreNoteIds` (covers id uniqueness, sub-millisecond grace-note
-case, malformed-note gap handling); `back-end/server/tests/test_validator.py`
+case, malformed-note gap handling); `back-end/tests/test_validator.py`
 → `test_to_dict_surfaces_expected_id_for_all_outcomes`; and
 `front-end/test/timeline.test.mjs` → `noteMeshKey *` (covers id
 preference, composite fallback, sentinel handling, sub-ms disambig).
