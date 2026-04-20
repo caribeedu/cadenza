@@ -1,0 +1,14 @@
+.field.tolerance .tolerance-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.field.tolerance input[type="range"] { min-width: 140px; }
+.tolerance-value {
+  min-width: 52px;
+  text-align: right;
+  color: var(--fg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}

@@ -1,4 +1,11 @@
 node_modules/
 dist/
+out/
+.vite/
 .DS_Store
 *.log
+coverage/
+# TypeScript build outputs
+*.tsbuildinfo
+.tsbuildinfo/
+

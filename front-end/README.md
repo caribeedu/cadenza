@@ -1,39 +1,17 @@
 # Cadenza · Front-end (`front-end/`)
 
-Electron + Three.js visualiser. The main process hardens the renderer
-(`contextIsolation: true`, `nodeIntegration: false`, sandboxed preload) and
-the renderer paints the waterfall on a `WebGLRenderer` driven by an
-`OrthographicCamera`.
-
-## Project layout
-
-```
-front-end/
-├── package.json
-├── README.md
-└── src/
-    ├── main.js            # Electron main process (ESM)
-    ├── preload.cjs        # Sandboxed preload (exposes defaultBackendUrl)
-    └── renderer/
-        ├── index.html     # Imports three via native importmap
-        ├── renderer.js    # UI glue: binds DOM → WS client → waterfall
-        ├── ws-client.js   # Auto-reconnecting WebSocket helper
-        ├── protocol.js    # JSON message-type constants (mirror of Python)
-        ├── timeline.js    # Pure note→pixel math (unit tested)
-        ├── waterfall.js   # Three.js scene + animation loop
-        └── styles.css
-└── test/
-    ├── timeline.test.mjs
-    ├── protocol.test.mjs
-    └── ws-client.test.mjs
-```
+Electron desktop app. Renderer is a **React 19** tree built with **Vite**
+(via `electron-vite`); the visualiser itself still paints on a Three.js
+`WebGLRenderer` under an `OrthographicCamera`. The renderer is hardened
+(`contextIsolation: true`, `nodeIntegration: false`, sandboxed preload,
+CSP) while the main process owns the Bluetooth mitigation
+(`TECH-DEBTS.md → TD-02`).
 
 ## Prerequisites
 
-- Node.js **20 LTS** or newer (the project uses ESM main-process support
-  added in Electron 28+).
-- A GPU capable of running WebGL (any modern desktop GPU works).
-- The Cadenza backend running (`back-end/server`).
+- Node.js **20.19+** or **22.12+** (required by electron-vite and Vite 6).
+- A GPU capable of running WebGL.
+- The Cadenza backend (`back-end/server`) for live data.
 
 ## Install
 
@@ -42,65 +20,116 @@ cd front-end
 npm install
 ```
 
-## Run the app
+## Scripts
 
-```bash
-npm start
+| Command              | Purpose                                             |
+| -------------------- | --------------------------------------------------- |
+| `npm run dev`        | Vite dev server + Electron with renderer HMR       |
+| `npm run build`      | Production build (main + preload + renderer)       |
+| `npm run preview`    | Launch Electron against the last production build  |
+| `npm start`          | Alias of `preview`                                 |
+| `npm test`           | Run the Vitest suite once                          |
+| `npm run test:watch` | Re-run tests on file changes                       |
+
+## Project layout
+
+```
+front-end/
+├── electron.vite.config.js     # main / preload / renderer build configs
+├── vitest.config.js            # test config, aliases shared with renderer
+├── package.json
+└── src/
+    ├── main/                   # Electron main process (ESM)
+    │   └── index.js
+    ├── preload/                # contextBridge; emitted as CJS for sandbox:true
+    │   └── index.js
+    └── renderer/
+        ├── index.html          # Vite renderer entry
+        ├── main.jsx            # React.createRoot
+        ├── App.jsx             # top-level composition
+        ├── app/
+        │   ├── constants.js    # defaults (backend URL, tolerance bounds, palette)
+        │   └── providers/
+        │       ├── AppProviders.jsx       # composition root for context
+        │       ├── EventLogProvider.jsx
+        │       ├── ScoreConfigProvider.jsx  # tolerance / palette / viz mode
+        │       ├── WebSocketProvider.jsx
+        │       └── PlaybackProvider.jsx     # mirrors server status + actions
+        ├── features/
+        │   ├── player/          # waterfall + piano + top bar composition
+        │   ├── midi/            # MIDI port selection
+        │   ├── websocket/       # backend URL input
+        │   ├── score-config/    # tolerance slider today; velocity/colour later
+        │   ├── settings/        # placeholder for the upcoming settings page
+        │   └── visualization/   # mode dropdown (waterfall today)
+        ├── shared/
+        │   ├── components/      # cross-feature UI (StatusChip, LogPanel)
+        │   ├── hooks/           # useElementSize, useEventTarget
+        │   ├── lib/             # pure utilities (timeline, piano-layout,
+        │   │                    #   protocol, ws-client, waterfall-renderer)
+        │   └── styles/          # tokens.css + globals.css
+        └── types/               # reserved for JSDoc typedefs
 ```
 
-The app opens the Cadenza window and immediately tries to connect to
-`ws://127.0.0.1:8765` (the default backend URL; override it in the top-bar
-input field). The top-bar shows live status chips for the WebSocket,
-selected MIDI device, and score state.
+Path aliases (`@app`, `@features`, `@shared`, `@styles`) are defined in
+both the Vite config and the Vitest config so imports stay the same in
+tests.
 
-### Typical end-to-end session
+## Data flow
 
-1. `cd back-end/server && uv run cadenza-server` in one terminal.
-2. `cd front-end && npm start` in another.
-3. Install the MuseScore plugin (see `plugin/README.md`), open a
-   score and run **Plugins → Cadenza Sender**. The waterfall populates
-   with the extracted notes.
-4. In the Cadenza window pick your MIDI device (USB or Bluetooth) from
-   the dropdown and click **Use device**.
-5. Hit **Start** to zero the clock and begin validation. Correct hits
-   turn notes green, misses turn them red.
+1. `WebSocketProvider` owns a single `CadenzaClient` instance and
+   publishes `status`, `backendUrl`, `reconnect`, `send`, `subscribe`.
+2. `PlaybackProvider` subscribes to server messages, runs a reducer
+   for `status` / `midi_ports` / `score_timeline` / `note_played`, and
+   exposes imperative actions (`start`, `togglePause`, `selectMidi`,
+   `commitTolerance`, ...).
+3. `ScoreConfigProvider` holds the slider / palette / visualisation
+   mode state.
+4. `EventLogProvider` keeps the rolling 200-line diagnostic buffer.
 
-## Run the unit tests
+The `<Waterfall>` component measures the piano strip with
+`useElementSize`, feeds the width into `useKeyboardLayout` to build a
+memoised piano layout, and hands the resulting `laneCenterPx` /
+`laneWidthPx` facade to the Three.js `WaterfallRenderer`. The
+`<Piano>` component reads the same layout so bars and keys stay
+aligned to the pixel.
+
+## Testing
+
+Tests use **Vitest** (+ **@testing-library/react** for components). The
+default environment is `node`; component tests opt into `jsdom` with:
+
+```js
+// @vitest-environment jsdom
+```
+
+Run everything:
 
 ```bash
 npm test
 ```
 
-This uses Node's built-in test runner (`node --test`) against the
-framework-free logic modules (`timeline`, `protocol`, `ws-client`). No
-bundler or headless browser is required.
-
-## Rendering notes
-
-- Three.js is imported by a direct relative path
-  (`../../node_modules/three/build/three.module.js`). We previously used a
-  `<script type="importmap">` with the bare specifier `"three"`, but our
-  CSP (`script-src 'self'`) blocks inline scripts — including import maps —
-  so a direct relative import is the least-friction option that keeps the
-  CSP strict and doesn't need a bundler.
-- The scene uses an `OrthographicCamera` with the hit-line anchored at
-  `y=0`. Notes descend from `+y` toward the line at
-  `DEFAULT_PX_PER_MS = 0.25` px/ms by default.
-- `WaterfallRenderer.reportPlayback` mutates the target mesh's colour in
-  place so a successful hit immediately turns green, a miss turns red.
+Coverage today: pure utilities (timeline, piano-layout, protocol,
+ws-client) plus two component tests (`StatusChip`, `LogPanel`) that
+prove the React + jsdom stack is wired up correctly.
 
 ## Security / hardening
 
-The renderer runs with:
+Renderer:
 
 ```js
 contextIsolation: true,
 nodeIntegration: false,
 sandbox: true,
-preload: "preload.cjs",
+preload: "out/preload/index.js",
 ```
 
-A `Content-Security-Policy` meta tag locks script/style sources to `'self'`
-and only allows WebSocket connections to `ws://127.0.0.1:*` and
-`ws://localhost:*`. The preload only exposes a single constant
-(`window.cadenza.defaultBackendUrl`).
+CSP meta tag (in `src/renderer/index.html`) locks script/style
+sources to `'self'` (with `'unsafe-inline'` / `'unsafe-eval'` needed
+only for Vite's HMR during dev), allows WebSocket connections to
+`ws://127.0.0.1:*` / `ws://localhost:*`, and permits the backend
+HTTP loopback for the MuseScore plugin's POST.
+
+The preload exposes a single constant
+(`window.cadenza.defaultBackendUrl`) — everything else is reached
+through that constant or the WebSocket.

@@ -3,62 +3,27 @@
   <head>
     <meta charset="utf-8" />
     <title>Cadenza</title>
+    <!--
+      CSP compatible with both Electron production loads and the
+      Vite dev server. 'unsafe-inline' / 'unsafe-eval' are required
+      only while React/Vite's HMR client is active; production bundles
+      run under the same policy without needing them but we keep a
+      single policy for simplicity. connect-src is loose enough for
+      Vite's HMR WebSocket plus the backend loopback port.
+    -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; connect-src 'self' ws://127.0.0.1:* ws://localhost:*; style-src 'self' 'unsafe-inline'; script-src 'self'"
+      content="
+        default-src 'self';
+        connect-src 'self' ws://127.0.0.1:* ws://localhost:* http://127.0.0.1:* http://localhost:*;
+        style-src 'self' 'unsafe-inline';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval';
+        img-src 'self' data: blob:;
+      "
     />
-    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <header class="topbar">
-      <div class="brand">
-        <span class="logo">♪</span>
-        <span class="name">Cadenza</span>
-      </div>
-      <div class="controls">
-        <label class="field">
-          <span>Backend</span>
-          <input id="backend-url" type="text" />
-        </label>
-        <label class="field">
-          <span>MIDI input</span>
-          <select id="midi-ports">
-            <option value="">(none)</option>
-          </select>
-        </label>
-        <button id="refresh-midi" type="button">Refresh</button>
-        <button id="connect-midi" type="button">Use device</button>
-        <button id="start" type="button" class="primary">Start</button>
-        <button id="pause" type="button">Pause</button>
-        <label class="field tolerance">
-          <span>Tolerance</span>
-          <div class="tolerance-row">
-            <input
-              id="tolerance"
-              type="range"
-              min="20"
-              max="300"
-              step="5"
-              value="100"
-              aria-label="Hit-timing tolerance in milliseconds"
-            />
-            <span id="tolerance-value" class="tolerance-value">100 ms</span>
-          </div>
-        </label>
-      </div>
-      <div class="status">
-        <span id="ws-status" class="chip chip-off">WS: disconnected</span>
-        <span id="midi-status" class="chip chip-off">MIDI: none</span>
-        <span id="score-status" class="chip chip-off">Score: waiting</span>
-      </div>
-    </header>
-    <main>
-      <div class="playfield">
-        <canvas id="stage"></canvas>
-        <div id="piano"></div>
-      </div>
-      <aside id="log" aria-label="Event log"></aside>
-    </main>
-    <script type="module" src="./renderer.js"></script>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
   </body>
 </html>

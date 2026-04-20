@@ -1,0 +1,16 @@
+.log-panel {
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  padding: 12px;
+  overflow: auto;
+  min-height: 0;
+  min-width: 0;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.log-panel .ok { color: var(--good); }
+.log-panel .err { color: var(--bad); }
+.log-panel .dim { color: var(--muted); }
