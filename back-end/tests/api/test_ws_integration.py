@@ -144,6 +144,36 @@ class TestPlaybackSpeedFlow:
             assert "playback_speed" in err["error"]
 
 
+class TestStatusElapsedMs:
+    """``status.elapsed_ms`` is the frontend's only lifeline against
+    clock drift when a slider drag or a reconnect happens mid-session.
+    The invariant: it's zero outside an active run, and is a
+    non-negative number while playing/paused so clients can align to
+    it. We don't assert on precise numeric values (the TestClient
+    thread timing is unreliable for that); we pin the shape instead.
+    """
+
+    def test_elapsed_ms_present_and_zero_before_start(self, client: TestClient) -> None:
+        with client.websocket_connect("/") as ws:
+            initial = _drain_status(ws)
+            assert "elapsed_ms" in initial
+            assert initial["elapsed_ms"] == 0.0
+
+    def test_elapsed_ms_still_zero_after_speed_change_without_session(
+        self, client: TestClient
+    ) -> None:
+        with client.websocket_connect("/") as ws:
+            _drain_status(ws)
+            ws.send_json({"type": "set_playback_speed", "playback_speed": 0.5})
+            status = _recv_of_type(ws, "status")
+            assert status["playback_speed"] == 0.5
+            assert status["elapsed_ms"] == 0.0, (
+                "Between Stop and Start we must not leak the MidiInput's "
+                "since-construction clock; a reconnecting client would "
+                "otherwise align to a bogus future offset."
+            )
+
+
 class TestScoreTitleBroadcast:
     def test_title_forwarded_in_score_timeline(self, client: TestClient) -> None:
         with client.websocket_connect("/") as frontend, client.websocket_connect("/") as plugin:

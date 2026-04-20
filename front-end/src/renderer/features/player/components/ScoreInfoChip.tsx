@@ -1,5 +1,6 @@
-import { usePlayback } from "@app/providers/PlaybackProvider";
 import type { ReactElement } from "react";
+
+import { usePlayback } from "@app/providers/PlaybackProvider";
 
 // Inline "now playing" chip: shows the current score's title (from
 // the plugin's ``meta.title``) and the total scored-note count. Kept

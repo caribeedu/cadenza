@@ -26,8 +26,8 @@ export function ToleranceSlider(): ReactElement {
   );
 
   return (
-    <label className="field tolerance">
-      <span>Tolerance</span>
+    <label className="field tolerance" title="Hit window around each beat (server uses a slightly wider late than early margin)">
+      <span>Timing</span>
       <div className="tolerance-row">
         <input
           aria-label="Hit-timing tolerance in milliseconds"

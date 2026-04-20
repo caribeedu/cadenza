@@ -5,7 +5,12 @@ from __future__ import annotations
 import pytest
 
 from cadenza_server.core.score import Score, ScoreNote
-from cadenza_server.core.validator import DEFAULT_TOLERANCE_MS, Validator
+from cadenza_server.core.validator import (
+    DEFAULT_TOLERANCE_MS,
+    EARLY_TOLERANCE_FACTOR,
+    LATE_TOLERANCE_FACTOR,
+    Validator,
+)
 
 
 def _score() -> Score:
@@ -99,6 +104,26 @@ class TestValidator:
             Validator(_score(), tolerance_ms=-1.0)
 
 
+class TestAsymmetricOnsetWindow:
+    """The slider's ``tolerance_ms`` maps to a wider late than early window."""
+
+    def test_late_press_beyond_symmetric_radius_can_still_hit(self) -> None:
+        v = Validator(_score(), tolerance_ms=100.0)
+        # Symmetric ±100 would miss at +130; late window is 100 * 1.38 = 138.
+        result = v.validate(pitch=60, played_time_ms=130.0)
+        assert result.correct is True
+
+    def test_early_press_beyond_early_radius_misses(self) -> None:
+        v = Validator(_score(), tolerance_ms=100.0)
+        # Early window is 100 * 0.82 = 82 ms before onset.
+        result = v.validate(pitch=60, played_time_ms=-90.0)
+        assert result.correct is False
+        assert result.expected is None
+
+    def test_factors_are_documented(self) -> None:
+        assert 0 < EARLY_TOLERANCE_FACTOR < LATE_TOLERANCE_FACTOR
+
+
 class TestValidatorToleranceSetter:
     def test_tightening_tolerance_turns_marginal_hit_into_miss(self) -> None:
         v = Validator(_score(), tolerance_ms=100.0)
@@ -138,7 +163,7 @@ class TestValidatorToleranceSetter:
         assert result.correct is True
 
     def test_default_tolerance_constant_is_exposed(self) -> None:
-        assert DEFAULT_TOLERANCE_MS == 100.0
+        assert DEFAULT_TOLERANCE_MS == 130.0
 
 
 class TestValidatorActiveHitPenalty:

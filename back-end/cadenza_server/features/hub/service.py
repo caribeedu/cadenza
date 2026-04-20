@@ -141,6 +141,10 @@ class Hub:
             ClientRole.FRONTEND,
             {"type": MessageType.SCORE_TIMELINE, **score.to_dict()},
         )
+        # Frontend UIs also key off ``status.score_loaded``; a timeline
+        # frame alone used to leave that stale until the next unrelated
+        # status (e.g. tolerance change). Echo status once per ingest.
+        await self._broadcast_status()
         return score
 
     def _dispatch_table(self) -> dict[str, _MessageHandler]:
@@ -385,6 +389,24 @@ class Hub:
         )
 
     async def _send_status_to(self, client: Client) -> None:
+        # ``elapsed_ms`` is the server-authoritative virtual-time
+        # playhead. Clients use it to align their local renderer to the
+        # backend clock whenever the speed changes or a client joins
+        # mid-session — without it, slider drags and reconnects silently
+        # drift the two sides apart (the backend rebases on commit
+        # while the frontend rebased optimistically on every pixel tick,
+        # leaving a persistent offset that showed up as systematically
+        # negative ``delta_ms`` after a round-trip of the slider).
+        #
+        # Outside an active session (not playing and not paused) we
+        # pin ``elapsed_ms`` to ``0.0`` instead of exposing the raw
+        # ``MidiInput`` clock (which keeps ticking since construction).
+        # This prevents a client that reconnects between Stop and Start
+        # from aligning its renderer to a meaningless offset.
+        if self._midi is not None and (self._state.playing or self._state.paused):
+            elapsed_ms = self._midi.virtual_elapsed_ms
+        else:
+            elapsed_ms = 0.0
         status = {
             "type": MessageType.STATUS,
             "midi_port": self._midi.port_name if self._midi else None,
@@ -394,6 +416,7 @@ class Hub:
             "score_loaded": self._state.score is not None,
             "tolerance_ms": self._state.tolerance_ms,
             "playback_speed": self._state.playback_speed,
+            "elapsed_ms": elapsed_ms,
             "clients": {
                 role.value: sum(1 for c in self._state.clients if c.role == role)
                 for role in (

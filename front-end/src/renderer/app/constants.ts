@@ -1,6 +1,6 @@
 export const DEFAULT_BACKEND_URL = "ws://127.0.0.1:8765";
 
-export const DEFAULT_TOLERANCE_MS = 100;
+export const DEFAULT_TOLERANCE_MS = 130;
 export const TOLERANCE_MIN_MS = 20;
 export const TOLERANCE_MAX_MS = 300;
 export const TOLERANCE_STEP_MS = 5;

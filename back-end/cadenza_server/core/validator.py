@@ -8,9 +8,11 @@ eligible for validation at all.
 Four-phase decision tree, applied to every MIDI note_on:
 
     Phase 1 — exact match:
-        The press lands within tolerance of an unconsumed scored note at
-        the same pitch. Mark the note consumed *and* "active" until its
-        scored duration elapses, return ``correct=True``.
+        The press lands within an asymmetric onset window (derived from
+        the user-facing ``tolerance_ms``: tighter *before* the beat,
+        wider *after*) around an unconsumed scored note at the same
+        pitch. Mark the note consumed *and* "active" until its scored
+        duration elapses, return ``correct=True``.
 
     Phase 2 — violated hold window:
         The press doesn't match anything new, but a previously-hit note
@@ -37,7 +39,15 @@ from typing import Any
 
 from cadenza_server.core.score import Score, ScoreNote
 
-DEFAULT_TOLERANCE_MS = 100.0
+DEFAULT_TOLERANCE_MS = 130.0
+
+# The UI exposes a single ``tolerance_ms`` slider; the engine maps it to an
+# asymmetric onset window. Players tend to *lag* the visual beat more
+# than they anticipate it, so we allow a wider window after the scored
+# onset than before it — same nominal slider, friendlier hits without
+# widening accidental early flams as much.
+EARLY_TOLERANCE_FACTOR = 0.82
+LATE_TOLERANCE_FACTOR = 1.38
 
 
 @dataclass(frozen=True)
@@ -155,35 +165,42 @@ class Validator:
             delta_ms=None,
         )
 
+    def _within_onset_window(self, played_time_ms: float, onset_ms: float) -> bool:
+        """True if ``played_time_ms`` falls within the asymmetric window."""
+        delta = played_time_ms - onset_ms  # negative → early, positive → late
+        early = self._tolerance_ms * EARLY_TOLERANCE_FACTOR
+        late = self._tolerance_ms * LATE_TOLERANCE_FACTOR
+        return -early <= delta <= late
+
     def _find_match(self, pitch: int, played_time_ms: float) -> int | None:
         """Closest unconsumed scored note at ``pitch`` within tolerance."""
         best_idx: int | None = None
-        best_delta: float | None = None
+        best_abs_delta: float | None = None
         for idx, note in enumerate(self._score.notes):
             if idx in self._consumed:
                 continue
             if note.pitch != pitch:
                 continue
-            delta = abs(note.start_ms - played_time_ms)
-            if delta > self._tolerance_ms:
+            if not self._within_onset_window(played_time_ms, note.start_ms):
                 continue
-            if best_delta is None or delta < best_delta:
-                best_delta = delta
+            delta = abs(note.start_ms - played_time_ms)
+            if best_abs_delta is None or delta < best_abs_delta:
+                best_abs_delta = delta
                 best_idx = idx
         return best_idx
 
     def _closest_unconsumed_within_tolerance(self, played_time_ms: float) -> ScoreNote | None:
         """Closest unconsumed scored note *of any pitch* within tolerance."""
         best_note: ScoreNote | None = None
-        best_delta: float | None = None
+        best_abs_delta: float | None = None
         for idx, note in enumerate(self._score.notes):
             if idx in self._consumed:
                 continue
-            delta = abs(note.start_ms - played_time_ms)
-            if delta > self._tolerance_ms:
+            if not self._within_onset_window(played_time_ms, note.start_ms):
                 continue
-            if best_delta is None or delta < best_delta:
-                best_delta = delta
+            delta = abs(note.start_ms - played_time_ms)
+            if best_abs_delta is None or delta < best_abs_delta:
+                best_abs_delta = delta
                 best_note = note
         return best_note
 

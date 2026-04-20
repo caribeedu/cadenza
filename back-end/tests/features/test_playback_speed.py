@@ -147,6 +147,68 @@ class TestMidiInputSpeedRebase:
         assert (loop.time() - midi._start_time) == pytest.approx(4.0)
 
 
+class TestMidiInputVirtualElapsedMs:
+    """``virtual_elapsed_ms`` is the authoritative clock the status
+    broadcaster ships to every frontend so it can realign its renderer
+    without drifting. These tests pin the four invariants that make
+    the alignment safe: starts at zero, advances at the speed-scaled
+    wall rate, freezes across pause/resume, and is byte-identical to
+    the timestamp stamped on a concurrent ``note_on``.
+    """
+
+    def test_reports_zero_right_after_mark_time_zero(self, loop_with_fake_clock) -> None:
+        loop, _ = loop_with_fake_clock
+        midi = MidiInput(loop)
+        midi.mark_time_zero()
+        assert midi.virtual_elapsed_ms == pytest.approx(0.0)
+
+    def test_advances_with_speed_scaling(self, loop_with_fake_clock) -> None:
+        loop, clock = loop_with_fake_clock
+        midi = MidiInput(loop)
+        midi.mark_time_zero()
+        midi.set_speed(0.25)
+
+        clock["t"] = 4.0
+        assert midi.virtual_elapsed_ms == pytest.approx(1000.0), (
+            "4 wall-seconds at 0.25x must read as 1000 virtual-ms. "
+            "Drift between this property and the note-on timestamp "
+            "would show up as systematically off deltas."
+        )
+
+    def test_matches_note_on_timestamp(self, loop_with_fake_clock) -> None:
+        loop, clock = loop_with_fake_clock
+        midi = MidiInput(loop)
+        midi.mark_time_zero()
+        midi.set_speed(0.5)
+
+        clock["t"] = 3.0
+        expected = midi.virtual_elapsed_ms
+        midi._on_message(SimpleNamespace(type="note_on", note=60, velocity=80))
+        event = _drain_event(loop, midi)
+
+        assert event.timestamp_ms == pytest.approx(expected), (
+            "The status broadcaster and the validator must see the same "
+            "clock: divergence here would be the same class of bug the "
+            "status-sync machinery exists to prevent."
+        )
+
+    def test_freezes_under_pause(self, loop_with_fake_clock) -> None:
+        loop, clock = loop_with_fake_clock
+        midi = MidiInput(loop)
+        midi.mark_time_zero()
+
+        clock["t"] = 2.0
+        midi.pause()
+        frozen = midi.virtual_elapsed_ms
+
+        clock["t"] = 100.0
+        assert midi.virtual_elapsed_ms == pytest.approx(frozen), (
+            "A paused session must not keep reporting wall-advancing "
+            "elapsed — late-joining clients would realign to a point in "
+            "the future."
+        )
+
+
 class TestMidiInputSpeedValidation:
     def test_zero_is_rejected(self, loop_with_fake_clock) -> None:
         loop, _ = loop_with_fake_clock

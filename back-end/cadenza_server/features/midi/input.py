@@ -131,6 +131,22 @@ class MidiInput:
     def speed(self) -> float:
         return self._speed
 
+    @property
+    def virtual_elapsed_ms(self) -> float:
+        """Current playhead position in virtual (score) milliseconds.
+
+        Single authoritative source for "where are we on the timeline?".
+        Used both by the note-event timestamping in :meth:`_on_message`
+        *and* by the status broadcaster so every connected client can
+        realign its local renderer to the server clock — eliminating
+        the drift introduced when slider drag rebased the renderer
+        optimistically while the server stayed at the old speed until
+        the commit frame arrived.
+        """
+        if self._paused_elapsed_s is not None:
+            return self._paused_elapsed_s * 1000.0
+        return (self._loop.time() - self._start_time) * self._speed * 1000.0
+
     def mark_time_zero(self) -> None:
         """Reset the time origin used to timestamp incoming events."""
         self._start_time = self._loop.time()
@@ -258,11 +274,10 @@ class MidiInput:
 
             if msg.type != "note_on" or msg.velocity == 0:
                 return
-            virtual_elapsed_ms = (self._loop.time() - self._start_time) * self._speed * 1000.0
             event = MidiEvent(
                 pitch=int(msg.note),
                 velocity=int(msg.velocity),
-                timestamp_ms=virtual_elapsed_ms,
+                timestamp_ms=self.virtual_elapsed_ms,
             )
             self._loop.call_soon_threadsafe(self.events.put_nowait, event)
         except Exception:  # pragma: no cover - background thread safety net

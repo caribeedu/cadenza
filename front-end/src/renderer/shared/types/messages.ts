@@ -81,6 +81,7 @@ export type ClientMessage =
   | StopMessage;
 
 export interface StatusMessage {
+  elapsed_ms?: number;
   midi_open: boolean;
   midi_port: null | string;
   paused: boolean;

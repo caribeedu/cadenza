@@ -1,9 +1,11 @@
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 
 import type { LaneGeometry } from "../types/geometry";
 import type { NotePlayed, ScoreNote, ScoreTimeline } from "../types/score";
 
 import {
+  BAR_VERTICAL_GAP_PX,
   barHeightPx,
   DEFAULT_LEAD_MS,
   DEFAULT_PX_PER_MS,
@@ -180,11 +182,33 @@ export class WaterfallRenderer {
     return this._speed;
   }
 
-  // Rebase the clock so the currently-displayed playhead position is
-  // continuous across the change: without this the falling bars would
-  // jump to a different frame as soon as the user releases the slider.
-  setPlaybackSpeed(nextSpeed: number): void {
+  // Update the replay-speed multiplier.
+  //
+  // When ``alignToVirtualMs`` is provided we pin the renderer's
+  // playhead to the caller-supplied virtual-time value (the
+  // server-authoritative ``elapsed_ms``). This is how drift is
+  // eliminated on a speed commit or mid-session reconnect: the
+  // frontend stops trying to extrapolate its own virtual time across
+  // asymmetric rebases and simply trusts the server's clock for the
+  // snap, then resumes ticking forward at the new speed from there.
+  //
+  // When ``alignToVirtualMs`` is omitted we fall back to a self-rebase
+  // (preserve the currently-displayed playhead) for callers that don't
+  // yet have an authoritative value — e.g. offline unit tests.
+  setPlaybackSpeed(nextSpeed: number, alignToVirtualMs?: number): void {
     if (!Number.isFinite(nextSpeed) || nextSpeed <= 0) return;
+
+    if (typeof alignToVirtualMs === "number" && Number.isFinite(alignToVirtualMs)) {
+      const virtualMs = Math.max(0, alignToVirtualMs);
+      if (this.pausedElapsedMs != null) {
+        this.pausedElapsedMs = virtualMs;
+      } else {
+        this.startTimestamp = performance.now() - virtualMs / nextSpeed;
+      }
+      this._speed = nextSpeed;
+      return;
+    }
+
     if (this.startTimestamp != null) {
       const virtualNowMs =
         (performance.now() - this.startTimestamp) * this._speed;
@@ -194,6 +218,45 @@ export class WaterfallRenderer {
     // there is nothing to rebase — the next ``resume()`` will honour
     // the new factor automatically.
     this._speed = nextSpeed;
+  }
+
+  // Align the renderer's virtual-time playhead to the supplied value
+  // without changing the replay-speed. Used on late-join (a client
+  // reconnects mid-session) and on pause/resume transitions where the
+  // server reports an authoritative elapsed we must honour verbatim.
+  syncToElapsedMs(virtualMs: number): void {
+    if (!Number.isFinite(virtualMs)) return;
+    const safe = Math.max(0, virtualMs);
+    if (this.pausedElapsedMs != null) {
+      this.pausedElapsedMs = safe;
+    } else if (this.startTimestamp != null) {
+      this.startTimestamp = performance.now() - safe / this._speed;
+    }
+  }
+
+  // Like :meth:`start` but positions the virtual-time origin so the
+  // playhead begins at ``virtualMs``. Used when a client joins in the
+  // middle of a running session — the status frame tells us where the
+  // server is, and the renderer mirrors it.
+  startAt(virtualMs: number): void {
+    const safe = Number.isFinite(virtualMs) ? Math.max(0, virtualMs) : 0;
+    this.startTimestamp = performance.now() - safe / this._speed;
+    this.pausedElapsedMs = null;
+    for (const group of this.noteMeshes.values()) {
+      const data = group.userData as NoteUserData;
+      data.status = "pending";
+      data.bar.material.color.copy(pendingColourFor(data.pitch));
+    }
+  }
+
+  // Pause variant that sets the frozen playhead to the supplied
+  // virtual-time value. Lets a newly-connecting client land exactly on
+  // the server's paused position rather than wherever it was animating
+  // locally.
+  pauseAt(virtualMs: number): void {
+    const safe = Number.isFinite(virtualMs) ? Math.max(0, virtualMs) : 0;
+    this.pausedElapsedMs = safe;
+    this.startTimestamp = null;
   }
 
   reportPlayback(msg: NotePlayed): void {
@@ -347,9 +410,20 @@ export class WaterfallRenderer {
       const width = Math.max(3, laneWidth * 0.85);
       const height = barHeightPx(n.duration_ms, this.pxPerMs);
       const isBlack = isAccidental(n.pitch);
+      const cornerRadius = Math.min(
+        6,
+        width * 0.14,
+        Math.max(2, height * 0.12),
+      );
 
       const group = new THREE.Group();
-      const geom = new THREE.PlaneGeometry(width, height);
+      const geom = new RoundedBoxGeometry(
+        width,
+        height,
+        2,
+        2,
+        cornerRadius,
+      );
       const mat = new THREE.MeshBasicMaterial({
         color: pendingColourFor(n.pitch).clone(),
         depthTest: false,
@@ -427,9 +501,9 @@ export class WaterfallRenderer {
 
     for (const group of this.noteMeshes.values()) {
       const { durationMs, pitch, startMs } = group.userData as NoteUserData;
+      const hPx = barHeightPx(durationMs, this.pxPerMs, BAR_VERTICAL_GAP_PX);
       const y =
-        yForNote({ nowMs, pxPerMs: this.pxPerMs, startMs }) +
-        (durationMs * this.pxPerMs) / 2;
+        yForNote({ nowMs, pxPerMs: this.pxPerMs, startMs }) + hPx / 2;
       const x = this.laneGeometry.laneCenterPx(pitch) - w / 2;
       group.position.set(x, y, 0);
       group.visible = y > this.camera.bottom - 50 && y < this.camera.top + 50;

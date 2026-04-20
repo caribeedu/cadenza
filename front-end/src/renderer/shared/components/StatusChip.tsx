@@ -11,12 +11,18 @@ const CHIP_CLASS: Record<ChipState, string> = {
 export interface StatusChipProps {
   label: string;
   state?: ChipState | string;
+  title?: string;
 }
 
 export function StatusChip({
   label,
   state = "off",
+  title,
 }: StatusChipProps): ReactElement {
   const className = CHIP_CLASS[state as ChipState] ?? CHIP_CLASS.off;
-  return <span className={className}>{label}</span>;
+  return (
+    <span className={className} title={title}>
+      {label}
+    </span>
+  );
 }

@@ -39,15 +39,29 @@ interface PlaybackState {
   midiPorts: string[];
   score: null | ScoreTimeline;
   scoreLoaded: boolean;
+  // Server-authoritative playhead in virtual (score) milliseconds.
+  // ``null`` while no session is running; consumed by the renderer to
+  // realign its local clock on speed changes or reconnects. Must be
+  // null-checked rather than 0-checked because 0 is the legitimate
+  // "just started" value.
+  serverElapsedMs: null | number;
   serverPaused: boolean;
+  // Server-confirmed playback speed. Distinct from the UI slider
+  // value so a drag can update the label without driving the renderer
+  // into a drifted state.
+  serverPlaybackSpeed: number;
   serverPlaying: boolean;
+  /** Increments on every ``start()`` so the waterfall can reset even when
+   *  ``serverPlaying`` stays true (restart mid-play). */
+  sessionRestartGeneration: number;
 }
 
 type PlaybackAction =
   | { payload: MidiPortsMessage; type: "midi_ports" }
   | { payload: NotePlayed; type: "note_played" }
   | { payload: ScoreTimeline; type: "score_timeline" }
-  | { payload: StatusMessage; type: "status" };
+  | { payload: StatusMessage; type: "status" }
+  | { type: "session_restart" };
 
 export interface PlaybackContextValue extends PlaybackState {
   commitPlaybackSpeed: (factor: number) => void;
@@ -69,8 +83,11 @@ const initialState: PlaybackState = {
   midiPorts: [],
   score: null,
   scoreLoaded: false,
+  serverElapsedMs: null,
   serverPaused: false,
+  serverPlaybackSpeed: 1.0,
   serverPlaying: false,
+  sessionRestartGeneration: 0,
 };
 
 function reducer(state: PlaybackState, action: PlaybackAction): PlaybackState {
@@ -81,15 +98,38 @@ function reducer(state: PlaybackState, action: PlaybackAction): PlaybackState {
       return { ...state, latestNotePlayed: action.payload };
     case "score_timeline":
       return { ...state, score: action.payload };
-    case "status":
+    case "session_restart":
       return {
         ...state,
-        midiOpen: !!action.payload.midi_open,
-        midiPort: action.payload.midi_open ? action.payload.midi_port : null,
-        scoreLoaded: !!action.payload.score_loaded,
-        serverPaused: !!action.payload.paused,
-        serverPlaying: !!action.payload.playing,
+        sessionRestartGeneration: state.sessionRestartGeneration + 1,
       };
+    case "status": {
+      const { payload } = action;
+      const serverReportsScore = !!payload.score_loaded;
+      return {
+        ...state,
+        midiOpen: !!payload.midi_open,
+        midiPort: payload.midi_open ? payload.midi_port : null,
+        // Drop stale timeline when the hub no longer holds a score
+        // (keeps session chip / Start in sync with server truth).
+        score: serverReportsScore ? state.score : null,
+        scoreLoaded: serverReportsScore,
+        // ``elapsed_ms`` is only meaningful while a session is active.
+        // We keep it null otherwise so the renderer's sync effect can
+        // tell "no server state yet" from "server says t=0".
+        serverElapsedMs:
+          typeof payload.elapsed_ms === "number" &&
+          (payload.playing || payload.paused)
+            ? payload.elapsed_ms
+            : null,
+        serverPaused: !!payload.paused,
+        serverPlaybackSpeed:
+          typeof payload.playback_speed === "number"
+            ? payload.playback_speed
+            : state.serverPlaybackSpeed,
+        serverPlaying: !!payload.playing,
+      };
+    }
     default:
       return state;
   }
@@ -244,8 +284,14 @@ export function PlaybackProvider({
 
   const start = useCallback(() => {
     send({ type: MSG_START });
-    log("Playback started", "ok");
-  }, [send, log]);
+    dispatch({ type: "session_restart" });
+    log(
+      state.serverPlaying || state.serverPaused
+        ? "Restarted from beginning"
+        : "Playback started",
+      "ok",
+    );
+  }, [send, log, state.serverPlaying, state.serverPaused, dispatch]);
 
   const pause = useCallback(() => {
     send({ type: MSG_PAUSE });
