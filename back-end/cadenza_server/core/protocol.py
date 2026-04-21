@@ -40,6 +40,7 @@ class MessageType(StrEnum):
     SCORE_TIMELINE = "score_timeline"
     NOTE_TRIGGER = "note_trigger"
     NOTE_PLAYED = "note_played"
+    FINGERING_PROGRESS = "fingering_progress"
     ERROR = "error"
 
 
@@ -59,6 +60,7 @@ MSG_MIDI_PORTS = MessageType.MIDI_PORTS
 MSG_SCORE_TIMELINE = MessageType.SCORE_TIMELINE
 MSG_NOTE_TRIGGER = MessageType.NOTE_TRIGGER
 MSG_NOTE_PLAYED = MessageType.NOTE_PLAYED
+MSG_FINGERING_PROGRESS = MessageType.FINGERING_PROGRESS
 MSG_ERROR = MessageType.ERROR
 
 

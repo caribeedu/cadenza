@@ -12,11 +12,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Callable
 
-from music21 import note as m21_note
-from music21 import stream as m21_stream
-from music21 import tempo as m21_tempo
+from music21 import note as m21_note, stream as m21_stream, tempo as m21_tempo
 
 DEFAULT_BPM = 120.0
 
@@ -39,19 +37,27 @@ class ScoreNote:
     duration_ms: float
     track: int = 0
     id: int = -1
+    #: Staff index within the part (0 = top / treble on piano). Used for hand split.
+    staff: int = 0
+    #: 1-5 when known (editorial or computed). ``None`` if unavailable.
+    finger: int | None = None
 
     @property
     def end_ms(self) -> float:
         return self.start_ms + self.duration_ms
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        d: dict[str, Any] = {
             "id": self.id,
             "pitch": self.pitch,
             "start_ms": self.start_ms,
             "duration_ms": self.duration_ms,
             "track": self.track,
+            "staff": self.staff,
         }
+        if self.finger is not None:
+            d["finger"] = self.finger
+        return d
 
 
 @dataclass
@@ -120,7 +126,34 @@ def _normalise_tempo_map(raw_tempo_map: Any) -> list[tuple[float, float]]:
     return sorted(at_offset.items())
 
 
-def build_score_from_payload(payload: dict[str, Any]) -> Score:
+def _parse_staff(raw: dict[str, Any]) -> int:
+    s = raw.get("staff")
+    if s is None:
+        return 0
+    try:
+        v = int(s)
+    except (TypeError, ValueError):
+        return 0
+    return max(0, v)
+
+
+def _parse_finger(raw: dict[str, Any]) -> int | None:
+    f = raw.get("finger")
+    if f is None:
+        return None
+    try:
+        v = int(f)
+    except (TypeError, ValueError):
+        return None
+    if 1 <= v <= 5:
+        return v
+    return None
+
+
+def build_score_from_payload(
+    payload: dict[str, Any],
+    fingering_progress: Callable[[dict[str, Any]], None] | None = None,
+) -> Score:
     """Build a :class:`Score` from a plugin payload.
 
     Expected JSON shape (fields marked optional have defaults)::
@@ -156,7 +189,7 @@ def build_score_from_payload(payload: dict[str, Any]) -> Score:
     tempo_map = _normalise_tempo_map(payload.get("tempo_map"))
     title = _extract_title(payload.get("meta"))
 
-    stream = m21_stream.Stream()
+    stream: m21_stream.Stream = m21_stream.Stream()
     if tempo_map:
         # Ensure a tempo is in effect from offset 0: if the map doesn't
         # start at 0 we prepend ``bpm`` there, otherwise the first note
@@ -169,7 +202,7 @@ def build_score_from_payload(payload: dict[str, Any]) -> Score:
     else:
         stream.insert(0, m21_tempo.MetronomeMark(number=bpm))
 
-    tracked: list[tuple[m21_note.Note, int, int]] = []
+    tracked: list[tuple[m21_note.Note, int, int, int, int | None]] = []
     for raw in raw_notes:
         try:
             pitch = int(raw["pitch"])
@@ -184,7 +217,15 @@ def build_score_from_payload(payload: dict[str, Any]) -> Score:
         n.pitch.midi = pitch
         n.quarterLength = max(duration_ql, 1e-6)
         stream.insert(offset_ql, n)
-        tracked.append((n, pitch, int(raw.get("track", 0))))
+        tracked.append(
+            (
+                n,
+                pitch,
+                int(raw.get("track", 0)),
+                _parse_staff(raw if isinstance(raw, dict) else {}),
+                _parse_finger(raw if isinstance(raw, dict) else {}),
+            )
+        )
 
     # music21 ``secondsMap`` resolves absolute timing taking tempo (and in
     # principle tempo changes) into account. Keying by the music21 element's
@@ -202,7 +243,7 @@ def build_score_from_payload(payload: dict[str, Any]) -> Score:
     # frontend a composite-key-free way to address each bar even if two
     # notes collapse under millisecond rounding.
     next_id = 0
-    for m_note, pitch, track in tracked:
+    for m_note, pitch, track, staff, finger in tracked:
         entry = seconds_by_id.get(id(m_note))
         if entry is None:
             continue
@@ -213,9 +254,15 @@ def build_score_from_payload(payload: dict[str, Any]) -> Score:
                 start_ms=float(entry["offsetSeconds"]) * 1000.0,
                 duration_ms=float(entry["durationSeconds"]) * 1000.0,
                 track=track,
+                staff=staff,
+                finger=finger,
             )
         )
         next_id += 1
+
+    from cadenza_server.core.fingering_assign import assign_fingerings_if_needed
+
+    resolved = assign_fingerings_if_needed(resolved, progress=fingering_progress)
 
     return Score(bpm=bpm, notes=resolved, title=title)
 

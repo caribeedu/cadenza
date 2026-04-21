@@ -126,7 +126,19 @@ class Hub:
 
     async def apply_score(self, payload: dict[str, Any]) -> Score:
         """Common path for score payloads from both WebSocket and HTTP ingest."""
-        score = build_score_from_payload(payload)
+        loop = asyncio.get_running_loop()
+
+        def on_fingering_progress(info: dict[str, Any]) -> None:
+            asyncio.run_coroutine_threadsafe(
+                self._emit_fingering_progress(info),
+                loop,
+            )
+
+        score = await asyncio.to_thread(
+            build_score_from_payload,
+            payload,
+            fingering_progress=on_fingering_progress,
+        )
         self._state.score = score
         # Honour the currently-configured tolerance so the user-chosen
         # slider value persists across score reloads.
@@ -146,6 +158,12 @@ class Hub:
         # status (e.g. tolerance change). Echo status once per ingest.
         await self._broadcast_status()
         return score
+
+    async def _emit_fingering_progress(self, info: dict[str, Any]) -> None:
+        await self._broadcast_to_role(
+            ClientRole.FRONTEND,
+            {"type": MessageType.FINGERING_PROGRESS, **info},
+        )
 
     def _dispatch_table(self) -> dict[str, _MessageHandler]:
         """Map inbound message type -> handler coroutine.

@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 
 import { usePlayback } from "@app/providers/PlaybackProvider";
 import { useWebSocket } from "@app/providers/WebSocketProvider";
+import { formatFingeringProgressLabel } from "@shared/lib/fingering-ui";
 import { MidiDeviceSelector } from "@features/midi/components/MidiDeviceSelector";
 import { PlaybackSpeedSlider } from "@features/score-config/components/PlaybackSpeedSlider";
 import { ToleranceSlider } from "@features/score-config/components/ToleranceSlider";
@@ -14,16 +15,28 @@ import { ScoreInfoChip } from "./ScoreInfoChip";
 import "./TopBar.css";
 
 interface ScoreChipArgs {
+  fingeringProgress: null | {
+    done: number;
+    hand: "left" | "right";
+    total: number;
+  };
   hasPlayableScore: boolean;
   serverPaused: boolean;
   serverPlaying: boolean;
 }
 
 function scoreChipState({
+  fingeringProgress,
   hasPlayableScore,
   serverPaused,
   serverPlaying,
 }: ScoreChipArgs): { label: string; state: ChipState } {
+  if (fingeringProgress) {
+    return {
+      label: formatFingeringProgressLabel(fingeringProgress),
+      state: "on",
+    };
+  }
   if (!hasPlayableScore) return { label: "No score", state: "off" };
   if (serverPaused) return { label: "Paused", state: "on" };
   if (serverPlaying) return { label: "Playing", state: "on" };
@@ -35,6 +48,7 @@ export function TopBar(): ReactElement {
 
   const { status: wsStatus } = useWebSocket();
   const {
+    fingeringProgress,
     midiOpen,
     midiPort,
     score,
@@ -66,6 +80,7 @@ export function TopBar(): ReactElement {
   const midiState: ChipState = midiOpen ? "on" : "off";
 
   const scoreChip = scoreChipState({
+    fingeringProgress,
     hasPlayableScore,
     serverPaused,
     serverPlaying,
@@ -139,7 +154,11 @@ export function TopBar(): ReactElement {
         <StatusChip
           label={scoreChip.label}
           state={scoreChip.state}
-          title="Session"
+          title={
+            fingeringProgress
+              ? formatFingeringProgressLabel(fingeringProgress)
+              : "Session"
+          }
         />
         <ScoreInfoChip />
       </div>

@@ -13,6 +13,7 @@ import type {
   MSG_PAUSE,
   MSG_RESUME,
   MSG_SCORE,
+  MSG_FINGERING_PROGRESS,
   MSG_SCORE_TIMELINE,
   MSG_SELECT_MIDI,
   MSG_SET_PLAYBACK_SPEED,
@@ -101,6 +102,15 @@ export interface ScoreTimelineMessage extends ScoreTimeline {
   type: typeof MSG_SCORE_TIMELINE;
 }
 
+/** Server → frontend: automatic fingering pass progress (score ingest). */
+export interface FingeringProgressMessage {
+  /** Layers completed so far for multi-staff jobs (0-based). */
+  done: number;
+  hand: "left" | "right";
+  total: number;
+  type: typeof MSG_FINGERING_PROGRESS;
+}
+
 export interface NoteTriggerMessage extends NotePlayed {
   type: typeof MSG_NOTE_TRIGGER;
 }
@@ -116,6 +126,7 @@ export interface ErrorMessage {
 
 export type ServerMessage =
   | ErrorMessage
+  | FingeringProgressMessage
   | MidiPortsMessage
   | NotePlayedMessage
   | NoteTriggerMessage

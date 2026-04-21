@@ -7,6 +7,7 @@ import type {
 import type { NotePlayed, ScoreTimeline } from "@shared/types/score";
 
 import {
+  MSG_FINGERING_PROGRESS,
   MSG_HELLO,
   MSG_LIST_MIDI,
   MSG_PAUSE,
@@ -32,7 +33,14 @@ import { useEventLog } from "./EventLogProvider";
 import { useScoreConfig } from "./ScoreConfigProvider";
 import { useWebSocket } from "./WebSocketProvider";
 
+export interface FingeringProgressState {
+  done: number;
+  hand: "left" | "right";
+  total: number;
+}
+
 interface PlaybackState {
+  fingeringProgress: null | FingeringProgressState;
   latestNotePlayed: NotePlayed | null;
   midiOpen: boolean;
   midiPort: null | string;
@@ -57,6 +65,7 @@ interface PlaybackState {
 }
 
 type PlaybackAction =
+  | { payload: FingeringProgressState; type: "fingering_progress" }
   | { payload: MidiPortsMessage; type: "midi_ports" }
   | { payload: NotePlayed; type: "note_played" }
   | { payload: ScoreTimeline; type: "score_timeline" }
@@ -77,6 +86,7 @@ export interface PlaybackContextValue extends PlaybackState {
 const PlaybackContext = createContext<null | PlaybackContextValue>(null);
 
 const initialState: PlaybackState = {
+  fingeringProgress: null,
   latestNotePlayed: null,
   midiOpen: false,
   midiPort: null,
@@ -92,12 +102,18 @@ const initialState: PlaybackState = {
 
 function reducer(state: PlaybackState, action: PlaybackAction): PlaybackState {
   switch (action.type) {
+    case "fingering_progress":
+      return { ...state, fingeringProgress: action.payload };
     case "midi_ports":
       return { ...state, midiPorts: action.payload.ports ?? [] };
     case "note_played":
       return { ...state, latestNotePlayed: action.payload };
     case "score_timeline":
-      return { ...state, score: action.payload };
+      return {
+        ...state,
+        fingeringProgress: null,
+        score: action.payload,
+      };
     case "session_restart":
       return {
         ...state,
@@ -113,6 +129,7 @@ function reducer(state: PlaybackState, action: PlaybackAction): PlaybackState {
         // Drop stale timeline when the hub no longer holds a score
         // (keeps session chip / Start in sync with server truth).
         score: serverReportsScore ? state.score : null,
+        fingeringProgress: serverReportsScore ? state.fingeringProgress : null,
         scoreLoaded: serverReportsScore,
         // ``elapsed_ms`` is only meaningful while a session is active.
         // We keep it null otherwise so the renderer's sync effect can
@@ -218,6 +235,23 @@ export function PlaybackProvider({
         "ok",
       );
     });
+    const unsubFingering = subscribe(MSG_FINGERING_PROGRESS, (msg) => {
+      const raw = msg as Record<string, unknown>;
+      const done = raw.done;
+      const total = raw.total;
+      const hand = raw.hand;
+      if (
+        typeof done !== "number" ||
+        typeof total !== "number" ||
+        (hand !== "left" && hand !== "right")
+      ) {
+        return;
+      }
+      dispatch({
+        payload: { done, hand, total },
+        type: "fingering_progress",
+      });
+    });
     const unsubError = subscribe("error", (msg) => {
       log(`Server error: ${String(msg.error ?? "")}`, "err");
     });
@@ -230,6 +264,7 @@ export function PlaybackProvider({
       unsubStatus();
       unsubPorts();
       unsubTimeline();
+      unsubFingering();
       unsubError();
       unsubNote();
     };

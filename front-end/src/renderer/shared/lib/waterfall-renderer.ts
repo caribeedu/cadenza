@@ -4,6 +4,7 @@ import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeom
 import type { LaneGeometry } from "../types/geometry";
 import type { NotePlayed, ScoreNote, ScoreTimeline } from "../types/score";
 
+import { pendingNoteColorHex } from "./note-hand-colors";
 import {
   BAR_VERTICAL_GAP_PX,
   barHeightPx,
@@ -15,22 +16,28 @@ import {
   yForNote,
 } from "./timeline";
 
-const COLOUR_PENDING_WHITE = new THREE.Color(0x6cd0ff);
-const COLOUR_PENDING_BLACK = new THREE.Color(0xa77bff);
 const COLOUR_GOOD = new THREE.Color(0x3fd97f);
 const COLOUR_BAD = new THREE.Color(0xff5a6c);
 const COLOUR_NEUTRAL = new THREE.Color(0x6cd0ff);
 const COLOUR_LINE = new THREE.Color(0xffffff);
 
-function pendingColourFor(pitch: number): THREE.Color {
-  return isAccidental(pitch) ? COLOUR_PENDING_BLACK : COLOUR_PENDING_WHITE;
+function pendingColourFor(staff: number | undefined, pitch: number): THREE.Color {
+  return new THREE.Color(pendingNoteColorHex(staff, pitch));
 }
 
 const LABEL_WIDTH_PX = 26;
 const LABEL_HEIGHT_PX = 16;
+const FINGER_WIDTH_PX = 12;
+const FINGER_HEIGHT_PX = 12;
 const LABEL_BOTTOM_INSET_PX = 3;
+const LABEL_TO_FINGER_GAP_PX = 3;
 const MIN_BAR_HEIGHT_FOR_LABEL_PX =
   LABEL_HEIGHT_PX + LABEL_BOTTOM_INSET_PX * 2;
+const MIN_BAR_HEIGHT_FOR_FINGER_PX =
+  LABEL_HEIGHT_PX +
+  FINGER_HEIGHT_PX +
+  LABEL_BOTTOM_INSET_PX * 2 +
+  LABEL_TO_FINGER_GAP_PX;
 
 const NAME_TO_PITCH_CLASS: Record<string, number> = {
   A: 9,
@@ -66,6 +73,7 @@ interface NoteUserData {
   durationMs: number;
   id?: number;
   pitch: number;
+  staff: number;
   startMs: number;
   status: NoteStatus;
 }
@@ -111,6 +119,8 @@ export class WaterfallRenderer {
   private _speed: number;
   private readonly _resizeObserver: ResizeObserver;
   private readonly labelMaterials: Map<string, THREE.SpriteMaterial> =
+    new Map();
+  private readonly fingerMaterials: Map<string, THREE.SpriteMaterial> =
     new Map();
 
   constructor(
@@ -165,6 +175,11 @@ export class WaterfallRenderer {
       mat.dispose();
     }
     this.labelMaterials.clear();
+    for (const mat of this.fingerMaterials.values()) {
+      mat.map?.dispose();
+      mat.dispose();
+    }
+    this.fingerMaterials.clear();
   }
 
   get isPaused(): boolean {
@@ -245,7 +260,9 @@ export class WaterfallRenderer {
     for (const group of this.noteMeshes.values()) {
       const data = group.userData as NoteUserData;
       data.status = "pending";
-      data.bar.material.color.copy(pendingColourFor(data.pitch));
+      data.bar.material.color.copy(
+        pendingColourFor(data.staff, data.pitch),
+      );
     }
   }
 
@@ -310,7 +327,9 @@ export class WaterfallRenderer {
     for (const group of this.noteMeshes.values()) {
       const data = group.userData as NoteUserData;
       data.status = "pending";
-      data.bar.material.color.copy(pendingColourFor(data.pitch));
+      data.bar.material.color.copy(
+        pendingColourFor(data.staff, data.pitch),
+      );
     }
   }
 
@@ -375,6 +394,72 @@ export class WaterfallRenderer {
     return mat;
   }
 
+  private _getFingerMaterial(digit: string): THREE.SpriteMaterial {
+    const cached = this.fingerMaterials.get(digit);
+    if (cached) return cached;
+
+    const dpr = Math.ceil((window.devicePixelRatio || 1) * 2);
+    const cw = FINGER_WIDTH_PX * dpr;
+    const ch = FINGER_HEIGHT_PX * dpr;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = cw;
+    canvas.height = ch;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("2D canvas context unavailable");
+    ctx.clearRect(0, 0, cw, ch);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `800 ${Math.floor(ch * 0.82)}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+
+    const cx = cw / 2;
+    const cy = ch / 2 + 1;
+    const strokeW = Math.max(4, Math.floor(ch * 0.3));
+
+    ctx.lineJoin = "round";
+    ctx.miterLimit = 2;
+
+    // Soft background shadow + halo (stronger than the pitch label).
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.88)";
+    ctx.shadowBlur = Math.max(5, Math.floor(ch * 0.38));
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = Math.max(1, Math.floor(ch * 0.12));
+    ctx.strokeStyle = "rgba(6,8,16,0.55)";
+    ctx.lineWidth = strokeW + 5;
+    ctx.strokeText(digit, cx, cy);
+    ctx.restore();
+
+    ctx.strokeStyle = "rgba(8,10,20,0.97)";
+    ctx.lineWidth = strokeW;
+    ctx.strokeText(digit, cx, cy);
+    ctx.fillStyle = "rgba(255,255,255,0.96)";
+    ctx.fillText(digit, cx, cy);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.anisotropy = 4;
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.generateMipmaps = false;
+
+    const mat = new THREE.SpriteMaterial({
+      depthTest: false,
+      depthWrite: false,
+      map: tex,
+      transparent: true,
+    });
+    this.fingerMaterials.set(digit, mat);
+    return mat;
+  }
+
+  private _makeFingerSprite(digit: number): THREE.Sprite {
+    const text = String(digit);
+    const mat = this._getFingerMaterial(text);
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(FINGER_WIDTH_PX, FINGER_HEIGHT_PX, 1);
+    return sprite;
+  }
+
   private _makeHitLine(): THREE.Line {
     const mat = new THREE.LineBasicMaterial({ color: COLOUR_LINE });
     const geom = new THREE.BufferGeometry().setFromPoints([
@@ -410,6 +495,7 @@ export class WaterfallRenderer {
       const width = Math.max(3, laneWidth * 0.85);
       const height = barHeightPx(n.duration_ms, this.pxPerMs);
       const isBlack = isAccidental(n.pitch);
+      const staff = n.staff ?? 0;
       const cornerRadius = Math.min(
         6,
         width * 0.14,
@@ -425,7 +511,7 @@ export class WaterfallRenderer {
         cornerRadius,
       );
       const mat = new THREE.MeshBasicMaterial({
-        color: pendingColourFor(n.pitch).clone(),
+        color: pendingColourFor(staff, n.pitch).clone(),
         depthTest: false,
         depthWrite: false,
       });
@@ -433,7 +519,38 @@ export class WaterfallRenderer {
       group.add(bar);
       group.renderOrder = isBlack ? 2 : 1;
 
-      if (height >= MIN_BAR_HEIGHT_FOR_LABEL_PX) {
+      const rawFinger = n.finger;
+      const fingerDigit =
+        rawFinger != null &&
+        Number.isFinite(rawFinger) &&
+        Math.abs(Math.trunc(rawFinger)) >= 1 &&
+        Math.abs(Math.trunc(rawFinger)) <= 5
+          ? Math.abs(Math.trunc(rawFinger))
+          : null;
+
+      const showFinger =
+        height >= MIN_BAR_HEIGHT_FOR_FINGER_PX && fingerDigit != null;
+
+      if (showFinger) {
+        // Stack from the bar bottom (toward hit line): finger below, pitch name above.
+        const yFinger =
+          -height / 2 + LABEL_BOTTOM_INSET_PX + FINGER_HEIGHT_PX / 2;
+        const yName =
+          yFinger +
+          FINGER_HEIGHT_PX / 2 +
+          LABEL_TO_FINGER_GAP_PX +
+          LABEL_HEIGHT_PX / 2;
+
+        const fSprite = this._makeFingerSprite(fingerDigit);
+        fSprite.position.set(0, yFinger, 0);
+        fSprite.renderOrder = 3;
+        group.add(fSprite);
+
+        const sprite = this._makeLabelSprite(n.pitch);
+        sprite.position.set(0, yName, 0);
+        sprite.renderOrder = 4;
+        group.add(sprite);
+      } else if (height >= MIN_BAR_HEIGHT_FOR_LABEL_PX) {
         const sprite = this._makeLabelSprite(n.pitch);
         sprite.position.set(
           0,
@@ -449,6 +566,7 @@ export class WaterfallRenderer {
         durationMs: n.duration_ms,
         id: n.id,
         pitch: n.pitch,
+        staff,
         startMs: n.start_ms,
         status: "pending",
       };

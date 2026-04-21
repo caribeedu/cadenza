@@ -91,3 +91,7 @@ disallow_untyped_decorators = false
 [[tool.mypy.overrides]]
 module = ["music21.*", "mido", "mido.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["cadenza_server.core.vendor.*"]
+ignore_errors = true

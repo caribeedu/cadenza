@@ -1,6 +1,7 @@
 import {
   decode,
   encode,
+  MSG_FINGERING_PROGRESS,
   MSG_HELLO,
   MSG_PAUSE,
   MSG_RESUME,
@@ -39,5 +40,9 @@ describe("protocol constants", () => {
   it("MSG_SET_TOLERANCE matches the server's dispatch key", () => {
     expect(MSG_SET_TOLERANCE).toBe("set_tolerance");
     expect(MSG_SET_TOLERANCE).not.toBe(MSG_START);
+  });
+
+  it("MSG_FINGERING_PROGRESS matches the server outbound type", () => {
+    expect(MSG_FINGERING_PROGRESS).toBe("fingering_progress");
   });
 });

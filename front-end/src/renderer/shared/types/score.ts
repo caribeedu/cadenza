@@ -4,6 +4,10 @@ export interface ScoreNote {
   pitch: number;
   start_ms: number;
   track?: number;
+  /** Grand staff: 0 treble (right hand), 1 bass (left). */
+  staff?: number;
+  /** 1–5 when known (editorial or computed). */
+  finger?: null | number;
 }
 
 export interface ScoreTimeline {

@@ -16,6 +16,7 @@ export const MSG_MIDI_PORTS = "midi_ports";
 export const MSG_SCORE_TIMELINE = "score_timeline";
 export const MSG_NOTE_TRIGGER = "note_trigger";
 export const MSG_NOTE_PLAYED = "note_played";
+export const MSG_FINGERING_PROGRESS = "fingering_progress";
 export const MSG_ERROR = "error";
 
 // Accept any serialisable shape on the way out — the strongly-typed

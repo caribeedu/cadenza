@@ -220,6 +220,7 @@ class TestScoreNoteIds:
         wire = score.to_dict()
         assert "notes" in wire and len(wire["notes"]) == 1
         assert wire["notes"][0]["id"] == 0
+        assert wire["notes"][0]["staff"] == 0
 
     def test_malformed_notes_dont_consume_ids(self) -> None:
         payload = {
@@ -232,6 +233,64 @@ class TestScoreNoteIds:
         }
         score = build_score_from_payload(payload)
         assert [n.id for n in score.notes] == [0, 1]
+
+
+class TestFingering:
+    """Editorial ``finger`` from the payload is kept; gaps use the vendored DP."""
+
+    def test_editorial_finger_preserved_and_fallback_fills_rest(self) -> None:
+        payload = {
+            "bpm": 120,
+            "notes": [
+                {"pitch": 60, "offset_ql": 0.0, "duration_ql": 1.0, "staff": 0, "finger": 2},
+                {"pitch": 64, "offset_ql": 1.0, "duration_ql": 1.0, "staff": 0},
+            ],
+        }
+        score = build_score_from_payload(payload)
+        assert score.notes[0].finger == 2
+        assert score.notes[1].finger is not None
+        assert 1 <= score.notes[1].finger <= 5
+
+    def test_invalid_finger_in_payload_is_ignored_then_computed(self) -> None:
+        payload = {
+            "bpm": 120,
+            "notes": [
+                {"pitch": 60, "offset_ql": 0.0, "duration_ql": 1.0, "staff": 0, "finger": 9},
+            ],
+        }
+        score = build_score_from_payload(payload)
+        assert score.notes[0].finger is not None
+
+    def test_left_hand_staff_gets_fingering(self) -> None:
+        payload = {
+            "bpm": 120,
+            "notes": [
+                {"pitch": 48, "offset_ql": 0.0, "duration_ql": 1.0, "staff": 1},
+                {"pitch": 52, "offset_ql": 1.0, "duration_ql": 1.0, "staff": 1},
+            ],
+        }
+        score = build_score_from_payload(payload)
+        assert all(n.finger is not None for n in score.notes)
+
+    def test_fingering_progress_callback_records_hands(self) -> None:
+        payload = {
+            "bpm": 120,
+            "notes": [
+                {"pitch": 60, "offset_ql": 0.0, "duration_ql": 1.0, "staff": 0},
+                {"pitch": 48, "offset_ql": 0.0, "duration_ql": 1.0, "staff": 1},
+            ],
+        }
+        events: list[dict[str, int | str]] = []
+
+        def progress(info: dict[str, int | str]) -> None:
+            events.append(info)
+
+        build_score_from_payload(payload, fingering_progress=progress)
+        assert len(events) >= 2
+        assert events[-1]["done"] == events[-1]["total"]
+        hands = {str(e["hand"]) for e in events}
+        assert "left" in hands
+        assert "right" in hands
 
 
 class TestScore:

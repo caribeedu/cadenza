@@ -95,37 +95,80 @@ MuseScore {
         return { bpm: initialBpm, tempoMap: tempoMap };
     }
 
+    // First decimal digit 1–5 from a fingering element (e.g. "3", "4–5" as editor text).
+    function fingeringDigitFromNote(note) {
+        if (!note || !note.elements) {
+            return undefined;
+        }
+        try {
+            for (var ei = 0; ei < note.elements.length; ++ei) {
+                var sub = note.elements[ei];
+                if (sub && sub.type === Element.FINGERING && sub.text) {
+                    var t = String(sub.text);
+                    for (var ci = 0; ci < t.length; ++ci) {
+                        var ch = t.charAt(ci);
+                        if (ch >= "1" && ch <= "5") {
+                            return parseInt(ch, 10);
+                        }
+                    }
+                }
+            }
+        } catch (err) {
+            console.log("[Cadenza] fingering read failed:", err);
+        }
+        return undefined;
+    }
+
     function collectNotes(score) {
         var notes = [];
         var division = (typeof score.division === "number" && score.division > 0)
             ? score.division : 480;
 
         for (var partIdx = 0; partIdx < score.parts.length; ++partIdx) {
-            var cursor = score.newCursor();
-            cursor.track = partIdx * 4; // first staff, first voice of each part
-            cursor.rewind(Cursor.SCORE_START);
+            var part = score.parts[partIdx];
+            var startTrack = (typeof part.startTrack === "number") ? part.startTrack : (partIdx * 4);
+            var endTrack = (typeof part.endTrack === "number") ? part.endTrack : startTrack;
+            var nstaves;
+            if (typeof part.nstaves === "number" && part.nstaves >= 1) {
+                nstaves = part.nstaves;
+            } else {
+                var span = Math.max(0, endTrack - startTrack + 1);
+                nstaves = Math.max(1, Math.floor(span / 4));
+            }
 
-            while (cursor.segment) {
-                var el = cursor.element;
-                if (el && el.type === Element.CHORD) {
-                    var offsetQL = cursor.tick / division;
-                    var durationQL = el.duration && el.duration.ticks
-                        ? el.duration.ticks / division
-                        : 0.0;
-                    var chordNotes = el.notes;
-                    for (var n = 0; n < chordNotes.length; ++n) {
-                        var note = chordNotes[n];
-                        if (note && typeof note.pitch === "number") {
-                            notes.push({
-                                pitch: note.pitch,
-                                offset_ql: offsetQL,
-                                duration_ql: durationQL,
-                                track: partIdx
-                            });
+            for (var staffIdx = 0; staffIdx < nstaves; ++staffIdx) {
+                var cursor = score.newCursor();
+                cursor.track = startTrack + staffIdx * 4; // voice 0 on staff staffIdx
+                cursor.rewind(Cursor.SCORE_START);
+
+                while (cursor.segment) {
+                    var el = cursor.element;
+                    if (el && el.type === Element.CHORD) {
+                        var offsetQL = cursor.tick / division;
+                        var durationQL = el.duration && el.duration.ticks
+                            ? el.duration.ticks / division
+                            : 0.0;
+                        var chordNotes = el.notes;
+                        for (var n = 0; n < chordNotes.length; ++n) {
+                            var note = chordNotes[n];
+                            if (note && typeof note.pitch === "number") {
+                                var entry = {
+                                    pitch: note.pitch,
+                                    offset_ql: offsetQL,
+                                    duration_ql: durationQL,
+                                    track: partIdx,
+                                    staff: staffIdx
+                                };
+                                var fg = fingeringDigitFromNote(note);
+                                if (fg !== undefined) {
+                                    entry.finger = fg;
+                                }
+                                notes.push(entry);
+                            }
                         }
                     }
+                    cursor.next();
                 }
-                cursor.next();
             }
         }
 
