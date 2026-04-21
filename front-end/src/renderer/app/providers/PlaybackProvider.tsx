@@ -4,7 +4,7 @@ import type {
   ScoreTimelineMessage,
   StatusMessage,
 } from "@shared/types/messages";
-import type { NotePlayed, ScoreTimeline } from "@shared/types/score";
+import type { NotePlayed } from "@shared/types/score";
 
 import {
   MSG_FINGERING_PROGRESS,
@@ -29,48 +29,17 @@ import {
   useRef,
 } from "react";
 
+import {
+  type FingeringProgressState,
+  type PlaybackState,
+  initialPlaybackState,
+  playbackReducer,
+} from "../state/playback-reducer";
 import { useEventLog } from "./EventLogProvider";
 import { useScoreConfig } from "./ScoreConfigProvider";
 import { useWebSocket } from "./WebSocketProvider";
 
-export interface FingeringProgressState {
-  done: number;
-  hand: "left" | "right";
-  total: number;
-}
-
-interface PlaybackState {
-  fingeringProgress: null | FingeringProgressState;
-  latestNotePlayed: NotePlayed | null;
-  midiOpen: boolean;
-  midiPort: null | string;
-  midiPorts: string[];
-  score: null | ScoreTimeline;
-  scoreLoaded: boolean;
-  // Server-authoritative playhead in virtual (score) milliseconds.
-  // ``null`` while no session is running; consumed by the renderer to
-  // realign its local clock on speed changes or reconnects. Must be
-  // null-checked rather than 0-checked because 0 is the legitimate
-  // "just started" value.
-  serverElapsedMs: null | number;
-  serverPaused: boolean;
-  // Server-confirmed playback speed. Distinct from the UI slider
-  // value so a drag can update the label without driving the renderer
-  // into a drifted state.
-  serverPlaybackSpeed: number;
-  serverPlaying: boolean;
-  /** Increments on every ``start()`` so the waterfall can reset even when
-   *  ``serverPlaying`` stays true (restart mid-play). */
-  sessionRestartGeneration: number;
-}
-
-type PlaybackAction =
-  | { payload: FingeringProgressState; type: "fingering_progress" }
-  | { payload: MidiPortsMessage; type: "midi_ports" }
-  | { payload: NotePlayed; type: "note_played" }
-  | { payload: ScoreTimeline; type: "score_timeline" }
-  | { payload: StatusMessage; type: "status" }
-  | { type: "session_restart" };
+export type { FingeringProgressState };
 
 export interface PlaybackContextValue extends PlaybackState {
   commitPlaybackSpeed: (factor: number) => void;
@@ -84,73 +53,6 @@ export interface PlaybackContextValue extends PlaybackState {
 }
 
 const PlaybackContext = createContext<null | PlaybackContextValue>(null);
-
-const initialState: PlaybackState = {
-  fingeringProgress: null,
-  latestNotePlayed: null,
-  midiOpen: false,
-  midiPort: null,
-  midiPorts: [],
-  score: null,
-  scoreLoaded: false,
-  serverElapsedMs: null,
-  serverPaused: false,
-  serverPlaybackSpeed: 1.0,
-  serverPlaying: false,
-  sessionRestartGeneration: 0,
-};
-
-function reducer(state: PlaybackState, action: PlaybackAction): PlaybackState {
-  switch (action.type) {
-    case "fingering_progress":
-      return { ...state, fingeringProgress: action.payload };
-    case "midi_ports":
-      return { ...state, midiPorts: action.payload.ports ?? [] };
-    case "note_played":
-      return { ...state, latestNotePlayed: action.payload };
-    case "score_timeline":
-      return {
-        ...state,
-        fingeringProgress: null,
-        score: action.payload,
-      };
-    case "session_restart":
-      return {
-        ...state,
-        sessionRestartGeneration: state.sessionRestartGeneration + 1,
-      };
-    case "status": {
-      const { payload } = action;
-      const serverReportsScore = !!payload.score_loaded;
-      return {
-        ...state,
-        midiOpen: !!payload.midi_open,
-        midiPort: payload.midi_open ? payload.midi_port : null,
-        // Drop stale timeline when the hub no longer holds a score
-        // (keeps session chip / Start in sync with server truth).
-        score: serverReportsScore ? state.score : null,
-        fingeringProgress: serverReportsScore ? state.fingeringProgress : null,
-        scoreLoaded: serverReportsScore,
-        // ``elapsed_ms`` is only meaningful while a session is active.
-        // We keep it null otherwise so the renderer's sync effect can
-        // tell "no server state yet" from "server says t=0".
-        serverElapsedMs:
-          typeof payload.elapsed_ms === "number" &&
-          (payload.playing || payload.paused)
-            ? payload.elapsed_ms
-            : null,
-        serverPaused: !!payload.paused,
-        serverPlaybackSpeed:
-          typeof payload.playback_speed === "number"
-            ? payload.playback_speed
-            : state.serverPlaybackSpeed,
-        serverPlaying: !!payload.playing,
-      };
-    }
-    default:
-      return state;
-  }
-}
 
 // Maps backend reason codes (see server.unvalidated_reason) to short
 // actionable English for the diagnostic log. Kept in sync with the
@@ -167,7 +69,7 @@ export function PlaybackProvider({
 }: {
   children: ReactNode;
 }): ReactElement {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(playbackReducer, initialPlaybackState);
   const {
     send,
     status: wsStatus,
@@ -278,10 +180,13 @@ export function PlaybackProvider({
       log("WebSocket connected", "ok");
       send({ role: "frontend", type: MSG_HELLO });
       send({ type: MSG_LIST_MIDI });
-    } else if (wsStatus === "closed") {
-      log("WebSocket closed (will reconnect)", "dim");
-    } else if (wsStatus === "error") {
-      log("WebSocket error", "err");
+    } else if (wsStatus === "closed" || wsStatus === "error") {
+      if (wsStatus === "closed") {
+        log("WebSocket closed (will reconnect)", "dim");
+      } else {
+        log("WebSocket error", "err");
+      }
+      dispatch({ type: "connection_lost" });
     }
   }, [wsStatus, log, send]);
 

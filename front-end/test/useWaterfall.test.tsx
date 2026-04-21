@@ -50,7 +50,10 @@ vi.mock("@shared/lib/waterfall-renderer", () => {
         resume: vi.fn(),
         setLaneGeometry: vi.fn(),
         setPlaybackSpeed: vi.fn(),
-        setScore: vi.fn(),
+        // Mirrors production: ``setScore`` clears local transport before rebuild.
+        setScore: vi.fn(function (this: RendererSpy, _score: ScoreTimeline) {
+          this.stop();
+        }),
         start: vi.fn(),
         startAt: vi.fn(),
         stop: vi.fn(),
@@ -153,6 +156,39 @@ describe("useWaterfall", () => {
     });
     expect(rendererSpies).toHaveLength(1);
     expect(rendererSpies[0].setScore).toHaveBeenCalledWith(SAMPLE_SCORE);
+  });
+
+  it("clears the playfield when score becomes null (disconnect / server reset)", () => {
+    const empty: ScoreTimeline = { bpm: 120, duration_ms: 0, notes: [] };
+    const { rerender } = render(
+      <Harness geometry={makeGeometry()} score={SAMPLE_SCORE} />,
+    );
+    expect(rendererSpies).toHaveLength(1);
+    (rendererSpies[0].setScore as unknown as { mockClear: () => void }).mockClear();
+
+    act(() => {
+      rerender(<Harness geometry={makeGeometry()} score={null} />);
+    });
+    expect(rendererSpies[0].setScore).toHaveBeenCalledWith(empty);
+  });
+
+  it("setScore stops transport before applying a new timeline (reconnect / re-ingest)", () => {
+    const next: ScoreTimeline = {
+      ...SAMPLE_SCORE,
+      bpm: 91,
+    };
+    const { rerender } = render(
+      <Harness geometry={makeGeometry()} score={SAMPLE_SCORE} />,
+    );
+    const spy = rendererSpies[0];
+    (spy.stop as unknown as { mockClear: () => void }).mockClear();
+
+    act(() => {
+      rerender(<Harness geometry={makeGeometry()} score={next} />);
+    });
+
+    expect(spy.stop).toHaveBeenCalledTimes(1);
+    expect(spy.setScore).toHaveBeenCalledWith(next);
   });
 
   it("re-applies the server's playing state when the renderer becomes available", () => {

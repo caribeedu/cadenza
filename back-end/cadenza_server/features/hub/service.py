@@ -106,6 +106,13 @@ class Hub:
         client = Client(conn=conn)
         self._state.clients.add(client)
         await self._send_status_to(client)
+        # Late-joining clients never saw the broadcast from ``apply_score``;
+        # push the current timeline so the UI can render without a reload.
+        if self._state.score is not None:
+            await self._send(
+                client,
+                {"type": MessageType.SCORE_TIMELINE, **self._state.score.to_dict()},
+            )
         return client
 
     def unregister(self, client: Client) -> None:

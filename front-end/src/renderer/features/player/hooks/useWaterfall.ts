@@ -2,6 +2,13 @@ import type { LaneGeometry } from "@shared/types/geometry";
 import type { NotePlayed, ScoreTimeline } from "@shared/types/score";
 
 import { WaterfallRenderer } from "@shared/lib/waterfall-renderer";
+
+/** Clears meshes when ``score`` is ``null`` (e.g. WebSocket disconnect). */
+const EMPTY_SCORE_TIMELINE: ScoreTimeline = {
+  bpm: 120,
+  duration_ms: 0,
+  notes: [],
+};
 import {
   type RefObject,
   useEffect,
@@ -128,8 +135,8 @@ export function useWaterfall({
   }, [renderer, laneGeometry]);
 
   useEffect(() => {
-    if (!renderer || !score) return;
-    renderer.setScore(score);
+    if (!renderer) return;
+    renderer.setScore(score ?? EMPTY_SCORE_TIMELINE);
   }, [renderer, score]);
 
   // Drive start / pause / resume / stop from server-authoritative

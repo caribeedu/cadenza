@@ -75,6 +75,30 @@ class TestScoreOverWebsocket:
             assert timeline["notes"][0]["pitch"] == 60
             assert timeline["notes"][1]["start_ms"] == pytest.approx(500.0)
 
+    def test_late_joining_frontend_receives_timeline_on_connect(
+        self, client: TestClient
+    ) -> None:
+        """A client that connects after ingest must see the current score (register push)."""
+        response = client.post(
+            "/score",
+            json={
+                "type": "score",
+                "bpm": 100,
+                "notes": [
+                    {"pitch": 48, "offset_ql": 0.0, "duration_ql": 1.0},
+                ],
+            },
+        )
+        assert response.status_code == 200
+
+        with client.websocket_connect("/") as late:
+            status = _drain_status(late)
+            assert status["score_loaded"] is True
+            timeline = _recv_of_type(late, "score_timeline")
+            assert timeline["bpm"] == 100.0
+            assert len(timeline["notes"]) == 1
+            assert timeline["notes"][0]["pitch"] == 48
+
 
 class TestUnknownMessageType:
     def test_hub_replies_with_error_for_unknown_type(self, client: TestClient) -> None:

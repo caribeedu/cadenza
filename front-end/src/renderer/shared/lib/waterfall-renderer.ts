@@ -317,6 +317,9 @@ export class WaterfallRenderer {
   }
 
   setScore(scoreTimeline: ScoreTimeline): void {
+    // New timeline (reconnect, re-ingest): drop any local playhead from the
+    // previous hub process so notes are not positioned with stale virtual time.
+    this.stop();
     this.score = scoreTimeline;
     this._rebuildNotes();
   }
