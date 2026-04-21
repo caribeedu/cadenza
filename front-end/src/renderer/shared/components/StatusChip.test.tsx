@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 
-import { StatusChip } from "@shared/components/StatusChip";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+
+import { StatusChip } from "./StatusChip";
 
 describe("<StatusChip>", () => {
   it("renders the label with the 'chip-on' class when state is 'on'", () => {

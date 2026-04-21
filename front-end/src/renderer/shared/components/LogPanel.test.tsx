@@ -5,9 +5,10 @@ import {
   LOG_BUFFER_LIMIT,
   useEventLog,
 } from "@app/providers/EventLogProvider";
-import { LogPanel } from "@shared/components/LogPanel";
 import { act, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+
+import { LogPanel } from "./LogPanel";
 
 interface DriverApi {
   clear: () => void;

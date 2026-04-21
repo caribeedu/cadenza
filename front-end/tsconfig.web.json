@@ -31,8 +31,6 @@
   "include": [
     "src/renderer/**/*.ts",
     "src/renderer/**/*.tsx",
-    "src/renderer/**/*.d.ts",
-    "test/**/*.ts",
-    "test/**/*.tsx"
+    "src/renderer/**/*.d.ts"
   ]
 }

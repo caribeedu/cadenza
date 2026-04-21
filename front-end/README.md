@@ -35,26 +35,27 @@ npm install
 
 ```
 front-end/
-├── electron.vite.config.js     # main / preload / renderer build configs
-├── vitest.config.js            # test config, aliases shared with renderer
+├── electron.vite.config.ts     # main / preload / renderer build configs
+├── vitest.config.ts            # test config, aliases shared with renderer
+├── vitest.setup.ts             # Vitest + jest-dom matchers
 ├── package.json
 └── src/
     ├── main/                   # Electron main process (ESM)
-    │   └── index.js
+    │   └── index.ts
     ├── preload/                # contextBridge; emitted as CJS for sandbox:true
-    │   └── index.js
+    │   └── index.ts
     └── renderer/
         ├── index.html          # Vite renderer entry
-        ├── main.jsx            # React.createRoot
-        ├── App.jsx             # top-level composition
+        ├── main.tsx            # React.createRoot
+        ├── App.tsx             # top-level composition
         ├── app/
-        │   ├── constants.js    # defaults (backend URL, tolerance bounds, palette)
+        │   ├── constants.ts    # defaults (backend URL, tolerance bounds, palette)
         │   └── providers/
-        │       ├── AppProviders.jsx       # composition root for context
-        │       ├── EventLogProvider.jsx
-        │       ├── ScoreConfigProvider.jsx  # tolerance / palette / viz mode
-        │       ├── WebSocketProvider.jsx
-        │       └── PlaybackProvider.jsx     # mirrors server status + actions
+        │       ├── AppProviders.tsx       # composition root for context
+        │       ├── EventLogProvider.tsx
+        │       ├── ScoreConfigProvider.tsx  # tolerance / palette / viz mode
+        │       ├── WebSocketProvider.tsx
+        │       └── PlaybackProvider.tsx     # mirrors server status + actions
         ├── features/
         │   ├── player/          # waterfall + piano + top bar composition
         │   ├── midi/            # MIDI port selection
@@ -63,10 +64,10 @@ front-end/
         │   ├── settings/        # placeholder for the upcoming settings page
         │   └── visualization/   # mode dropdown (waterfall today)
         ├── shared/
-        │   ├── components/      # cross-feature UI (StatusChip, LogPanel)
+        │   ├── components/      # cross-feature UI (StatusChip, LogPanel) + *.test.tsx
         │   ├── hooks/           # useElementSize, useEventTarget
         │   ├── lib/             # pure utilities (timeline, piano-layout,
-        │   │                    #   protocol, ws-client, waterfall-renderer)
+        │   │                    #   protocol, ws-client, …) + colocated *.test.ts
         │   └── styles/          # tokens.css + globals.css
         └── types/               # reserved for JSDoc typedefs
 ```
@@ -109,9 +110,9 @@ Run everything:
 npm test
 ```
 
-Coverage today: pure utilities (timeline, piano-layout, protocol,
-ws-client) plus two component tests (`StatusChip`, `LogPanel`) that
-prove the React + jsdom stack is wired up correctly.
+Tests live next to the modules they cover (e.g. `timeline.test.ts` beside
+`timeline.ts`). Coverage includes pure utilities, `playback-reducer`,
+`useWaterfall`, and component smoke tests (`StatusChip`, `LogPanel`).
 
 ## Security / hardening
 

@@ -4,7 +4,7 @@ import {
   pendingNoteColorHex,
   RH_PENDING_BLACK_HEX,
   RH_PENDING_WHITE_HEX,
-} from "@shared/lib/note-hand-colors";
+} from "./note-hand-colors";
 import { describe, expect, it } from "vitest";
 
 describe("pendingNoteColorHex", () => {

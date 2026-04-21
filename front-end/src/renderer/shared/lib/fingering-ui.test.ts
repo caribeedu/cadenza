@@ -1,4 +1,4 @@
-import { formatFingeringProgressLabel } from "@shared/lib/fingering-ui";
+import { formatFingeringProgressLabel } from "./fingering-ui";
 import { describe, expect, it } from "vitest";
 
 describe("formatFingeringProgressLabel", () => {

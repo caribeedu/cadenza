@@ -1,10 +1,8 @@
-import {
-  initialPlaybackState,
-  playbackReducer,
-} from "@app/state/playback-reducer";
 import type { StatusMessage } from "@shared/types/messages";
 import { MSG_STATUS } from "@shared/lib/protocol";
 import { describe, expect, it } from "vitest";
+
+import { initialPlaybackState, playbackReducer } from "./playback-reducer";
 
 const SAMPLE_SCORE = {
   bpm: 120,
@@ -28,7 +26,7 @@ function status(partial: Partial<StatusMessage>): StatusMessage {
 }
 
 describe("playbackReducer", () => {
-  describe("WebSocket disconnect vs Start/Restart", () => {
+  describe("regression: WebSocket disconnect vs Start/Restart", () => {
     it("does not increment sessionRestartGeneration on connection_lost (avoids startAt(0) clock drift)", () => {
       const afterStart = playbackReducer(initialPlaybackState, {
         type: "session_restart",

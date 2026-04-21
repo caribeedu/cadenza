@@ -1,4 +1,4 @@
-import { CadenzaClient, type WebSocketCtor } from "@shared/lib/ws-client";
+import { CadenzaClient, type WebSocketCtor } from "./ws-client";
 import { beforeEach, describe, expect, it } from "vitest";
 
 class MockSocket extends EventTarget {

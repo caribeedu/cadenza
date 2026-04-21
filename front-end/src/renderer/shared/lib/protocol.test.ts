@@ -8,7 +8,7 @@ import {
   MSG_SET_TOLERANCE,
   MSG_START,
   MSG_STOP,
-} from "@shared/lib/protocol";
+} from "./protocol";
 import { describe, expect, it } from "vitest";
 
 describe("encode / decode", () => {

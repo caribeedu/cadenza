@@ -68,7 +68,7 @@ export default tseslint.config(
     settings: { react: { version: "detect" } },
   },
   {
-    files: ["test/**/*.{ts,tsx}", "src/**/*.{test,spec}.{ts,tsx}"],
+    files: ["src/**/*.{test,spec}.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
     },

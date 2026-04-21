@@ -3,7 +3,6 @@
 import type { LaneGeometry } from "@shared/types/geometry";
 import type { ScoreTimeline } from "@shared/types/score";
 
-import { useWaterfall } from "@features/player/hooks/useWaterfall";
 import { act, render } from "@testing-library/react";
 import {
   type ReactElement,
@@ -13,6 +12,8 @@ import {
   useState,
 } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { useWaterfall } from "./useWaterfall";
 
 // Track every instance the hook constructs so the test can assert
 // "was it ever instantiated?" and "did the score land on it?" without
@@ -172,7 +173,7 @@ describe("useWaterfall", () => {
     expect(rendererSpies[0].setScore).toHaveBeenCalledWith(empty);
   });
 
-  it("setScore stops transport before applying a new timeline (reconnect / re-ingest)", () => {
+  it("regression: setScore stops transport before applying a new timeline (reconnect / re-ingest)", () => {
     const next: ScoreTimeline = {
       ...SAMPLE_SCORE,
       bpm: 91,

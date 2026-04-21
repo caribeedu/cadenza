@@ -11,7 +11,7 @@ import {
   octaveForPitch,
   visibleNotes,
   yForNote,
-} from "@shared/lib/timeline";
+} from "./timeline";
 import { describe, expect, it } from "vitest";
 
 describe("yForNote", () => {
