@@ -37,7 +37,7 @@ interface RendererSpy {
 
 const rendererSpies: RendererSpy[] = [];
 
-vi.mock("@shared/lib/waterfall-renderer", () => {
+vi.mock("@shared/lib/waterfall", () => {
   return {
     WaterfallRenderer: vi.fn().mockImplementation(() => {
       const spy: RendererSpy = {

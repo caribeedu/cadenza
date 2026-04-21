@@ -1,7 +1,7 @@
 import type { LaneGeometry } from "@shared/types/geometry";
 import type { NotePlayed, ScoreTimeline } from "@shared/types/score";
 
-import { WaterfallRenderer } from "@shared/lib/waterfall-renderer";
+import { WaterfallRenderer } from "@shared/lib/waterfall";
 
 /** Clears meshes when ``score`` is ``null`` (e.g. WebSocket disconnect). */
 const EMPTY_SCORE_TIMELINE: ScoreTimeline = {
