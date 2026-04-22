@@ -46,6 +46,9 @@ describe("ui theme registry", () => {
       expect(theme.waterfall.particles.tint).toBeGreaterThan(0);
       expect(theme.waterfall.particles.size).toBeGreaterThan(0);
       expect(theme.waterfall.particles.opacity).toBeGreaterThan(0);
+      expect(theme.waterfall.noteBarGeometry.depth).toBeGreaterThan(0);
+      expect(theme.waterfall.noteSprites.labelWidthPx).toBeGreaterThan(0);
+      expect(theme.waterfall.lavaAppearance.mixGood).toBeGreaterThan(0);
     }
   });
 });

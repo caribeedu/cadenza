@@ -1,6 +1,10 @@
 import * as THREE from "three";
 
-import { feedbackForTheme, type WaterfallTheme } from "./visual-theme";
+import {
+  feedbackForTheme,
+  visualThemeConfig,
+  type WaterfallTheme,
+} from "./visual-theme";
 import { fireBarGradient } from "./fire-pending-color";
 
 export type LavaBarStatus = "bad" | "good" | "pending";
@@ -21,6 +25,12 @@ uniform vec3 uGood;
 uniform vec3 uBad;
 uniform float uTime;
 uniform int uStatus;
+uniform vec2 uNoiseUvScale;
+uniform float uNoiseTimeScale;
+uniform float uNoiseValueBase;
+uniform float uNoiseValueAmp;
+uniform float uMixGood;
+uniform float uMixBad;
 float hash21(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
@@ -47,18 +57,22 @@ float fbm(vec2 p) {
 }
 void main() {
   vec2 uv = vUv;
-  float f = fbm(uv * vec2(4.0, 7.0) + vec2(0.0, uTime * 0.6));
-  float n = 0.42 + 0.58 * f;
+  float f = fbm(uv * uNoiseUvScale + vec2(0.0, uTime * uNoiseTimeScale));
+  float n = uNoiseValueBase + uNoiseValueAmp * f;
   vec3 base = mix(uColorLow, uColorHigh, uv.y) * n;
   vec3 c = base;
-  if (uStatus == 1) c = mix(base, uGood, 0.88);
-  else if (uStatus == 2) c = mix(base, uBad, 0.9);
+  if (uStatus == 1) c = mix(base, uGood, uMixGood);
+  else if (uStatus == 2) c = mix(base, uBad, uMixBad);
   gl_FragColor = vec4(c, 1.0);
 }
 `;
 
-export function createLavaBarMaterial(pitch: number): THREE.ShaderMaterial {
+export function createLavaBarMaterial(
+  pitch: number,
+  theme: WaterfallTheme,
+): THREE.ShaderMaterial {
   const g = fireBarGradient(pitch);
+  const d = visualThemeConfig(theme).lavaAppearance;
   return new THREE.ShaderMaterial({
     depthTest: false,
     depthWrite: false,
@@ -68,6 +82,14 @@ export function createLavaBarMaterial(pitch: number): THREE.ShaderMaterial {
       uColorHigh: { value: g.high },
       uColorLow: { value: g.low },
       uGood: { value: new THREE.Vector3() },
+      uMixBad: { value: d.mixBad },
+      uMixGood: { value: d.mixGood },
+      uNoiseTimeScale: { value: d.noiseTimeScale },
+      uNoiseUvScale: {
+        value: new THREE.Vector2(d.noiseUvScaleX, d.noiseUvScaleY),
+      },
+      uNoiseValueAmp: { value: d.noiseValueAmp },
+      uNoiseValueBase: { value: d.noiseValueBase },
       uStatus: { value: 0 },
       uTime: { value: 0 },
     },
@@ -83,6 +105,17 @@ export function initLavaBarFeedbackUniforms(
   const bad = feedbackForTheme(theme, "bad");
   mat.uniforms.uGood.value.set(good.r, good.g, good.b);
   mat.uniforms.uBad.value.set(bad.r, bad.g, bad.b);
+
+  const lava = visualThemeConfig(theme).lavaAppearance;
+  mat.uniforms.uMixGood.value = lava.mixGood;
+  mat.uniforms.uMixBad.value = lava.mixBad;
+  mat.uniforms.uNoiseTimeScale.value = lava.noiseTimeScale;
+  (mat.uniforms.uNoiseUvScale.value as THREE.Vector2).set(
+    lava.noiseUvScaleX,
+    lava.noiseUvScaleY,
+  );
+  mat.uniforms.uNoiseValueAmp.value = lava.noiseValueAmp;
+  mat.uniforms.uNoiseValueBase.value = lava.noiseValueBase;
 }
 
 export function setLavaBarStatus(

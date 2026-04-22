@@ -1,12 +1,7 @@
+import type { NoteSpritesDims } from "@app/theme/ui-theme";
 import * as THREE from "three";
 
 import { isAccidental } from "../timeline";
-import {
-  FINGER_HEIGHT_PX,
-  FINGER_WIDTH_PX,
-  LABEL_HEIGHT_PX,
-  LABEL_WIDTH_PX,
-} from "./constants";
 import { midiFromName } from "./pitch-name";
 
 const LABEL_FONT_SCALE = 0.78;
@@ -19,6 +14,14 @@ const FINGER_FONT_SCALE = 0.82;
 export class NoteSpriteMaterialCache {
   private readonly labelMaterials = new Map<string, THREE.SpriteMaterial>();
   private readonly fingerMaterials = new Map<string, THREE.SpriteMaterial>();
+
+  private fingerCacheKey(digit: string, s: NoteSpritesDims): string {
+    return `${digit}:${s.fingerWidthPx}x${s.fingerHeightPx}`;
+  }
+
+  private labelCacheKey(text: string, s: NoteSpritesDims): string {
+    return `${text}:${s.labelWidthPx}x${s.labelHeightPx}`;
+  }
 
   dispose(): void {
     for (const mat of this.labelMaterials.values()) {
@@ -33,13 +36,14 @@ export class NoteSpriteMaterialCache {
     this.fingerMaterials.clear();
   }
 
-  getLabelMaterial(text: string): THREE.SpriteMaterial {
-    const cached = this.labelMaterials.get(text);
+  getLabelMaterial(text: string, sprites: NoteSpritesDims): THREE.SpriteMaterial {
+    const key = this.labelCacheKey(text, sprites);
+    const cached = this.labelMaterials.get(key);
     if (cached) return cached;
 
     const dpr = Math.ceil((window.devicePixelRatio || 1) * 2);
-    const cw = LABEL_WIDTH_PX * dpr;
-    const ch = LABEL_HEIGHT_PX * dpr;
+    const cw = sprites.labelWidthPx * dpr;
+    const ch = sprites.labelHeightPx * dpr;
 
     const canvas = document.createElement("canvas");
     canvas.width = cw;
@@ -74,17 +78,18 @@ export class NoteSpriteMaterialCache {
       map: tex,
       transparent: true,
     });
-    this.labelMaterials.set(text, mat);
+    this.labelMaterials.set(key, mat);
     return mat;
   }
 
-  getFingerMaterial(digit: string): THREE.SpriteMaterial {
-    const cached = this.fingerMaterials.get(digit);
+  getFingerMaterial(digit: string, sprites: NoteSpritesDims): THREE.SpriteMaterial {
+    const key = this.fingerCacheKey(digit, sprites);
+    const cached = this.fingerMaterials.get(key);
     if (cached) return cached;
 
     const dpr = Math.ceil((window.devicePixelRatio || 1) * 2);
-    const cw = FINGER_WIDTH_PX * dpr;
-    const ch = FINGER_HEIGHT_PX * dpr;
+    const cw = sprites.fingerWidthPx * dpr;
+    const ch = sprites.fingerHeightPx * dpr;
 
     const canvas = document.createElement("canvas");
     canvas.width = cw;
@@ -131,7 +136,7 @@ export class NoteSpriteMaterialCache {
       map: tex,
       transparent: true,
     });
-    this.fingerMaterials.set(digit, mat);
+    this.fingerMaterials.set(key, mat);
     return mat;
   }
 }

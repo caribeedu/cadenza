@@ -1,11 +1,6 @@
-import {
-  FINGER_HEIGHT_PX,
-  LABEL_BOTTOM_INSET_PX,
-  LABEL_HEIGHT_PX,
-  LABEL_TO_FINGER_GAP_PX,
-  MIN_BAR_HEIGHT_FOR_FINGER_PX,
-  MIN_BAR_HEIGHT_FOR_LABEL_PX,
-} from "./constants";
+import type { NoteSpritesDims } from "@app/theme/ui-theme";
+
+import { minBarHeightForFingerPx, minBarHeightForLabelPx } from "./constants";
 
 /** 1–5 when showable; ``null`` if missing or out of range. */
 export function resolveFingerDigit(raw: unknown): number | null {
@@ -20,34 +15,48 @@ export type NoteSpriteStackMode = "finger_and_label" | "label_only" | "none";
 export function classifyNoteSpriteStack(
   barHeightPx: number,
   fingerDigit: number | null,
+  sprites: NoteSpritesDims,
 ): NoteSpriteStackMode {
-  if (barHeightPx >= MIN_BAR_HEIGHT_FOR_FINGER_PX && fingerDigit != null) {
+  if (
+    barHeightPx >= minBarHeightForFingerPx(sprites) &&
+    fingerDigit != null
+  ) {
     return "finger_and_label";
   }
-  if (barHeightPx >= MIN_BAR_HEIGHT_FOR_LABEL_PX) {
+  if (barHeightPx >= minBarHeightForLabelPx(sprites)) {
     return "label_only";
   }
   return "none";
 }
 
 /** Local Y positions (bar-centred coords; +Y up) for finger + name stack from bar bottom. */
-export function fingerAndLabelSpriteYs(barHeightPx: number): {
+export function fingerAndLabelSpriteYs(
+  barHeightPx: number,
+  sprites: NoteSpritesDims,
+): {
   yFinger: number;
   yName: number;
 } {
   const yFinger =
-    -barHeightPx / 2 + LABEL_BOTTOM_INSET_PX + FINGER_HEIGHT_PX / 2;
+    -barHeightPx / 2 +
+    sprites.labelBottomInsetPx +
+    sprites.fingerHeightPx / 2;
   const yName =
     yFinger +
-    FINGER_HEIGHT_PX / 2 +
-    LABEL_TO_FINGER_GAP_PX +
-    LABEL_HEIGHT_PX / 2;
+    sprites.fingerHeightPx / 2 +
+    sprites.labelToFingerGapPx +
+    sprites.labelHeightPx / 2;
   return { yFinger, yName };
 }
 
 /** Pitch label only — original single-sprite position from bar bottom. */
-export function labelOnlySpriteY(barHeightPx: number): number {
+export function labelOnlySpriteY(
+  barHeightPx: number,
+  sprites: NoteSpritesDims,
+): number {
   return (
-    -barHeightPx / 2 + LABEL_HEIGHT_PX / 2 + LABEL_BOTTOM_INSET_PX
+    -barHeightPx / 2 +
+    sprites.labelHeightPx / 2 +
+    sprites.labelBottomInsetPx
   );
 }

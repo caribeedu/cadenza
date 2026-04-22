@@ -1,12 +1,14 @@
 import * as THREE from "three";
 import { describe, expect, it, vi } from "vitest";
 
+import { UI_THEME_IDS, UI_THEMES } from "@app/theme/ui-theme";
+
 import type { ScoreNote } from "../../types/score";
 import {
   barHeightPx,
   DEFAULT_PX_PER_MS,
 } from "../timeline";
-import { MIN_BAR_HEIGHT_FOR_FINGER_PX, MIN_BAR_HEIGHT_FOR_LABEL_PX } from "./constants";
+import { minBarHeightForFingerPx, minBarHeightForLabelPx } from "./constants";
 import { WaterfallNoteGroupFactory } from "./note-group-factory";
 import type { NoteSpriteMaterialCache } from "./sprite-material-cache";
 
@@ -32,6 +34,8 @@ describe("WaterfallNoteGroupFactory", () => {
     laneCenterPx: () => 100,
     laneWidthPx: () => 40,
   };
+
+  const lightSprites = UI_THEMES[UI_THEME_IDS.CadenzaLight].waterfall.noteSprites;
 
   it("createGroup attaches userData with score fields and mesh key from id", () => {
     const factory = new WaterfallNoteGroupFactory(
@@ -69,7 +73,7 @@ describe("WaterfallNoteGroupFactory", () => {
       baseNote({ duration_ms: 10, finger: 1 }),
     );
     const h = barHeightPx(10, DEFAULT_PX_PER_MS);
-    expect(h).toBeLessThan(MIN_BAR_HEIGHT_FOR_LABEL_PX);
+    expect(h).toBeLessThan(minBarHeightForLabelPx(lightSprites));
     expect(group.children.length).toBe(1);
   });
 
@@ -84,14 +88,17 @@ describe("WaterfallNoteGroupFactory", () => {
     // Tall enough for a pitch label, too short for finger+label stack (see constants).
     const durationMs = 128;
     const height = barHeightPx(durationMs, DEFAULT_PX_PER_MS);
-    expect(height).toBeGreaterThanOrEqual(MIN_BAR_HEIGHT_FOR_LABEL_PX);
-    expect(height).toBeLessThan(MIN_BAR_HEIGHT_FOR_FINGER_PX);
+    expect(height).toBeGreaterThanOrEqual(minBarHeightForLabelPx(lightSprites));
+    expect(height).toBeLessThan(minBarHeightForFingerPx(lightSprites));
 
     const { group } = factory.createGroup(
       baseNote({ duration_ms: durationMs, finger: null }),
     );
     expect(group.children.length).toBe(2);
-    expect(cache.getLabelMaterial).toHaveBeenCalled();
+    expect(cache.getLabelMaterial).toHaveBeenCalledWith(
+      expect.any(String),
+      lightSprites,
+    );
     expect(cache.getFingerMaterial).not.toHaveBeenCalled();
   });
 
@@ -105,14 +112,17 @@ describe("WaterfallNoteGroupFactory", () => {
     );
     const durationMs = 400;
     const height = barHeightPx(durationMs, DEFAULT_PX_PER_MS);
-    expect(height).toBeGreaterThanOrEqual(MIN_BAR_HEIGHT_FOR_FINGER_PX);
+    expect(height).toBeGreaterThanOrEqual(minBarHeightForFingerPx(lightSprites));
 
     const { group } = factory.createGroup(
       baseNote({ duration_ms: durationMs, finger: 3 }),
     );
     expect(group.children.length).toBe(3);
-    expect(cache.getFingerMaterial).toHaveBeenCalledWith("3");
-    expect(cache.getLabelMaterial).toHaveBeenCalled();
+    expect(cache.getFingerMaterial).toHaveBeenCalledWith("3", lightSprites);
+    expect(cache.getLabelMaterial).toHaveBeenCalledWith(
+      expect.any(String),
+      lightSprites,
+    );
   });
 
   it("sets higher renderOrder for black-key (accidental) lanes", () => {

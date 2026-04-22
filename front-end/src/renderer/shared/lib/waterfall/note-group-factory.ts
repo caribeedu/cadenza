@@ -1,18 +1,14 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 
+import type { NoteSpritesDims } from "@app/theme/ui-theme";
+
 import type { LaneGeometry } from "../../types/geometry";
 import type { ScoreNote } from "../../types/score";
 
 import { pendingNoteColorHex } from "../note-hand-colors";
 import { barHeightPx, isAccidental, nameForPitch, noteMeshKey } from "../timeline";
 import { createNoteBarMaterial } from "./bar-material";
-import {
-  FINGER_HEIGHT_PX,
-  FINGER_WIDTH_PX,
-  LABEL_HEIGHT_PX,
-  LABEL_WIDTH_PX,
-} from "./constants";
 import { pendingColorForTheme } from "./fire-pending-color";
 import {
   createLavaBarMaterial,
@@ -60,40 +56,49 @@ export class WaterfallNoteGroupFactory {
     private readonly theme: WaterfallTheme,
   ) {}
 
-  private makeFingerSprite(digit: number): THREE.Sprite {
+  private makeFingerSprite(digit: number, sprites: NoteSpritesDims): THREE.Sprite {
     const text = String(digit);
-    const mat = this.spriteCache.getFingerMaterial(text);
+    const mat = this.spriteCache.getFingerMaterial(text, sprites);
     const sprite = new THREE.Sprite(mat);
-    sprite.scale.set(FINGER_WIDTH_PX, FINGER_HEIGHT_PX, 1);
+    sprite.scale.set(sprites.fingerWidthPx, sprites.fingerHeightPx, 1);
     return sprite;
   }
 
-  private makeLabelSprite(pitch: number): THREE.Sprite {
+  private makeLabelSprite(pitch: number, sprites: NoteSpritesDims): THREE.Sprite {
     const text = nameForPitch(pitch);
-    const mat = this.spriteCache.getLabelMaterial(text);
+    const mat = this.spriteCache.getLabelMaterial(text, sprites);
     const sprite = new THREE.Sprite(mat);
-    sprite.scale.set(LABEL_WIDTH_PX, LABEL_HEIGHT_PX, 1);
+    sprite.scale.set(sprites.labelWidthPx, sprites.labelHeightPx, 1);
     return sprite;
   }
 
   createGroup(note: ScoreNote): { group: THREE.Group; key: null | string } {
+    const wf = visualThemeConfig(this.theme);
     const laneWidth = this.laneGeometry.laneWidthPx(note.pitch);
-    const width = Math.max(3, laneWidth * 0.85);
+    const bg = wf.noteBarGeometry;
+    const sprites = wf.noteSprites;
+    const width = Math.max(3, laneWidth * bg.laneWidthFactor);
     const height = barHeightPx(note.duration_ms, this.pxPerMs);
     const isBlack = isAccidental(note.pitch);
     const staff = note.staff ?? 0;
     const cornerRadius = Math.min(
-      6,
-      width * 0.14,
-      Math.max(2, height * 0.12),
+      bg.cornerRadiusCap,
+      width * bg.cornerRadiusWidthFactor,
+      Math.max(bg.cornerRadiusHeightMin, height * bg.cornerRadiusHeightFactor),
     );
 
-    const isLava = visualThemeConfig(this.theme).lavaBars;
+    const isLava = wf.lavaBars;
     const group = new THREE.Group();
-    const geom = new RoundedBoxGeometry(width, height, 2, 2, cornerRadius);
+    const geom = new RoundedBoxGeometry(
+      width,
+      height,
+      bg.depth,
+      2,
+      cornerRadius,
+    );
     const mat = isLava
       ? (() => {
-          const m = createLavaBarMaterial(note.pitch);
+          const m = createLavaBarMaterial(note.pitch, this.theme);
           initLavaBarFeedbackUniforms(m, this.theme);
           return m;
         })()
@@ -105,22 +110,22 @@ export class WaterfallNoteGroupFactory {
     group.renderOrder = isBlack ? 2 : 1;
 
     const fingerDigit = resolveFingerDigit(note.finger);
-    const stack = classifyNoteSpriteStack(height, fingerDigit);
+    const stack = classifyNoteSpriteStack(height, fingerDigit, sprites);
 
     if (stack === "finger_and_label" && fingerDigit != null) {
-      const { yFinger, yName } = fingerAndLabelSpriteYs(height);
-      const fSprite = this.makeFingerSprite(fingerDigit);
+      const { yFinger, yName } = fingerAndLabelSpriteYs(height, sprites);
+      const fSprite = this.makeFingerSprite(fingerDigit, sprites);
       fSprite.position.set(0, yFinger, 0);
       fSprite.renderOrder = 3;
       group.add(fSprite);
 
-      const sprite = this.makeLabelSprite(note.pitch);
+      const sprite = this.makeLabelSprite(note.pitch, sprites);
       sprite.position.set(0, yName, 0);
       sprite.renderOrder = 4;
       group.add(sprite);
     } else if (stack === "label_only") {
-      const sprite = this.makeLabelSprite(note.pitch);
-      sprite.position.set(0, labelOnlySpriteY(height), 0);
+      const sprite = this.makeLabelSprite(note.pitch, sprites);
+      sprite.position.set(0, labelOnlySpriteY(height, sprites), 0);
       sprite.renderOrder = 3;
       group.add(sprite);
     }

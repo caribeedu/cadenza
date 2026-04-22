@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { DEFAULT_UI_THEME, UI_THEMES } from "@app/theme/ui-theme";
 import * as THREE from "three";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -34,6 +35,8 @@ function stubCanvas2d(): void {
   );
 }
 
+const S = UI_THEMES[DEFAULT_UI_THEME].waterfall.noteSprites;
+
 describe("NoteSpriteMaterialCache", () => {
   beforeEach(() => {
     stubCanvas2d();
@@ -45,29 +48,29 @@ describe("NoteSpriteMaterialCache", () => {
 
   it("returns the same label material instance for repeated text (cache hit)", () => {
     const cache = new NoteSpriteMaterialCache();
-    const a = cache.getLabelMaterial("C");
-    const b = cache.getLabelMaterial("C");
+    const a = cache.getLabelMaterial("C", S);
+    const b = cache.getLabelMaterial("C", S);
     expect(a).toBe(b);
   });
 
   it("returns distinct label materials for different text keys", () => {
     const cache = new NoteSpriteMaterialCache();
-    const c = cache.getLabelMaterial("C");
-    const d = cache.getLabelMaterial("D");
+    const c = cache.getLabelMaterial("C", S);
+    const d = cache.getLabelMaterial("D", S);
     expect(c).not.toBe(d);
   });
 
   it("returns the same finger material instance for repeated digit strings", () => {
     const cache = new NoteSpriteMaterialCache();
-    const a = cache.getFingerMaterial("3");
-    const b = cache.getFingerMaterial("3");
+    const a = cache.getFingerMaterial("3", S);
+    const b = cache.getFingerMaterial("3", S);
     expect(a).toBe(b);
   });
 
   it("dispose disposes label and finger materials and their textures", () => {
     const cache = new NoteSpriteMaterialCache();
-    const label = cache.getLabelMaterial("E");
-    const finger = cache.getFingerMaterial("2");
+    const label = cache.getLabelMaterial("E", S);
+    const finger = cache.getFingerMaterial("2", S);
     const disposeLabelMap = vi.spyOn(label.map!, "dispose");
     const disposeLabelMat = vi.spyOn(label, "dispose");
     const disposeFingerMap = vi.spyOn(finger.map!, "dispose");
@@ -81,7 +84,7 @@ describe("NoteSpriteMaterialCache", () => {
     expect(disposeFingerMat).toHaveBeenCalled();
 
     const cache2 = new NoteSpriteMaterialCache();
-    const label2 = cache2.getLabelMaterial("E");
+    const label2 = cache2.getLabelMaterial("E", S);
     expect(label2).not.toBe(label);
   });
 });

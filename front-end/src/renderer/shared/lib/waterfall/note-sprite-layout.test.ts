@@ -1,4 +1,8 @@
+import { DEFAULT_UI_THEME, UI_THEMES } from "@app/theme/ui-theme";
 import { describe, expect, it } from "vitest";
+
+const DEFAULT_NOTE_SPRITES =
+  UI_THEMES[DEFAULT_UI_THEME].waterfall.noteSprites;
 
 import {
   classifyNoteSpriteStack,
@@ -24,30 +28,33 @@ describe("resolveFingerDigit", () => {
 });
 
 describe("classifyNoteSpriteStack", () => {
+  const s = DEFAULT_NOTE_SPRITES;
+
   it("prefers finger + label when bar is tall enough and finger exists", () => {
-    expect(classifyNoteSpriteStack(40, 2)).toBe("finger_and_label");
+    expect(classifyNoteSpriteStack(40, 2, s)).toBe("finger_and_label");
   });
 
   it("uses label only when finger missing but bar fits label", () => {
-    expect(classifyNoteSpriteStack(24, null)).toBe("label_only");
+    expect(classifyNoteSpriteStack(24, null, s)).toBe("label_only");
   });
 
   it("returns none when bar is too short", () => {
-    expect(classifyNoteSpriteStack(10, 3)).toBe("none");
+    expect(classifyNoteSpriteStack(10, 3, s)).toBe("none");
   });
 });
 
 describe("fingerAndLabelSpriteYs", () => {
   it("places finger below the name (smaller Y toward hit line)", () => {
     const h = 80;
-    const { yFinger, yName } = fingerAndLabelSpriteYs(h);
+    const { yFinger, yName } = fingerAndLabelSpriteYs(h, DEFAULT_NOTE_SPRITES);
     expect(yFinger).toBeLessThan(yName);
   });
 });
 
 describe("labelOnlySpriteY", () => {
   it("positions the pitch label near the bar bottom (label-only stack)", () => {
+    const s = DEFAULT_NOTE_SPRITES;
     // -h/2 + LABEL_HEIGHT/2 + LABEL_BOTTOM_INSET for h=100 → -39
-    expect(labelOnlySpriteY(100)).toBe(-39);
+    expect(labelOnlySpriteY(100, s)).toBe(-39);
   });
 });

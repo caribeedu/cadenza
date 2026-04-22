@@ -9,6 +9,37 @@ export const UI_THEME_IDS = Object.freeze({
 export type UiThemeId = (typeof UI_THEME_IDS)[keyof typeof UI_THEME_IDS];
 export type WaterfallTheme = UiThemeId;
 
+/** Procedural lava bar appearance (noise domain, brightness, feedback mix). */
+export interface LavaAppearance {
+  mixBad: number;
+  mixGood: number;
+  noiseTimeScale: number;
+  noiseUvScaleX: number;
+  noiseUvScaleY: number;
+  noiseValueAmp: number;
+  noiseValueBase: number;
+}
+
+/** Rounded note mesh: lane-relative width and corner radii (screen px). */
+export interface NoteBarGeometry {
+  cornerRadiusCap: number;
+  cornerRadiusHeightFactor: number;
+  cornerRadiusHeightMin: number;
+  cornerRadiusWidthFactor: number;
+  depth: number;
+  laneWidthFactor: number;
+}
+
+/** Pitch / finger sprite canvas layout (screen px). */
+export interface NoteSpritesDims {
+  fingerHeightPx: number;
+  fingerWidthPx: number;
+  labelBottomInsetPx: number;
+  labelHeightPx: number;
+  labelToFingerGapPx: number;
+  labelWidthPx: number;
+}
+
 export interface WaterfallVisualTheme {
   ambientLight: { color: number; intensity: number };
   background: number;
@@ -44,6 +75,9 @@ export interface WaterfallVisualTheme {
     size: number;
     tint: number;
   };
+  noteBarGeometry: NoteBarGeometry;
+  noteSprites: NoteSpritesDims;
+  lavaAppearance: LavaAppearance;
   lavaBars: boolean;
   pendingColorMode: "gradient" | "staff";
   pendingGradient: { high: number; low: number };
@@ -270,6 +304,31 @@ const WATERFALL_CADENZA_DARK: WaterfallVisualTheme = Object.freeze({
     glowThickness: 200,
   },
   particles: { opacity: 0.9, size: 12, tint: 0xff9f52 },
+  lavaAppearance: {
+    mixBad: 0.9,
+    mixGood: 0.88,
+    noiseTimeScale: 0.6,
+    noiseUvScaleX: 4,
+    noiseUvScaleY: 7,
+    noiseValueAmp: 0.58,
+    noiseValueBase: 0.42,
+  },
+  noteBarGeometry: {
+    cornerRadiusCap: 6,
+    cornerRadiusHeightFactor: 0.12,
+    cornerRadiusHeightMin: 2,
+    cornerRadiusWidthFactor: 0.14,
+    depth: 2,
+    laneWidthFactor: 0.85,
+  },
+  noteSprites: {
+    fingerHeightPx: 12,
+    fingerWidthPx: 12,
+    labelBottomInsetPx: 3,
+    labelHeightPx: 16,
+    labelToFingerGapPx: 3,
+    labelWidthPx: 26,
+  },
   lavaBars: true,
   pendingColorMode: "gradient",
   pendingGradient: { high: 0xffcc4d, low: 0xff1e12 },
@@ -297,6 +356,31 @@ const WATERFALL_CADENZA_LIGHT: WaterfallVisualTheme = Object.freeze({
     glowThickness: 200,
   },
   particles: { opacity: 0.9, size: 12, tint: 0x63d8ff },
+  lavaAppearance: {
+    mixBad: 0.9,
+    mixGood: 0.88,
+    noiseTimeScale: 0.6,
+    noiseUvScaleX: 4,
+    noiseUvScaleY: 7,
+    noiseValueAmp: 0.58,
+    noiseValueBase: 0.42,
+  },
+  noteBarGeometry: {
+    cornerRadiusCap: 6,
+    cornerRadiusHeightFactor: 0.12,
+    cornerRadiusHeightMin: 2,
+    cornerRadiusWidthFactor: 0.14,
+    depth: 2,
+    laneWidthFactor: 0.85,
+  },
+  noteSprites: {
+    fingerHeightPx: 12,
+    fingerWidthPx: 12,
+    labelBottomInsetPx: 3,
+    labelHeightPx: 16,
+    labelToFingerGapPx: 3,
+    labelWidthPx: 26,
+  },
   lavaBars: false,
   pendingColorMode: "staff",
   pendingGradient: { high: 0x5b8bff, low: 0x39d5ff },
@@ -324,6 +408,31 @@ const WATERFALL_LAVA_STAGE: WaterfallVisualTheme = Object.freeze({
     glowThickness: 200,
   },
   particles: { opacity: 0.9, size: 12, tint: 0xff8d42 },
+  lavaAppearance: {
+    mixBad: 0.9,
+    mixGood: 0.88,
+    noiseTimeScale: 0.6,
+    noiseUvScaleX: 4,
+    noiseUvScaleY: 7,
+    noiseValueAmp: 0.58,
+    noiseValueBase: 0.42,
+  },
+  noteBarGeometry: {
+    cornerRadiusCap: 6,
+    cornerRadiusHeightFactor: 0.12,
+    cornerRadiusHeightMin: 2,
+    cornerRadiusWidthFactor: 0.14,
+    depth: 2,
+    laneWidthFactor: 0.85,
+  },
+  noteSprites: {
+    fingerHeightPx: 12,
+    fingerWidthPx: 12,
+    labelBottomInsetPx: 3,
+    labelHeightPx: 16,
+    labelToFingerGapPx: 3,
+    labelWidthPx: 26,
+  },
   lavaBars: true,
   pendingColorMode: "gradient",
   pendingGradient: { high: 0xffd67a, low: 0xff5c3a },
@@ -351,6 +460,31 @@ const WATERFALL_AURORA_ICE: WaterfallVisualTheme = Object.freeze({
     glowThickness: 200,
   },
   particles: { opacity: 0.9, size: 12, tint: 0x63d8ff },
+  lavaAppearance: {
+    mixBad: 0.9,
+    mixGood: 0.88,
+    noiseTimeScale: 0.6,
+    noiseUvScaleX: 4,
+    noiseUvScaleY: 7,
+    noiseValueAmp: 0.58,
+    noiseValueBase: 0.42,
+  },
+  noteBarGeometry: {
+    cornerRadiusCap: 6,
+    cornerRadiusHeightFactor: 0.12,
+    cornerRadiusHeightMin: 2,
+    cornerRadiusWidthFactor: 0.14,
+    depth: 2,
+    laneWidthFactor: 0.85,
+  },
+  noteSprites: {
+    fingerHeightPx: 12,
+    fingerWidthPx: 12,
+    labelBottomInsetPx: 3,
+    labelHeightPx: 16,
+    labelToFingerGapPx: 3,
+    labelWidthPx: 26,
+  },
   lavaBars: false,
   pendingColorMode: "gradient",
   pendingGradient: { high: 0x6d88ff, low: 0x34f5d5 },
@@ -378,6 +512,31 @@ const WATERFALL_SUNSET_PAPER: WaterfallVisualTheme = Object.freeze({
     glowThickness: 200,
   },
   particles: { opacity: 0.9, size: 12, tint: 0xe9823a },
+  lavaAppearance: {
+    mixBad: 0.9,
+    mixGood: 0.88,
+    noiseTimeScale: 0.6,
+    noiseUvScaleX: 4,
+    noiseUvScaleY: 7,
+    noiseValueAmp: 0.58,
+    noiseValueBase: 0.42,
+  },
+  noteBarGeometry: {
+    cornerRadiusCap: 6,
+    cornerRadiusHeightFactor: 0.12,
+    cornerRadiusHeightMin: 2,
+    cornerRadiusWidthFactor: 0.14,
+    depth: 2,
+    laneWidthFactor: 0.85,
+  },
+  noteSprites: {
+    fingerHeightPx: 12,
+    fingerWidthPx: 12,
+    labelBottomInsetPx: 3,
+    labelHeightPx: 16,
+    labelToFingerGapPx: 3,
+    labelWidthPx: 26,
+  },
   lavaBars: true,
   pendingColorMode: "gradient",
   pendingGradient: { high: 0xffd67a, low: 0xff5c3a },
