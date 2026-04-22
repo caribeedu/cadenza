@@ -1,4 +1,5 @@
 import type { LaneGeometry } from "@shared/types/geometry";
+import type { WaterfallTheme } from "@shared/lib/waterfall";
 import type { NotePlayed, ScoreTimeline } from "@shared/types/score";
 
 import { WaterfallRenderer } from "@shared/lib/waterfall";
@@ -28,6 +29,7 @@ export interface UseWaterfallOptions {
   serverPaused: boolean;
   serverPlaybackSpeed: number;
   serverPlaying: boolean;
+  waterfallTheme: WaterfallTheme;
   /** Bumps on every Start/Restart so we reset the waterfall when the
    *  server clock resets but ``serverPlaying`` never flips to false. */
   sessionRestartGeneration: number;
@@ -63,6 +65,7 @@ export function useWaterfall({
   serverPaused,
   serverPlaybackSpeed,
   serverPlaying,
+  waterfallTheme,
   sessionRestartGeneration,
   heldMidiPitches,
 }: UseWaterfallOptions): RefObject<null | WaterfallRenderer> {
@@ -99,6 +102,7 @@ export function useWaterfall({
 
     const instance = new WaterfallRenderer(canvas, laneGeometry, {
       playbackSpeed: serverSpeedRef.current,
+      theme: waterfallTheme,
     });
     rendererRef.current = instance;
     setRenderer(instance);
@@ -116,7 +120,7 @@ export function useWaterfall({
     // reflows are handled by ``setLaneGeometry`` below; rebuilding the
     // WebGL context on every ResizeObserver tick would cause flicker.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canvasRef, hasLaneGeometry]);
+  }, [canvasRef, hasLaneGeometry, waterfallTheme]);
 
   // Mirror the server-confirmed speed into the renderer, aligning the
   // virtual-time playhead to ``serverElapsedMs`` whenever available.

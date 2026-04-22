@@ -4,7 +4,7 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 
-import { BLOOM } from "./visual-theme";
+import type { WaterfallVisualTheme } from "@app/theme/ui-theme";
 
 export interface WaterfallBloomPipeline {
   readonly composer: EffectComposer;
@@ -24,16 +24,21 @@ export function createWaterfallBloomPipeline(
   renderer: THREE.WebGLRenderer,
   scene: THREE.Scene,
   camera: THREE.Camera,
+  theme: WaterfallVisualTheme,
 ): WaterfallBloomPipeline {
+  const bloom = theme.bloom;
   const composer = new EffectComposer(renderer);
   const renderPass = new RenderPass(scene, camera);
   const bloomRes = new THREE.Vector2(256, 256);
   const bloomPass = new UnrealBloomPass(
     bloomRes,
-    BLOOM.strength,
-    BLOOM.radius,
-    BLOOM.threshold,
+    bloom.strength,
+    bloom.radius,
+    bloom.threshold,
   );
+  bloomPass.strength = bloom.strength;
+  bloomPass.radius = bloom.radius;
+  bloomPass.threshold = bloom.threshold;
   const outputPass = new OutputPass();
   composer.addPass(renderPass);
   composer.addPass(bloomPass);
@@ -44,9 +49,9 @@ export function createWaterfallBloomPipeline(
     syncSize(cssWidth, cssHeight, pixelRatio) {
       composer.setPixelRatio(pixelRatio);
       composer.setSize(cssWidth, cssHeight);
-      const s = BLOOM.resolutionScale;
-      const effW = cssWidth * pixelRatio * s;
-      const effH = cssHeight * pixelRatio * s;
+      const s = bloom.resolutionScale;
+      const effW = Math.max(1, Math.round(cssWidth * pixelRatio * s));
+      const effH = Math.max(1, Math.round(cssHeight * pixelRatio * s));
       bloomPass.setSize(effW, effH);
     },
     dispose() {

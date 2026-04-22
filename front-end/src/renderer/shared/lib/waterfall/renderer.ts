@@ -33,13 +33,8 @@ import type { NoteUserData } from "./note-group-factory";
 import { WaterfallNoteGroupFactory } from "./note-group-factory";
 import { NoteSpriteMaterialCache } from "./sprite-material-cache";
 import {
-  AMBIENT_LIGHT,
-  BACKGROUND_COLOR,
-  FOG_COLOR,
-  FOG_FAR,
-  FOG_NEAR,
-  HEMI_LIGHT,
   MAX_DEVICE_PIXEL_RATIO,
+  visualThemeConfig,
 } from "./visual-theme";
 import type { WaterfallTheme } from "./visual-theme";
 import { VirtualPlayhead } from "./virtual-playhead";
@@ -53,7 +48,7 @@ export interface WaterfallOptions {
 }
 
 const DEFAULT_PLAYBACK_SPEED = 1.0;
-const DEFAULT_THEME: WaterfallTheme = "fire";
+const DEFAULT_THEME: WaterfallTheme = "cadenza-dark";
 
 export class WaterfallRenderer {
   readonly camera: THREE.OrthographicCamera;
@@ -107,6 +102,7 @@ export class WaterfallRenderer {
     this.pxPerMs = pxPerMs;
     this.leadMs = leadMs;
     this._theme = theme;
+    const themeConfig = visualThemeConfig(this._theme);
     const speed =
       playbackSpeed > 0 ? playbackSpeed : DEFAULT_PLAYBACK_SPEED;
     this.playhead = new VirtualPlayhead(speed);
@@ -126,11 +122,22 @@ export class WaterfallRenderer {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(BACKGROUND_COLOR);
-    this.scene.fog = new THREE.Fog(FOG_COLOR, FOG_NEAR, FOG_FAR);
+    this.scene.background = new THREE.Color(themeConfig.background);
+    this.scene.fog = new THREE.Fog(
+      themeConfig.fog.color,
+      themeConfig.fog.near,
+      themeConfig.fog.far,
+    );
 
-    const amb = new THREE.AmbientLight(AMBIENT_LIGHT.color, AMBIENT_LIGHT.intensity);
-    const hemi = new THREE.HemisphereLight(HEMI_LIGHT.sky, HEMI_LIGHT.ground, HEMI_LIGHT.intensity);
+    const amb = new THREE.AmbientLight(
+      themeConfig.ambientLight.color,
+      themeConfig.ambientLight.intensity,
+    );
+    const hemi = new THREE.HemisphereLight(
+      themeConfig.hemiLight.sky,
+      themeConfig.hemiLight.ground,
+      themeConfig.hemiLight.intensity,
+    );
     this.scene.add(amb, hemi);
 
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -10, 10);
@@ -147,7 +154,12 @@ export class WaterfallRenderer {
     this._impacts = new WaterfallImpactParticles();
     this.scene.add(this._impacts.object);
 
-    this._bloom = createWaterfallBloomPipeline(this.renderer, this.scene, this.camera);
+    this._bloom = createWaterfallBloomPipeline(
+      this.renderer,
+      this.scene,
+      this.camera,
+      themeConfig,
+    );
 
     this._resizeObserver = new ResizeObserver(() => this._resize());
     this._resizeObserver.observe(canvas);
@@ -245,21 +257,21 @@ export class WaterfallRenderer {
         const data = group.userData as NoteUserData;
         if (correct) {
           data.status = "good";
-          applyBarFeedback(data.bar, data.isLava, "good");
+          applyBarFeedback(data.bar, data.isLava, this._theme, "good");
         } else {
           data.status = "bad";
-          applyBarFeedback(data.bar, data.isLava, "bad");
+          applyBarFeedback(data.bar, data.isLava, this._theme, "bad");
         }
         return;
       }
       if (correct === false && played_pitch !== null && played_pitch !== undefined) {
-        this.flashLayer.spawn(played_pitch, feedbackColor("bad"), w);
+        this.flashLayer.spawn(played_pitch, feedbackColor(this._theme, "bad"), w);
       }
       return;
     }
 
     if (played_pitch !== null && played_pitch !== undefined) {
-      this.flashLayer.spawn(played_pitch, feedbackColor("neutral"), w);
+      this.flashLayer.spawn(played_pitch, feedbackColor(this._theme, "neutral"), w);
     }
   }
 

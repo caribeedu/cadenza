@@ -30,12 +30,14 @@ const STATE_CLASS: Record<FlashKind, string> = {
 
 export interface PianoProps {
   height?: number | undefined;
+  heldMidiPitches: readonly number[];
   latestNotePlayed: NotePlayed | null;
   layout: KeyboardLayout | null;
 }
 
 export function Piano({
   height = 140,
+  heldMidiPitches,
   latestNotePlayed,
   layout,
 }: PianoProps): null | ReactElement {
@@ -45,6 +47,20 @@ export function Piano({
   const timersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(
     new Map(),
   );
+  const heldPitchesRef = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    heldPitchesRef.current = new Set(heldMidiPitches);
+    if (heldMidiPitches.length > 0) return;
+    setKeyFlashes((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Map(prev);
+      for (const [pitch, kind] of prev.entries()) {
+        if (kind === "neutral") next.delete(pitch);
+      }
+      return next;
+    });
+  }, [heldMidiPitches]);
 
   // Cleanup timers on unmount to avoid setState-on-unmounted warnings.
   useEffect(
@@ -71,6 +87,19 @@ export function Piano({
     const existing = timersRef.current.get(pitch);
     if (existing) clearTimeout(existing);
     const timer = setTimeout(() => {
+      if (heldPitchesRef.current.has(pitch)) {
+        const heldTimer = setTimeout(() => {
+          setKeyFlashes((prev) => {
+            if (heldPitchesRef.current.has(pitch)) return prev;
+            const next = new Map(prev);
+            next.delete(pitch);
+            return next;
+          });
+          timersRef.current.delete(pitch);
+        }, FLASH_DURATION_MS);
+        timersRef.current.set(pitch, heldTimer);
+        return;
+      }
       setKeyFlashes((prev) => {
         const next = new Map(prev);
         next.delete(pitch);

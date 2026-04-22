@@ -1,31 +1,46 @@
 .piano-host {
   position: relative;
-  height: clamp(110px, 15vh, 170px);
-  background: #020203;
+  height: var(--piano-height);
+  background: var(--piano-host-bg, var(--bg));
   border-top: 1px solid var(--border);
   user-select: none;
   overflow: hidden;
+}
+
+.piano-host::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    var(--piano-host-gradient-start, transparent) 0%,
+    var(--piano-host-gradient-end, transparent) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
 .piano-svg {
   display: block;
   width: 100%;
   height: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 .key-white {
   fill: var(--key-white-fill);
   stroke: var(--key-stroke-white);
-  stroke-width: 1;
-  transition: fill 120ms ease-out;
+  stroke-width: var(--stroke-base);
+  transition: fill var(--dur-fast) var(--easing-out);
 }
 .key-white:hover { fill: var(--key-white-hover); }
 
 .key-black {
   fill: var(--key-black-fill);
   stroke: var(--key-stroke-black);
-  stroke-width: 0.75;
-  transition: fill 120ms ease-out;
+  stroke-width: var(--stroke-thin);
+  transition: fill var(--dur-fast) var(--easing-out);
 }
 .key-black:hover { fill: var(--key-black-hover); }
 
@@ -36,7 +51,7 @@
 
 .key-label {
   fill: var(--muted);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   font-weight: 600;
   letter-spacing: 0.3px;

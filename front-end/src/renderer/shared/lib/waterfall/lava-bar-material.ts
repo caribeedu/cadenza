@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { FEEDBACK } from "./visual-theme";
+import { feedbackForTheme, type WaterfallTheme } from "./visual-theme";
 import { fireBarGradient } from "./fire-pending-color";
 
 export type LavaBarStatus = "bad" | "good" | "pending";
@@ -75,9 +75,14 @@ export function createLavaBarMaterial(pitch: number): THREE.ShaderMaterial {
   });
 }
 
-export function initLavaBarFeedbackUniforms(mat: THREE.ShaderMaterial): void {
-  mat.uniforms.uGood.value.set(FEEDBACK.good.r, FEEDBACK.good.g, FEEDBACK.good.b);
-  mat.uniforms.uBad.value.set(FEEDBACK.bad.r, FEEDBACK.bad.g, FEEDBACK.bad.b);
+export function initLavaBarFeedbackUniforms(
+  mat: THREE.ShaderMaterial,
+  theme: WaterfallTheme = "cadenza-dark",
+): void {
+  const good = feedbackForTheme(theme, "good");
+  const bad = feedbackForTheme(theme, "bad");
+  mat.uniforms.uGood.value.set(good.r, good.g, good.b);
+  mat.uniforms.uBad.value.set(bad.r, bad.g, bad.b);
 }
 
 export function setLavaBarStatus(

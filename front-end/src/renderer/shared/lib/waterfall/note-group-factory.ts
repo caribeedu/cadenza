@@ -13,7 +13,7 @@ import {
   LABEL_HEIGHT_PX,
   LABEL_WIDTH_PX,
 } from "./constants";
-import { firePendingColorForPitch } from "./fire-pending-color";
+import { pendingColorForTheme } from "./fire-pending-color";
 import {
   createLavaBarMaterial,
   initLavaBarFeedbackUniforms,
@@ -25,7 +25,7 @@ import {
   resolveFingerDigit,
 } from "./note-sprite-layout";
 import type { NoteSpriteMaterialCache } from "./sprite-material-cache";
-import type { WaterfallTheme } from "./visual-theme";
+import { visualThemeConfig, type WaterfallTheme } from "./visual-theme";
 
 export type NoteStatus = "bad" | "good" | "pending";
 
@@ -45,8 +45,8 @@ function pendingFillColor(
   staff: number,
   pitch: number,
 ): THREE.Color {
-  if (theme === "fire") {
-    return firePendingColorForPitch(pitch);
+  if (visualThemeConfig(theme).pendingColorMode === "gradient") {
+    return pendingColorForTheme(theme, pitch);
   }
   return new THREE.Color(pendingNoteColorHex(staff, pitch));
 }
@@ -88,13 +88,13 @@ export class WaterfallNoteGroupFactory {
       Math.max(2, height * 0.12),
     );
 
-    const isLava = this.theme === "fire";
+    const isLava = visualThemeConfig(this.theme).lavaBars;
     const group = new THREE.Group();
     const geom = new RoundedBoxGeometry(width, height, 2, 2, cornerRadius);
     const mat = isLava
       ? (() => {
           const m = createLavaBarMaterial(note.pitch);
-          initLavaBarFeedbackUniforms(m);
+          initLavaBarFeedbackUniforms(m, this.theme);
           return m;
         })()
       : createNoteBarMaterial(

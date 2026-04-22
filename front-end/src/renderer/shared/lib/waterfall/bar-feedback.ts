@@ -2,28 +2,33 @@ import * as THREE from "three";
 
 import { pendingNoteColorHex } from "../note-hand-colors";
 import { setNoteBarFaceColor } from "./bar-material";
-import { firePendingColorForPitch } from "./fire-pending-color";
+import { pendingColorForTheme } from "./fire-pending-color";
 import {
   setLavaBarStatus,
   type LavaBarStatus,
 } from "./lava-bar-material";
-import { FEEDBACK, type WaterfallTheme } from "./visual-theme";
+import {
+  feedbackForTheme,
+  type WaterfallTheme,
+  visualThemeConfig,
+} from "./visual-theme";
 
 function pendingColour(
   theme: WaterfallTheme,
   staff: number,
   pitch: number,
 ): THREE.Color {
-  if (theme === "fire") {
-    return firePendingColorForPitch(pitch);
+  if (visualThemeConfig(theme).pendingColorMode === "gradient") {
+    return pendingColorForTheme(theme, pitch);
   }
   return new THREE.Color(pendingNoteColorHex(staff, pitch));
 }
 
-function feedbackColor(kind: "bad" | "good" | "neutral"): THREE.Color {
-  if (kind === "good") return FEEDBACK.good;
-  if (kind === "bad") return FEEDBACK.bad;
-  return FEEDBACK.neutral;
+function feedbackColor(
+  theme: WaterfallTheme,
+  kind: "bad" | "good" | "neutral",
+): THREE.Color {
+  return feedbackForTheme(theme, kind);
 }
 
 export function applyBarPending(
@@ -47,6 +52,7 @@ export function applyBarPending(
 export function applyBarFeedback(
   bar: THREE.Mesh,
   isLava: boolean,
+  theme: WaterfallTheme,
   kind: "bad" | "good",
 ): void {
   if (isLava) {
@@ -55,7 +61,7 @@ export function applyBarFeedback(
   }
   setNoteBarFaceColor(
     bar.material as THREE.MeshStandardMaterial,
-    feedbackColor(kind),
+    feedbackColor(theme, kind),
     kind,
   );
 }

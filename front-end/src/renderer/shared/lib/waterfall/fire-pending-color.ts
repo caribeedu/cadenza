@@ -1,20 +1,38 @@
 import * as THREE from "three";
 
 import { HIGHEST_MIDI, LOWEST_MIDI } from "../timeline";
+import { visualThemeConfig, type WaterfallTheme } from "./visual-theme";
 
 /** Deep ember; ramps toward gold with pitch. */
 const EMBER = 0xff1e12;
 const GOLD = 0xffcc4d;
 const PITCH_SPAN = HIGHEST_MIDI - LOWEST_MIDI;
 
+function lerpGradient(
+  pitch: number,
+  lowHex: number,
+  highHex: number,
+): THREE.Color {
+  if (PITCH_SPAN <= 0) return new THREE.Color(lowHex);
+  const t =
+    (Math.max(LOWEST_MIDI, Math.min(HIGHEST_MIDI, pitch)) - LOWEST_MIDI) / PITCH_SPAN;
+  return new THREE.Color(lowHex).lerp(new THREE.Color(highHex), t);
+}
+
 /**
  * Warm red → gold ramp by pitch (Phase A “fire” look). Only used for pending
  * notes when ``theme: 'fire'``.
  */
 export function firePendingColorForPitch(pitch: number): THREE.Color {
-  if (PITCH_SPAN <= 0) return new THREE.Color(EMBER);
-  const t = (Math.max(LOWEST_MIDI, Math.min(HIGHEST_MIDI, pitch)) - LOWEST_MIDI) / PITCH_SPAN;
-  return new THREE.Color(EMBER).lerp(new THREE.Color(GOLD), t);
+  return lerpGradient(pitch, EMBER, GOLD);
+}
+
+export function pendingColorForTheme(
+  theme: WaterfallTheme,
+  pitch: number,
+): THREE.Color {
+  const gradient = visualThemeConfig(theme).pendingGradient;
+  return lerpGradient(pitch, gradient.low, gradient.high);
 }
 
 /**

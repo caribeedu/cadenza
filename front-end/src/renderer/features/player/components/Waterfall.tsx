@@ -1,4 +1,5 @@
 import { usePlayback } from "@app/providers/PlaybackProvider";
+import { useThemeConfig } from "@app/providers/ThemeProvider";
 import { useElementSize } from "@shared/hooks/useElementSize";
 import { type ReactElement, useRef } from "react";
 
@@ -29,6 +30,7 @@ export function Waterfall(): ReactElement {
     serverPlaying,
     sessionRestartGeneration,
   } = usePlayback();
+  const { waterfallTheme } = useThemeConfig();
 
   useWaterfall({
     canvasRef,
@@ -40,6 +42,7 @@ export function Waterfall(): ReactElement {
     serverPlaybackSpeed,
     serverPlaying,
     sessionRestartGeneration,
+    waterfallTheme,
     heldMidiPitches,
   });
 
@@ -49,6 +52,7 @@ export function Waterfall(): ReactElement {
       <div className="piano-host" ref={pianoHostRef}>
         <Piano
           height={pianoSize?.height}
+          heldMidiPitches={heldMidiPitches}
           latestNotePlayed={latestNotePlayed}
           layout={layout}
         />

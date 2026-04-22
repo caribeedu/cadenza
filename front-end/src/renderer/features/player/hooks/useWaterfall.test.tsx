@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import type { LaneGeometry } from "@shared/types/geometry";
+import type { WaterfallTheme } from "@shared/lib/waterfall";
 import type { ScoreTimeline } from "@shared/types/score";
 
 import { act, render } from "@testing-library/react";
@@ -93,6 +94,7 @@ interface HarnessProps {
   serverPaused?: boolean;
   serverPlaybackSpeed?: number;
   serverPlaying?: boolean;
+  waterfallTheme?: WaterfallTheme;
   sessionRestartGeneration?: number;
   heldMidiPitches?: readonly number[];
 }
@@ -105,6 +107,7 @@ function Harness({
   serverPaused = false,
   serverPlaybackSpeed = 1,
   serverPlaying = false,
+  waterfallTheme = "cadenza-dark",
   sessionRestartGeneration = 0,
   heldMidiPitches = [],
 }: HarnessProps): ReactElement {
@@ -123,6 +126,7 @@ function Harness({
     serverPaused,
     serverPlaybackSpeed,
     serverPlaying,
+    waterfallTheme,
     sessionRestartGeneration,
     heldMidiPitches,
   });
@@ -253,6 +257,22 @@ describe("useWaterfall", () => {
     act(() => {
       rerender(<Harness geometry={makeGeometry("b")} />);
     });
+    expect(rendererSpies).toHaveLength(2);
+    expect(rendererSpies[1].destroyed).toBe(false);
+  });
+
+  it("rebuilds the renderer when waterfall visual theme changes", () => {
+    const { rerender } = render(
+      <Harness geometry={makeGeometry("a")} waterfallTheme="cadenza-dark" />,
+    );
+    expect(rendererSpies).toHaveLength(1);
+    const first = rendererSpies[0];
+
+    act(() => {
+      rerender(<Harness geometry={makeGeometry("a")} waterfallTheme="cadenza-light" />);
+    });
+
+    expect(first.destroyed).toBe(true);
     expect(rendererSpies).toHaveLength(2);
     expect(rendererSpies[1].destroyed).toBe(false);
   });
