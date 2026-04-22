@@ -15,17 +15,30 @@ vi.stubGlobal(
   },
 );
 
+const mockComposerRender = vi.fn();
+const mockBloomDispose = vi.fn();
+const mockBloomSyncSize = vi.fn();
+
+vi.mock("./bloom-pipeline", () => ({
+  createWaterfallBloomPipeline: () => ({
+    composer: { render: mockComposerRender },
+    dispose: mockBloomDispose,
+    syncSize: mockBloomSyncSize,
+  }),
+}));
+
 vi.mock("three", async (importOriginal) => {
   const THREE = await importOriginal<typeof import("three")>();
   return {
     ...THREE,
     WebGLRenderer: vi.fn().mockImplementation(() => ({
       domElement: document.createElement("canvas"),
-      setSize: vi.fn(),
-      setPixelRatio: vi.fn(),
-      setAnimationLoop: mockSetAnimationLoop,
-      render: mockRender,
       dispose: mockDispose,
+      outputColorSpace: THREE.SRGBColorSpace,
+      render: mockRender,
+      setAnimationLoop: mockSetAnimationLoop,
+      setPixelRatio: vi.fn(),
+      setSize: vi.fn(),
     })),
   };
 });
@@ -57,11 +70,12 @@ describe("WaterfallRenderer", () => {
     );
   });
 
-  it("destroy stops the animation loop and disposes the WebGL renderer", () => {
+  it("destroy stops the animation loop and disposes the WebGL renderer and bloom", () => {
     const r = new WaterfallRenderer(makeCanvas(), lane);
     r.destroy();
     expect(mockSetAnimationLoop).toHaveBeenCalledWith(null);
     expect(mockDispose).toHaveBeenCalled();
+    expect(mockBloomDispose).toHaveBeenCalled();
   });
 
   it("delegates play / pause / speed to the virtual playhead", () => {

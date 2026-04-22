@@ -9,6 +9,7 @@ import type {
   MSG_LIST_MIDI,
   MSG_MIDI_PORTS,
   MSG_NOTE_PLAYED,
+  MSG_NOTE_OFF,
   MSG_NOTE_TRIGGER,
   MSG_PAUSE,
   MSG_RESUME,
@@ -119,6 +120,12 @@ export interface NotePlayedMessage extends NotePlayed {
   type: typeof MSG_NOTE_PLAYED;
 }
 
+/** Server → frontend: physical key / MIDI note off (stops sustain VFX). */
+export interface NoteOffMessage {
+  pitch: number;
+  type: typeof MSG_NOTE_OFF;
+}
+
 export interface ErrorMessage {
   error: string;
   type: typeof MSG_ERROR;
@@ -129,6 +136,7 @@ export type ServerMessage =
   | FingeringProgressMessage
   | MidiPortsMessage
   | NotePlayedMessage
+  | NoteOffMessage
   | NoteTriggerMessage
   | ScoreTimelineMessage
   | StatusMessage;

@@ -107,8 +107,9 @@ class TestMidiInputCallbackResilience:
         assert event.pitch == 60
         assert event.velocity == 80
         assert event.timestamp_ms == pytest.approx(500.0)
+        assert event.on is True
 
-    def test_note_on_velocity_zero_is_treated_as_note_off(self, loop_with_fake_clock) -> None:
+    def test_note_on_velocity_zero_enqueues_note_off(self, loop_with_fake_clock) -> None:
         loop, _ = loop_with_fake_clock
         midi = MidiInput(loop)
         midi.mark_time_zero()
@@ -117,7 +118,23 @@ class TestMidiInputCallbackResilience:
         midi._on_message(msg)
 
         loop.run_until_complete(asyncio.sleep(0))
-        assert midi.events.empty(), "velocity-0 note_on must not enqueue an event"
+        event = midi.events.get_nowait()
+        assert event.pitch == 60
+        assert event.velocity == 0
+        assert event.on is False
+
+    def test_note_off_enqueues_off_event(self, loop_with_fake_clock) -> None:
+        loop, _ = loop_with_fake_clock
+        midi = MidiInput(loop)
+        midi.mark_time_zero()
+
+        msg = SimpleNamespace(type="note_off", note=62, velocity=0)
+        midi._on_message(msg)
+
+        loop.run_until_complete(asyncio.sleep(0))
+        event = midi.events.get_nowait()
+        assert event.pitch == 62
+        assert event.on is False
 
     def test_callback_swallows_exceptions_and_logs_them(self, loop_with_fake_clock, caplog) -> None:
         loop, _ = loop_with_fake_clock

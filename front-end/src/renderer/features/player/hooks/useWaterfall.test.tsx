@@ -26,6 +26,7 @@ interface RendererSpy {
   pauseAt: (virtualMs: number) => void;
   reportPlayback: () => void;
   resume: () => void;
+  setHeldPitches: (pitches: readonly number[]) => void;
   setLaneGeometry: (geom: LaneGeometry) => void;
   setPlaybackSpeed: (speed: number, alignToVirtualMs?: number) => void;
   setScore: (score: ScoreTimeline) => void;
@@ -49,6 +50,7 @@ vi.mock("@shared/lib/waterfall", () => {
         pauseAt: vi.fn(),
         reportPlayback: vi.fn(),
         resume: vi.fn(),
+        setHeldPitches: vi.fn(),
         setLaneGeometry: vi.fn(),
         setPlaybackSpeed: vi.fn(),
         // Mirrors production: ``setScore`` clears local transport before rebuild.
@@ -92,6 +94,7 @@ interface HarnessProps {
   serverPlaybackSpeed?: number;
   serverPlaying?: boolean;
   sessionRestartGeneration?: number;
+  heldMidiPitches?: readonly number[];
 }
 
 function Harness({
@@ -103,6 +106,7 @@ function Harness({
   serverPlaybackSpeed = 1,
   serverPlaying = false,
   sessionRestartGeneration = 0,
+  heldMidiPitches = [],
 }: HarnessProps): ReactElement {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -120,6 +124,7 @@ function Harness({
     serverPlaybackSpeed,
     serverPlaying,
     sessionRestartGeneration,
+    heldMidiPitches,
   });
   if (rendererRefOut) rendererRefOut.current = rendererRef;
   return (

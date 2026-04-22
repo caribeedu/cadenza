@@ -38,6 +38,7 @@ describe("WaterfallNoteGroupFactory", () => {
       lane,
       DEFAULT_PX_PER_MS,
       makeMockSpriteCache(),
+      "hand",
     );
     const { group, key } = factory.createGroup(baseNote({ id: 42 }));
 
@@ -61,6 +62,7 @@ describe("WaterfallNoteGroupFactory", () => {
       lane,
       DEFAULT_PX_PER_MS,
       makeMockSpriteCache(),
+      "hand",
     );
     // Very short duration → bar height below label threshold
     const { group } = factory.createGroup(
@@ -77,6 +79,7 @@ describe("WaterfallNoteGroupFactory", () => {
       lane,
       DEFAULT_PX_PER_MS,
       cache,
+      "hand",
     );
     // Tall enough for a pitch label, too short for finger+label stack (see constants).
     const durationMs = 128;
@@ -98,6 +101,7 @@ describe("WaterfallNoteGroupFactory", () => {
       lane,
       DEFAULT_PX_PER_MS,
       cache,
+      "hand",
     );
     const durationMs = 400;
     const height = barHeightPx(durationMs, DEFAULT_PX_PER_MS);
@@ -116,6 +120,7 @@ describe("WaterfallNoteGroupFactory", () => {
       lane,
       DEFAULT_PX_PER_MS,
       makeMockSpriteCache(),
+      "hand",
     );
     const white = factory.createGroup(baseNote({ pitch: 60 })).group;
     const black = factory.createGroup(baseNote({ pitch: 61 })).group;

@@ -334,6 +334,21 @@ class Hub:
             await self._handle_midi_event(event)
 
     async def _handle_midi_event(self, event: MidiEvent) -> None:
+        if not event.on:
+            log.info(
+                "MIDI note_off pitch=%d t=%.1fms",
+                event.pitch,
+                event.timestamp_ms,
+            )
+            await self._broadcast_to_role(
+                ClientRole.FRONTEND,
+                {
+                    "type": MessageType.NOTE_OFF,
+                    "pitch": event.pitch,
+                },
+            )
+            return
+
         validator = self._state.validator
         reason = unvalidated_reason(
             validator, playing=self._state.playing, paused=self._state.paused

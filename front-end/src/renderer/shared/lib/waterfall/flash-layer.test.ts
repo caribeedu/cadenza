@@ -25,6 +25,13 @@ describe("WaterfallFlashLayer", () => {
     expect(mesh.material.opacity).toBe(1);
   });
 
+  it("setStrikeLineY sets spawn y for subsequent flashes", () => {
+    const layer = new WaterfallFlashLayer(lane);
+    layer.setStrikeLineY(-40);
+    layer.spawn(0, new THREE.Color(0xffffff), 100);
+    expect(layer.flashes[0].position.y).toBe(-40);
+  });
+
   it("tick fades opacity linearly toward zero over 300ms", () => {
     let t = 0;
     const layer = new WaterfallFlashLayer(lane, () => t);

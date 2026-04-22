@@ -16,6 +16,7 @@ import {
   MSG_SET_PLAYBACK_SPEED,
   MSG_SET_TOLERANCE,
   MSG_START,
+  type DecodedMessage,
 } from "@shared/lib/protocol";
 import {
   createContext,
@@ -162,6 +163,21 @@ export function PlaybackProvider({
       dispatch({ payload: played, type: "note_played" });
       logNotePlayed(played, log, lastUnvalidatedReasonRef);
     });
+    const onNoteOff = (msg: DecodedMessage) => {
+      const raw = (msg as { pitch?: unknown }).pitch;
+      const n =
+        typeof raw === "number" && Number.isFinite(raw)
+          ? Math.round(raw)
+          : typeof raw === "string" && raw.trim() !== "" && Number.isFinite(Number(raw))
+            ? Math.round(Number(raw))
+            : null;
+      if (n != null) {
+        dispatch({ payload: n, type: "note_off" });
+      }
+    };
+    // ``note_off`` (current server); keep ``note_released`` for older hub builds.
+    const unsubNoteOff1 = subscribe("note_off", onNoteOff);
+    const unsubNoteOff2 = subscribe("note_released", onNoteOff);
     return () => {
       unsubStatus();
       unsubPorts();
@@ -169,6 +185,8 @@ export function PlaybackProvider({
       unsubFingering();
       unsubError();
       unsubNote();
+      unsubNoteOff1();
+      unsubNoteOff2();
     };
   }, [subscribe, log, setToleranceMs, setPlaybackSpeed]);
 

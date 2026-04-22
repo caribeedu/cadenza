@@ -8,6 +8,11 @@ export interface FingeringProgressState {
 }
 
 export interface PlaybackState {
+  /**
+   * Pitches with keys still physically down, from ``note_played`` / ``note_off``.
+   * Used for sustained waterfall VFX (e.g. particles).
+   */
+  heldMidiPitches: number[];
   fingeringProgress: null | FingeringProgressState;
   latestNotePlayed: NotePlayed | null;
   midiOpen: boolean;
@@ -27,11 +32,13 @@ export type PlaybackAction =
   | { payload: FingeringProgressState; type: "fingering_progress" }
   | { payload: MidiPortsMessage; type: "midi_ports" }
   | { payload: NotePlayed; type: "note_played" }
+  | { payload: number; type: "note_off" }
   | { payload: ScoreTimeline; type: "score_timeline" }
   | { payload: StatusMessage; type: "status" }
   | { type: "session_restart" };
 
 export const initialPlaybackState: PlaybackState = {
+  heldMidiPitches: [],
   fingeringProgress: null,
   latestNotePlayed: null,
   midiOpen: false,
@@ -54,6 +61,7 @@ export function playbackReducer(
     case "connection_lost":
       return {
         ...state,
+        heldMidiPitches: [],
         fingeringProgress: null,
         latestNotePlayed: null,
         midiOpen: false,
@@ -70,8 +78,21 @@ export function playbackReducer(
       return { ...state, fingeringProgress: action.payload };
     case "midi_ports":
       return { ...state, midiPorts: action.payload.ports ?? [] };
-    case "note_played":
-      return { ...state, latestNotePlayed: action.payload };
+    case "note_played": {
+      const p = action.payload.played_pitch;
+      const heldMidiPitches = state.heldMidiPitches.includes(p)
+        ? state.heldMidiPitches
+        : [...state.heldMidiPitches, p].sort((a, b) => a - b);
+      return { ...state, heldMidiPitches, latestNotePlayed: action.payload };
+    }
+    case "note_off": {
+      const p = action.payload;
+      if (!state.heldMidiPitches.includes(p)) {
+        return state;
+      }
+      const heldMidiPitches = state.heldMidiPitches.filter((x) => x !== p);
+      return { ...state, heldMidiPitches };
+    }
     case "score_timeline":
       return {
         ...state,
@@ -81,6 +102,7 @@ export function playbackReducer(
     case "session_restart":
       return {
         ...state,
+        heldMidiPitches: [],
         sessionRestartGeneration: state.sessionRestartGeneration + 1,
       };
     case "status": {

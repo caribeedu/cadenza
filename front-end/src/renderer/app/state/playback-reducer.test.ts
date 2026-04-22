@@ -82,7 +82,45 @@ describe("playbackReducer", () => {
       expect(cleared.serverPlaybackSpeed).toBe(1);
       expect(cleared.fingeringProgress).toBeNull();
       expect(cleared.latestNotePlayed).toBeNull();
+      expect(cleared.heldMidiPitches).toEqual([]);
       expect(cleared.sessionRestartGeneration).toBe(1);
+    });
+  });
+
+  describe("heldMidiPitches (note on/off)", () => {
+    it("adds a pitch on note_played and removes it on note_off", () => {
+      const n = {
+        correct: true,
+        delta_ms: 0,
+        expected_id: 0,
+        expected_pitch: 60,
+        expected_time_ms: 0,
+        played_pitch: 60,
+        played_time_ms: 0,
+      };
+      const afterOn = playbackReducer(initialPlaybackState, {
+        payload: n,
+        type: "note_played",
+      });
+      expect(afterOn.heldMidiPitches).toEqual([60]);
+
+      const afterOff = playbackReducer(afterOn, { payload: 60, type: "note_off" });
+      expect(afterOff.heldMidiPitches).toEqual([]);
+    });
+
+    it("clears held pitches on session_restart", () => {
+      const n = {
+        correct: true,
+        delta_ms: 0,
+        expected_id: 0,
+        expected_pitch: 60,
+        expected_time_ms: 0,
+        played_pitch: 60,
+        played_time_ms: 0,
+      };
+      const withHeld = playbackReducer(initialPlaybackState, { payload: n, type: "note_played" });
+      const restarted = playbackReducer(withHeld, { type: "session_restart" });
+      expect(restarted.heldMidiPitches).toEqual([]);
     });
   });
 

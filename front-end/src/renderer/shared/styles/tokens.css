@@ -1,13 +1,15 @@
+/* Stage / waterfall cohesion: near-black playfield, warm key flashes — see
+   `shared/lib/waterfall/visual-theme` (PIANO_KEY_CSS, FEEDBACK). */
 :root {
   color-scheme: dark;
-  --bg: #0b0d17;
+  --bg: #020203;
   --panel: #151826;
   --panel-2: #1f2336;
   --border: #272b40;
   --border-strong: #2e3350;
   --fg: #e8ecf7;
   --muted: #8892b0;
-  --accent: #6cd0ff;
+  --accent: #ffb84d;
   --accent-violet: #a77bff;
   --good: #3fd97f;
   --bad: #ff5a6c;

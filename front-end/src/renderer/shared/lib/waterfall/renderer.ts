@@ -14,13 +14,6 @@ import * as THREE from "three";
 import type { LaneGeometry } from "../../types/geometry";
 import type { NotePlayed, ScoreTimeline } from "../../types/score";
 
-/** Per-hand tint for bars still in the "pending" state. */
-import { pendingNoteColorHex } from "../note-hand-colors";
-/**
- * Timeline math shared with any other score visualisation: vertical placement,
- * bar height in px, and mesh keys for matching server playback events to
- * on-screen notes.
- */
 import {
   BAR_VERTICAL_GAP_PX,
   barHeightPx,
@@ -30,35 +23,44 @@ import {
   yForNote,
 } from "../timeline";
 
+import { applyBarFeedback, applyBarPending, feedbackColor } from "./bar-feedback";
+import { createWaterfallBloomPipeline } from "./bloom-pipeline";
 import { WaterfallFlashLayer } from "./flash-layer";
 import { createHitLine } from "./hit-line";
+import { WaterfallImpactParticles } from "./impact-particles";
+import { setLavaBarTime } from "./lava-bar-material";
 import type { NoteUserData } from "./note-group-factory";
 import { WaterfallNoteGroupFactory } from "./note-group-factory";
 import { NoteSpriteMaterialCache } from "./sprite-material-cache";
+import {
+  AMBIENT_LIGHT,
+  BACKGROUND_COLOR,
+  FOG_COLOR,
+  FOG_FAR,
+  FOG_NEAR,
+  HEMI_LIGHT,
+  MAX_DEVICE_PIXEL_RATIO,
+} from "./visual-theme";
+import type { WaterfallTheme } from "./visual-theme";
 import { VirtualPlayhead } from "./virtual-playhead";
-
-/** Hit / miss / neutral feedback on the lane (distinct from per-hand pending). */
-const COLOUR_GOOD = new THREE.Color(0x3fd97f);
-const COLOUR_BAD = new THREE.Color(0xff5a6c);
-const COLOUR_NEUTRAL = new THREE.Color(0x6cd0ff);
-
-function pendingColourFor(staff: number | undefined, pitch: number): THREE.Color {
-  return new THREE.Color(pendingNoteColorHex(staff, pitch));
-}
 
 export interface WaterfallOptions {
   leadMs?: number;
+  /** ``hand`` = per-hand “study” colours; ``fire`` = warm stage (default). */
+  theme?: WaterfallTheme;
   playbackSpeed?: number;
   pxPerMs?: number;
 }
 
 const DEFAULT_PLAYBACK_SPEED = 1.0;
+const DEFAULT_THEME: WaterfallTheme = "fire";
 
 export class WaterfallRenderer {
   readonly camera: THREE.OrthographicCamera;
   readonly canvas: HTMLCanvasElement;
   readonly flashGroup: THREE.Group;
-  readonly hitLine: THREE.Line;
+  /** Play line: additive band + hot core. */
+  readonly hitLine: THREE.Group;
   laneGeometry: LaneGeometry;
   readonly leadMs: number;
   readonly noteGroup: THREE.Group;
@@ -68,21 +70,21 @@ export class WaterfallRenderer {
   readonly scene: THREE.Scene;
   score: ScoreTimeline = { bpm: 120, duration_ms: 0, notes: [] };
 
+  private readonly _bloom: ReturnType<typeof createWaterfallBloomPipeline>;
   /**
-   * Virtual score-time clock (see {@link VirtualPlayhead}).
-   *
-   * While playing: virtual ms is ``(performance.now() - startTimestamp) *
-   * speed``. While paused: it is frozen in ``pausedElapsedMs``. At
-   * ``speed === 1``, elapsed virtual ms equals wall-clock ms since
-   * ``start()``/``resume()`` for that segment.
-   *
-   * ``pausedElapsedMs`` and ``startTimestamp`` are also exposed on this class
-   * as getters/setters that read and write the same fields on the playhead, for
-   * callers that inspect or adjust playhead state directly.
+   * World Y of the hit line (px). Placed just inside the bottom of the
+   * waterfall so it lines up with the top of the piano keys below the canvas.
    */
+  private _strikeLineY = 0;
+  /** Pitches with physical keys down; see {@link setHeldPitches}. */
+  private _heldPitches: number[] = [];
+  /** Seconds; ``0`` means "no prior frame" for delta. */
+  private _lastFrameT = 0;
+  private readonly _impacts: WaterfallImpactParticles;
   private readonly playhead: VirtualPlayhead;
   private readonly spriteCache = new NoteSpriteMaterialCache();
   private noteFactory: WaterfallNoteGroupFactory;
+  private readonly _theme: WaterfallTheme;
   private readonly flashLayer: WaterfallFlashLayer;
   private readonly _resizeObserver: ResizeObserver;
 
@@ -93,6 +95,7 @@ export class WaterfallRenderer {
       leadMs = DEFAULT_LEAD_MS,
       playbackSpeed = DEFAULT_PLAYBACK_SPEED,
       pxPerMs = DEFAULT_PX_PER_MS,
+      theme = DEFAULT_THEME,
     }: WaterfallOptions = {},
   ) {
     if (!laneGeometry) {
@@ -103,6 +106,7 @@ export class WaterfallRenderer {
     this.laneGeometry = laneGeometry;
     this.pxPerMs = pxPerMs;
     this.leadMs = leadMs;
+    this._theme = theme;
     const speed =
       playbackSpeed > 0 ? playbackSpeed : DEFAULT_PLAYBACK_SPEED;
     this.playhead = new VirtualPlayhead(speed);
@@ -111,18 +115,27 @@ export class WaterfallRenderer {
       this.laneGeometry,
       this.pxPerMs,
       this.spriteCache,
+      this._theme,
     );
     this.flashLayer = new WaterfallFlashLayer(this.laneGeometry);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio, MAX_DEVICE_PIXEL_RATIO),
+    );
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0b0d17);
+    this.scene.background = new THREE.Color(BACKGROUND_COLOR);
+    this.scene.fog = new THREE.Fog(FOG_COLOR, FOG_NEAR, FOG_FAR);
+
+    const amb = new THREE.AmbientLight(AMBIENT_LIGHT.color, AMBIENT_LIGHT.intensity);
+    const hemi = new THREE.HemisphereLight(HEMI_LIGHT.sky, HEMI_LIGHT.ground, HEMI_LIGHT.intensity);
+    this.scene.add(amb, hemi);
 
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -10, 10);
 
-    this.hitLine = createHitLine();
+    this.hitLine = createHitLine(this._theme);
     this.scene.add(this.hitLine);
 
     this.noteGroup = new THREE.Group();
@@ -130,6 +143,11 @@ export class WaterfallRenderer {
 
     this.flashGroup = this.flashLayer.group;
     this.scene.add(this.flashGroup);
+
+    this._impacts = new WaterfallImpactParticles();
+    this.scene.add(this._impacts.object);
+
+    this._bloom = createWaterfallBloomPipeline(this.renderer, this.scene, this.camera);
 
     this._resizeObserver = new ResizeObserver(() => this._resize());
     this._resizeObserver.observe(canvas);
@@ -156,9 +174,15 @@ export class WaterfallRenderer {
     return this.flashLayer.flashes;
   }
 
+  get theme(): WaterfallTheme {
+    return this._theme;
+  }
+
   destroy(): void {
     this.renderer.setAnimationLoop(null);
     this._resizeObserver.disconnect();
+    this._bloom.dispose();
+    this._impacts.dispose();
     this.renderer.dispose();
     this.spriteCache.dispose();
   }
@@ -175,85 +199,78 @@ export class WaterfallRenderer {
     return this.playhead.speed;
   }
 
-  /**
-   * Update the replay-speed multiplier.
-   *
-   * When ``alignToVirtualMs`` is provided we pin the renderer's playhead to the
-   * caller-supplied virtual-time value (the server-authoritative
-   * ``elapsed_ms``). This is how drift is eliminated on a speed commit or
-   * mid-session reconnect: the frontend stops extrapolating its own virtual
-   * time across asymmetric rebases and trusts the server's clock for the snap,
-   * then resumes ticking forward at the new speed from there.
-   *
-   * When ``alignToVirtualMs`` is omitted we fall back to a self-rebase
-   * (preserve the currently displayed playhead) for callers that do not yet
-   * have an authoritative value — e.g. offline unit tests.
-   *
-   * When paused, ``pausedElapsedMs`` already stores virtual ms, so there is
-   * nothing to rebase — the next ``resume()`` honours the new factor
-   * automatically.
-   */
   setPlaybackSpeed(nextSpeed: number, alignToVirtualMs?: number): void {
     this.playhead.setPlaybackSpeed(nextSpeed, alignToVirtualMs);
   }
 
-  /**
-   * Align the renderer's virtual-time playhead to the supplied value without
-   * changing the replay speed. Used on late-join (a client reconnects
-   * mid-session) and on pause/resume transitions where the server reports an
-   * authoritative elapsed we must honour verbatim.
-   */
   syncToElapsedMs(virtualMs: number): void {
     this.playhead.syncToElapsedMs(virtualMs);
   }
 
-  /**
-   * Like ``start`` but positions the virtual-time origin so the playhead
-   * begins at ``virtualMs``. Used when a client joins in the middle of a
-   * running session — the status frame tells us where the server is, and the
-   * renderer mirrors it.
-   */
   startAt(virtualMs: number): void {
     this.playhead.startAt(virtualMs);
     for (const group of this.noteMeshes.values()) {
       const data = group.userData as NoteUserData;
       data.status = "pending";
-      data.bar.material.color.copy(
-        pendingColourFor(data.staff, data.pitch),
+      applyBarPending(
+        data.bar,
+        data.isLava,
+        this._theme,
+        data.staff,
+        data.pitch,
       );
     }
   }
 
-  /**
-   * Pause variant that sets the frozen playhead to the supplied virtual-time
-   * value. Lets a newly connecting client land exactly on the server's paused
-   * position rather than wherever it was animating locally.
-   */
   pauseAt(virtualMs: number): void {
     this.playhead.pauseAt(virtualMs);
   }
 
   reportPlayback(msg: NotePlayed): void {
     const { correct, played_pitch } = msg;
+    const w = this._canvasWidthPx();
+
+    if (played_pitch !== null && played_pitch !== undefined) {
+      this._impacts.burst(
+        this.laneGeometry.laneCenterPx(played_pitch) - w * 0.5,
+        this._strikeLineY,
+        16,
+      );
+    }
 
     if (correct === true || correct === false) {
       const key = noteMeshKey(msg);
       const group = key != null ? this.noteMeshes.get(key) : null;
       if (group) {
         const data = group.userData as NoteUserData;
-        const colour = correct ? COLOUR_GOOD : COLOUR_BAD;
-        data.status = correct ? "good" : "bad";
-        data.bar.material.color.copy(colour);
+        if (correct) {
+          data.status = "good";
+          applyBarFeedback(data.bar, data.isLava, "good");
+        } else {
+          data.status = "bad";
+          applyBarFeedback(data.bar, data.isLava, "bad");
+        }
         return;
       }
       if (correct === false && played_pitch !== null && played_pitch !== undefined) {
-        this.flashLayer.spawn(played_pitch, COLOUR_BAD, this._canvasWidthPx());
+        this.flashLayer.spawn(played_pitch, feedbackColor("bad"), w);
       }
       return;
     }
 
     if (played_pitch !== null && played_pitch !== undefined) {
-      this.flashLayer.spawn(played_pitch, COLOUR_NEUTRAL, this._canvasWidthPx());
+      this.flashLayer.spawn(played_pitch, feedbackColor("neutral"), w);
+    }
+  }
+
+  /**
+   * Which MIDI pitches are still held, matching server ``note_played`` /
+   * ``note_off`` (and legacy ``note_released``) pairs. Drives sustain sparks.
+   */
+  setHeldPitches(pitches: readonly number[]): void {
+    this._heldPitches = pitches.length ? [...pitches] : [];
+    if (this._heldPitches.length === 0) {
+      this._impacts.resetSustainEmission();
     }
   }
 
@@ -261,11 +278,6 @@ export class WaterfallRenderer {
     this.playhead.resume();
   }
 
-  /**
-   * Replace the lane-geometry provider (e.g. after a piano reflow). Triggers a
-   * full mesh rebuild so bar widths/positions stay aligned with the visible
-   * keys.
-   */
   setLaneGeometry(nextGeometry: LaneGeometry | null | undefined): void {
     if (!nextGeometry) return;
     this.laneGeometry = nextGeometry;
@@ -273,14 +285,13 @@ export class WaterfallRenderer {
       this.laneGeometry,
       this.pxPerMs,
       this.spriteCache,
+      this._theme,
     );
     this.flashLayer.setLaneGeometry(this.laneGeometry);
     this._rebuildNotes();
   }
 
   setScore(scoreTimeline: ScoreTimeline): void {
-    // New timeline: reset the playhead so note motion uses only this score’s
-    // timing (no leftover virtual time from the last load).
     this.stop();
     this.score = scoreTimeline;
     this._rebuildNotes();
@@ -291,8 +302,12 @@ export class WaterfallRenderer {
     for (const group of this.noteMeshes.values()) {
       const data = group.userData as NoteUserData;
       data.status = "pending";
-      data.bar.material.color.copy(
-        pendingColourFor(data.staff, data.pitch),
+      applyBarPending(
+        data.bar,
+        data.isLava,
+        this._theme,
+        data.staff,
+        data.pitch,
       );
     }
   }
@@ -329,6 +344,9 @@ export class WaterfallRenderer {
     const w = this._canvasWidthPx();
     const h = this._canvasHeightPx();
     this.renderer.setSize(w, h, false);
+    const dpr = Math.min(window.devicePixelRatio, MAX_DEVICE_PIXEL_RATIO);
+    this.renderer.setPixelRatio(dpr);
+    this._bloom.syncSize(w, h, dpr);
 
     const hitLineOffset = h * 0.15;
     this.camera.left = -w / 2;
@@ -337,26 +355,48 @@ export class WaterfallRenderer {
     this.camera.bottom = -hitLineOffset;
     this.camera.updateProjectionMatrix();
 
+    const keyTopPadPx = 0;
+    this._strikeLineY = this.camera.bottom + keyTopPadPx;
+    this.hitLine.position.y = this._strikeLineY;
+    this.flashLayer.setStrikeLineY(this._strikeLineY);
+
     this._rebuildNotes();
   }
 
   private _tick(): void {
+    const t = performance.now() * 0.001;
+    const dt = this._lastFrameT > 0 ? t - this._lastFrameT : 0;
+    this._lastFrameT = t;
+
     const nowMs = this.playhead.getVirtualNowMs();
     const w = this._canvasWidthPx();
 
     for (const group of this.noteMeshes.values()) {
-      const { durationMs, pitch, startMs } = group.userData as NoteUserData;
+      const data = group.userData as NoteUserData;
+      const { durationMs, pitch, startMs, isLava, bar } = data;
+      if (isLava) {
+        setLavaBarTime(bar.material as THREE.ShaderMaterial, t);
+      }
       const hPx = barHeightPx(durationMs, this.pxPerMs, BAR_VERTICAL_GAP_PX);
       const y =
-        yForNote({ nowMs, pxPerMs: this.pxPerMs, startMs }) + hPx / 2;
+        yForNote({ nowMs, pxPerMs: this.pxPerMs, startMs }) +
+        hPx / 2 +
+        this._strikeLineY;
       const x = this.laneGeometry.laneCenterPx(pitch) - w / 2;
       group.position.set(x, y, 0);
       group.visible = y > this.camera.bottom - 50 && y < this.camera.top + 50;
     }
 
+    for (const p of this._heldPitches) {
+      const x = this.laneGeometry.laneCenterPx(p) - w * 0.5;
+      this._impacts.streamAtLine(x, this._strikeLineY, dt, 36);
+    }
+
     this.flashLayer.tick();
-    this.renderer.render(this.scene, this.camera);
+    this._impacts.tick(dt);
+    this._bloom.composer.render();
   }
 }
 
 export type { NoteUserData } from "./note-group-factory";
+export type { WaterfallTheme } from "./visual-theme";

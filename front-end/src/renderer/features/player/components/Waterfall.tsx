@@ -20,6 +20,7 @@ export function Waterfall(): ReactElement {
   const layout = useKeyboardLayout({ width: pianoSize?.width });
 
   const {
+    heldMidiPitches,
     latestNotePlayed,
     score,
     serverElapsedMs,
@@ -39,6 +40,7 @@ export function Waterfall(): ReactElement {
     serverPlaybackSpeed,
     serverPlaying,
     sessionRestartGeneration,
+    heldMidiPitches,
   });
 
   return (

@@ -30,6 +30,7 @@ class TestProtocol:
         assert MessageType.SCORE == "score"
         assert MessageType.STATUS == "status"
         assert MessageType.NOTE_PLAYED == "note_played"
+        assert MessageType.NOTE_OFF == "note_off"
 
     def test_pause_and_resume_constants_exist(self) -> None:
         # Regression guard: the pause-in-place UX relies on MSG_PAUSE and

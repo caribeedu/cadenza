@@ -52,6 +52,8 @@ class MidiEvent:
     pitch: int
     velocity: int
     timestamp_ms: float
+    on: bool
+    """``True`` for note_on (velocity > 0); ``False`` for note_off or velocity-0 note_on."""
 
 
 def list_input_ports() -> list[str]:
@@ -272,13 +274,24 @@ class MidiInput:
             else:
                 log.info("MIDI raw: %s", msg)
 
-            if msg.type != "note_on" or msg.velocity == 0:
+            if msg.type == "note_on" and msg.velocity > 0:
+                event = MidiEvent(
+                    pitch=int(msg.note),
+                    velocity=int(msg.velocity),
+                    timestamp_ms=self.virtual_elapsed_ms,
+                    on=True,
+                )
+            elif msg.type == "note_off" or (
+                msg.type == "note_on" and msg.velocity == 0
+            ):
+                event = MidiEvent(
+                    pitch=int(msg.note),
+                    velocity=0,
+                    timestamp_ms=self.virtual_elapsed_ms,
+                    on=False,
+                )
+            else:
                 return
-            event = MidiEvent(
-                pitch=int(msg.note),
-                velocity=int(msg.velocity),
-                timestamp_ms=self.virtual_elapsed_ms,
-            )
             self._loop.call_soon_threadsafe(self.events.put_nowait, event)
         except Exception:  # pragma: no cover - background thread safety net
             log.exception("MIDI callback crashed on message: %r", msg)

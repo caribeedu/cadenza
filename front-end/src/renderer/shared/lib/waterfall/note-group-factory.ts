@@ -6,12 +6,18 @@ import type { ScoreNote } from "../../types/score";
 
 import { pendingNoteColorHex } from "../note-hand-colors";
 import { barHeightPx, isAccidental, nameForPitch, noteMeshKey } from "../timeline";
+import { createNoteBarMaterial } from "./bar-material";
 import {
   FINGER_HEIGHT_PX,
   FINGER_WIDTH_PX,
   LABEL_HEIGHT_PX,
   LABEL_WIDTH_PX,
 } from "./constants";
+import { firePendingColorForPitch } from "./fire-pending-color";
+import {
+  createLavaBarMaterial,
+  initLavaBarFeedbackUniforms,
+} from "./lava-bar-material";
 import {
   classifyNoteSpriteStack,
   fingerAndLabelSpriteYs,
@@ -19,20 +25,30 @@ import {
   resolveFingerDigit,
 } from "./note-sprite-layout";
 import type { NoteSpriteMaterialCache } from "./sprite-material-cache";
-
-const COLOUR_PENDING = (staff: number, pitch: number) =>
-  new THREE.Color(pendingNoteColorHex(staff, pitch));
+import type { WaterfallTheme } from "./visual-theme";
 
 export type NoteStatus = "bad" | "good" | "pending";
 
 export interface NoteUserData {
-  bar: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+  bar: THREE.Mesh<THREE.BufferGeometry, THREE.Material>;
   durationMs: number;
   id?: number;
+  isLava: boolean;
   pitch: number;
   staff: number;
   startMs: number;
   status: NoteStatus;
+}
+
+function pendingFillColor(
+  theme: WaterfallTheme,
+  staff: number,
+  pitch: number,
+): THREE.Color {
+  if (theme === "fire") {
+    return firePendingColorForPitch(pitch);
+  }
+  return new THREE.Color(pendingNoteColorHex(staff, pitch));
 }
 
 /** Builds rounded note bars with optional pitch / finger sprites. */
@@ -41,6 +57,7 @@ export class WaterfallNoteGroupFactory {
     private readonly laneGeometry: LaneGeometry,
     private readonly pxPerMs: number,
     private readonly spriteCache: NoteSpriteMaterialCache,
+    private readonly theme: WaterfallTheme,
   ) {}
 
   private makeFingerSprite(digit: number): THREE.Sprite {
@@ -71,13 +88,18 @@ export class WaterfallNoteGroupFactory {
       Math.max(2, height * 0.12),
     );
 
+    const isLava = this.theme === "fire";
     const group = new THREE.Group();
     const geom = new RoundedBoxGeometry(width, height, 2, 2, cornerRadius);
-    const mat = new THREE.MeshBasicMaterial({
-      color: COLOUR_PENDING(staff, note.pitch).clone(),
-      depthTest: false,
-      depthWrite: false,
-    });
+    const mat = isLava
+      ? (() => {
+          const m = createLavaBarMaterial(note.pitch);
+          initLavaBarFeedbackUniforms(m);
+          return m;
+        })()
+      : createNoteBarMaterial(
+          pendingFillColor(this.theme, staff, note.pitch).clone(),
+        );
     const bar = new THREE.Mesh(geom, mat);
     group.add(bar);
     group.renderOrder = isBlack ? 2 : 1;
@@ -107,6 +129,7 @@ export class WaterfallNoteGroupFactory {
       bar,
       durationMs: note.duration_ms,
       id: note.id,
+      isLava,
       pitch: note.pitch,
       staff,
       startMs: note.start_ms,

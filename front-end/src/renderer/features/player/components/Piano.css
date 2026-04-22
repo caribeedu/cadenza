@@ -1,7 +1,7 @@
 .piano-host {
   position: relative;
   height: clamp(110px, 15vh, 170px);
-  background: #0f1220;
+  background: #020203;
   border-top: 1px solid var(--border);
   user-select: none;
   overflow: hidden;

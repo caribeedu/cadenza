@@ -31,6 +31,8 @@ export interface UseWaterfallOptions {
   /** Bumps on every Start/Restart so we reset the waterfall when the
    *  server clock resets but ``serverPlaying`` never flips to false. */
   sessionRestartGeneration: number;
+  /** Pitches with keys still down; drives sustained strike-line particles. */
+  heldMidiPitches: readonly number[];
 }
 
 // Imperative bridge between React and the Three.js renderer.
@@ -62,6 +64,7 @@ export function useWaterfall({
   serverPlaybackSpeed,
   serverPlaying,
   sessionRestartGeneration,
+  heldMidiPitches,
 }: UseWaterfallOptions): RefObject<null | WaterfallRenderer> {
   const [renderer, setRenderer] = useState<null | WaterfallRenderer>(null);
   const rendererRef = useRef<null | WaterfallRenderer>(null);
@@ -196,6 +199,11 @@ export function useWaterfall({
     previousNoteRef.current = latestNotePlayed;
     renderer.reportPlayback(latestNotePlayed);
   }, [renderer, latestNotePlayed]);
+
+  useEffect(() => {
+    if (!renderer) return;
+    renderer.setHeldPitches(heldMidiPitches);
+  }, [renderer, heldMidiPitches]);
 
   return rendererRef;
 }

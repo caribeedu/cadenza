@@ -7,4 +7,7 @@ export {
   WaterfallRenderer,
   type NoteUserData,
   type WaterfallOptions,
+  type WaterfallTheme,
 } from "./renderer";
+
+export { PIANO_KEY_CSS } from "./visual-theme";

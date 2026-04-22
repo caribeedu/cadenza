@@ -17,6 +17,9 @@ export class WaterfallFlashLayer {
   readonly flashes: FlashMesh[] = [];
   readonly group = new THREE.Group();
 
+  /** World Y of the play line (matches piano key top). */
+  private _strikeLineY = 0;
+
   constructor(
     private laneGeometry: LaneGeometry,
     private readonly now: () => number = () => performance.now(),
@@ -24,6 +27,10 @@ export class WaterfallFlashLayer {
 
   setLaneGeometry(lane: LaneGeometry): void {
     this.laneGeometry = lane;
+  }
+
+  setStrikeLineY(y: number): void {
+    this._strikeLineY = y;
   }
 
   spawn(
@@ -41,7 +48,7 @@ export class WaterfallFlashLayer {
     const mesh = new THREE.Mesh(geom, mat) as FlashMesh;
     mesh.position.set(
       this.laneGeometry.laneCenterPx(pitch) - canvasWidthPx / 2,
-      0,
+      this._strikeLineY,
       0,
     );
     mesh.userData = { spawnedAt: this.now() };
