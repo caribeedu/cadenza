@@ -7,6 +7,26 @@ import {
 
 const HALF_W = 5000;
 
+const GLOW_VERT = /* glsl */ `
+varying vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`;
+
+const GLOW_FRAG = /* glsl */ `
+varying vec2 vUv;
+uniform vec3 uColor;
+uniform float uOpacity;
+uniform float uFadePower;
+void main() {
+  float dist = abs(vUv.y - 0.5) * 2.0;
+  float feather = pow(max(0.0, 1.0 - dist), uFadePower);
+  gl_FragColor = vec4(uColor, feather * uOpacity);
+}
+`;
+
 /**
  * A bright core plus wide additive band so the play line reads through bloom.
  */
@@ -18,13 +38,18 @@ export function createHitLine(
 
   const glow = new THREE.Mesh(
     new THREE.PlaneGeometry(HALF_W * 2, line.glowThickness),
-    new THREE.MeshBasicMaterial({
+    new THREE.ShaderMaterial({
       blending: THREE.AdditiveBlending,
-      color: new THREE.Color(line.glow),
       depthTest: false,
       depthWrite: false,
-      opacity: line.glowOpacity,
+      fragmentShader: GLOW_FRAG,
       transparent: true,
+      uniforms: {
+        uColor: { value: new THREE.Color(line.glow) },
+        uFadePower: { value: line.glowFadePower },
+        uOpacity: { value: line.glowOpacity },
+      },
+      vertexShader: GLOW_VERT,
     }),
   );
   glow.renderOrder = 0;

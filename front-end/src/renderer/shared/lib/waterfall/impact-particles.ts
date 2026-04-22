@@ -1,5 +1,10 @@
 import * as THREE from "three";
 
+import {
+  visualThemeConfig,
+  type WaterfallTheme,
+} from "./visual-theme";
+
 const POOL = 400;
 const LIFE_BURST = 0.45;
 const LIFE_STREAM = 0.5;
@@ -23,7 +28,9 @@ export class WaterfallImpactParticles {
   private readonly _tex: THREE.DataTexture;
   private readonly _points: THREE.Points;
 
-  constructor() {
+  constructor(theme: WaterfallTheme = "cadenza-dark") {
+    const spec = visualThemeConfig(theme).particles;
+
     const pos = new Float32Array(POOL * 3);
     this._pos = pos;
     this._vel = new Float32Array(POOL * 3);
@@ -37,12 +44,12 @@ export class WaterfallImpactParticles {
     this._tex = this._makeSpriteTexture();
     this._mat = new THREE.PointsMaterial({
       blending: THREE.AdditiveBlending,
-      color: 0xffcc88,
+      color: spec.tint,
       depthTest: false,
       depthWrite: false,
       map: this._tex,
-      opacity: 0.9,
-      size: 12,
+      opacity: spec.opacity,
+      size: spec.size,
       sizeAttenuation: false,
       transparent: true,
     });
@@ -63,9 +70,10 @@ export class WaterfallImpactParticles {
         const t = Math.max(0, Math.min(1, r));
         const a = t * t * 255;
         const i = (y * s + x) * 4;
+        // Neutral white — hue comes from ``PointsMaterial.color`` (theme tint).
         d[i] = 255;
-        d[i + 1] = 230;
-        d[i + 2] = 200;
+        d[i + 1] = 255;
+        d[i + 2] = 255;
         d[i + 3] = a;
       }
     }

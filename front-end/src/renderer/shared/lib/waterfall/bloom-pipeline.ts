@@ -36,6 +36,23 @@ export function createWaterfallBloomPipeline(
     bloom.radius,
     bloom.threshold,
   );
+  // Tint the bloom chain from theme data so themes can keep a coherent
+  // look (e.g. Aurora stays cool-blue instead of warm yellow highlights).
+  const tint = new THREE.Color(bloom.tint);
+  if ("bloomTintColors" in bloomPass) {
+    const tintMips = (
+      bloomPass as unknown as {
+        bloomTintColors?: THREE.Vector3[];
+      }
+    ).bloomTintColors;
+    if (Array.isArray(tintMips)) {
+      const scales = [1.0, 0.82, 0.68, 0.56, 0.46];
+      for (const [idx, vec] of tintMips.entries()) {
+        const s = scales[idx] ?? 0.42;
+        vec.set(tint.r * s, tint.g * s, tint.b * s);
+      }
+    }
+  }
   bloomPass.strength = bloom.strength;
   bloomPass.radius = bloom.radius;
   bloomPass.threshold = bloom.threshold;

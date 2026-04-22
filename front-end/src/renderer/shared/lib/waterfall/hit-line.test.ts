@@ -10,13 +10,13 @@ describe("createHitLine", () => {
     expect(g).toBeInstanceOf(THREE.Group);
     expect(g.children.length).toBe(2);
     const [glow, core] = g.children;
-    const glowM = (glow as THREE.Mesh).material as THREE.MeshBasicMaterial;
+    const glowM = (glow as THREE.Mesh).material as THREE.ShaderMaterial;
     const coreM = (core as THREE.Mesh).material as THREE.MeshBasicMaterial;
     const darkLine = visualThemeConfig("cadenza-dark").hitLine;
-    expect(glowM.color.getHex()).toBe(
-      darkLine.glow,
-    );
-    expect(glowM.opacity).toBe(darkLine.glowOpacity);
+    const glowColor = glowM.uniforms.uColor.value as THREE.Color;
+    expect(glowColor.getHex()).toBe(darkLine.glow);
+    expect(glowM.uniforms.uFadePower.value).toBe(darkLine.glowFadePower);
+    expect(glowM.uniforms.uOpacity.value).toBe(darkLine.glowOpacity);
     expect(glowM.transparent).toBe(true);
     expect(glowM.blending).toBe(THREE.AdditiveBlending);
     expect(coreM.color.getHex()).toBe(
@@ -27,13 +27,15 @@ describe("createHitLine", () => {
   it("uses hand palette for study theme", () => {
     const g = createHitLine("cadenza-light");
     const [glow, core] = g.children;
-    const glowM = (glow as THREE.Mesh).material as THREE.MeshBasicMaterial;
+    const glowM = (glow as THREE.Mesh).material as THREE.ShaderMaterial;
     const coreM = (core as THREE.Mesh).material as THREE.MeshBasicMaterial;
-    expect(glowM.color.getHex()).toBe(
-      visualThemeConfig("cadenza-light").hitLine.glow,
-    );
+    const lightLine = visualThemeConfig("cadenza-light").hitLine;
+    const glowColor = glowM.uniforms.uColor.value as THREE.Color;
+    expect(glowColor.getHex()).toBe(lightLine.glow);
+    expect(glowM.uniforms.uFadePower.value).toBe(lightLine.glowFadePower);
+    expect(glowM.uniforms.uOpacity.value).toBe(lightLine.glowOpacity);
     expect(coreM.color.getHex()).toBe(
-      visualThemeConfig("cadenza-light").hitLine.core,
+      lightLine.core,
     );
   });
 });

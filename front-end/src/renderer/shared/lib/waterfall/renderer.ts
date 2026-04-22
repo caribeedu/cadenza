@@ -151,7 +151,7 @@ export class WaterfallRenderer {
     this.flashGroup = this.flashLayer.group;
     this.scene.add(this.flashGroup);
 
-    this._impacts = new WaterfallImpactParticles();
+    this._impacts = new WaterfallImpactParticles(this._theme);
     this.scene.add(this._impacts.object);
 
     this._bloom = createWaterfallBloomPipeline(

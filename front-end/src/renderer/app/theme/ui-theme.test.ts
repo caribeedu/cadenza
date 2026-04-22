@@ -10,7 +10,6 @@ describe("ui theme registry", () => {
       expect(theme.vars["--dur-fast"]).toBeTruthy();
       expect(theme.vars["--radius-md"]).toBeTruthy();
       expect(theme.vars["--piano-height"]).toBeTruthy();
-      expect(theme.vars["--piano-host-bg"]).toBeTruthy();
       expect(theme.vars["--btn-accent-bg-start"]).toBeTruthy();
     }
   });
@@ -40,5 +39,13 @@ describe("ui theme registry", () => {
     expect(UI_THEMES[UI_THEME_IDS.CadenzaDark].waterfall.pendingColorMode).toBe("gradient");
     expect(UI_THEMES[UI_THEME_IDS.CadenzaDark].waterfall.hitLine.glowOpacity).toBeGreaterThan(0);
     expect(UI_THEMES[UI_THEME_IDS.CadenzaDark].waterfall.hitLine.glowThickness).toBeGreaterThan(0);
+    expect(
+      UI_THEMES[UI_THEME_IDS.CadenzaDark].waterfall.hitLine.glowFadePower,
+    ).toBeGreaterThan(0);
+    for (const theme of Object.values(UI_THEMES)) {
+      expect(theme.waterfall.particles.tint).toBeGreaterThan(0);
+      expect(theme.waterfall.particles.size).toBeGreaterThan(0);
+      expect(theme.waterfall.particles.opacity).toBeGreaterThan(0);
+    }
   });
 });

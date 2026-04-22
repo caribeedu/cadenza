@@ -8,6 +8,7 @@ describe("waterfall visual themes", () => {
     const dark = visualThemeConfig("cadenza-dark");
     expect(aurora.background).not.toBe(dark.background);
     expect(aurora.bloom.strength).not.toBe(dark.bloom.strength);
+    expect(aurora.bloom.tint).not.toBe(dark.bloom.tint);
   });
 
   it("provides per-theme feedback colors", () => {

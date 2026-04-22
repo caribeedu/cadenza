@@ -16,6 +16,7 @@ export interface WaterfallVisualTheme {
     radius: number;
     resolutionScale: number;
     strength: number;
+    tint: number;
     threshold: number;
   };
   feedback: {
@@ -29,8 +30,19 @@ export interface WaterfallVisualTheme {
     core: number;
     coreThickness: number;
     glow: number;
+    /** Lower = softer vertical falloff (glow reads taller / wider band). */
+    glowFadePower: number;
     glowOpacity: number;
     glowThickness: number;
+  };
+  /**
+   * Strike-line additive point sprites. ``tint`` matches {@link bloom.tint} by
+   * default so sparks read coherent with bloom highlights; tune per theme.
+   */
+  particles: {
+    opacity: number;
+    size: number;
+    tint: number;
   };
   lavaBars: boolean;
   pendingColorMode: "gradient" | "staff";
@@ -239,7 +251,13 @@ const SUNSET_PAPER_COLORS = Object.freeze({
 const WATERFALL_CADENZA_DARK: WaterfallVisualTheme = Object.freeze({
   ambientLight: { color: 0x4a5568, intensity: 0.38 },
   background: 0x020203,
-  bloom: { radius: 0.4, resolutionScale: 0.5, strength: 0.88, threshold: 0.1 },
+  bloom: {
+    radius: 0.3,
+    resolutionScale: 0.5,
+    strength: 0.72,
+    threshold: 0.24,
+    tint: 0xff9f52,
+  },
   feedback: { bad: 0xff4a62, good: 0x40ffb0, neutral: 0xffb84d },
   fog: { color: 0x010102, far: 4200, near: 450 },
   hemiLight: { ground: 0x18151c, intensity: 0.45, sky: 0x5c6a88 },
@@ -247,9 +265,11 @@ const WATERFALL_CADENZA_DARK: WaterfallVisualTheme = Object.freeze({
     core: 0xfff2e6,
     coreThickness: 3,
     glow: 0xff5500,
+    glowFadePower: 6,
     glowOpacity: 0.4,
-    glowThickness: 14,
+    glowThickness: 200,
   },
+  particles: { opacity: 0.9, size: 12, tint: 0xff9f52 },
   lavaBars: true,
   pendingColorMode: "gradient",
   pendingGradient: { high: 0xffcc4d, low: 0xff1e12 },
@@ -258,7 +278,13 @@ const WATERFALL_CADENZA_DARK: WaterfallVisualTheme = Object.freeze({
 const WATERFALL_CADENZA_LIGHT: WaterfallVisualTheme = Object.freeze({
   ambientLight: { color: 0x4a5568, intensity: 0.38 },
   background: 0x020203,
-  bloom: { radius: 0.4, resolutionScale: 0.5, strength: 0.82, threshold: 0.14 },
+  bloom: {
+    radius: 0.28,
+    resolutionScale: 0.5,
+    strength: 0.62,
+    threshold: 0.28,
+    tint: 0x63d8ff,
+  },
   feedback: { bad: 0xff4a62, good: 0x40ffb0, neutral: 0x42c8ff },
   fog: { color: 0x010102, far: 4200, near: 450 },
   hemiLight: { ground: 0x18151c, intensity: 0.45, sky: 0x5c6a88 },
@@ -266,9 +292,11 @@ const WATERFALL_CADENZA_LIGHT: WaterfallVisualTheme = Object.freeze({
     core: 0x00e8d0,
     coreThickness: 2.5,
     glow: 0x00a090,
+    glowFadePower: 6,
     glowOpacity: 0.34,
-    glowThickness: 12,
+    glowThickness: 200,
   },
+  particles: { opacity: 0.9, size: 12, tint: 0x63d8ff },
   lavaBars: false,
   pendingColorMode: "staff",
   pendingGradient: { high: 0x5b8bff, low: 0x39d5ff },
@@ -277,7 +305,13 @@ const WATERFALL_CADENZA_LIGHT: WaterfallVisualTheme = Object.freeze({
 const WATERFALL_LAVA_STAGE: WaterfallVisualTheme = Object.freeze({
   ambientLight: { color: 0x6a3e3b, intensity: 0.4 },
   background: 0x0c0505,
-  bloom: { radius: 0.38, resolutionScale: 0.5, strength: 0.93, threshold: 0.09 },
+  bloom: {
+    radius: 0.32,
+    resolutionScale: 0.5,
+    strength: 0.8,
+    threshold: 0.2,
+    tint: 0xff8d42,
+  },
   feedback: { bad: 0xff5b72, good: 0x54ffb7, neutral: 0xffcb63 },
   fog: { color: 0x130808, far: 4300, near: 430 },
   hemiLight: { ground: 0x241011, intensity: 0.47, sky: 0x8f5f52 },
@@ -285,9 +319,11 @@ const WATERFALL_LAVA_STAGE: WaterfallVisualTheme = Object.freeze({
     core: 0xffe8c4,
     coreThickness: 3,
     glow: 0xff7a2f,
+    glowFadePower: 6,
     glowOpacity: 0.42,
-    glowThickness: 15,
+    glowThickness: 200,
   },
+  particles: { opacity: 0.9, size: 12, tint: 0xff8d42 },
   lavaBars: true,
   pendingColorMode: "gradient",
   pendingGradient: { high: 0xffd67a, low: 0xff5c3a },
@@ -296,7 +332,13 @@ const WATERFALL_LAVA_STAGE: WaterfallVisualTheme = Object.freeze({
 const WATERFALL_AURORA_ICE: WaterfallVisualTheme = Object.freeze({
   ambientLight: { color: 0x365a6f, intensity: 0.42 },
   background: 0x02060b,
-  bloom: { radius: 0.45, resolutionScale: 0.55, strength: 0.94, threshold: 0.08 },
+  bloom: {
+    radius: 0.3,
+    resolutionScale: 0.55,
+    strength: 0.66,
+    threshold: 0.3,
+    tint: 0x63d8ff,
+  },
   feedback: { bad: 0xff5f7f, good: 0x60ffd6, neutral: 0x63b4ff },
   fog: { color: 0x01070a, far: 4600, near: 380 },
   hemiLight: { ground: 0x0f1a1d, intensity: 0.5, sky: 0x3f7d94 },
@@ -304,9 +346,11 @@ const WATERFALL_AURORA_ICE: WaterfallVisualTheme = Object.freeze({
     core: 0x72fff0,
     coreThickness: 2.5,
     glow: 0x1c9aa0,
+    glowFadePower: 6,
     glowOpacity: 0.36,
-    glowThickness: 12,
+    glowThickness: 200,
   },
+  particles: { opacity: 0.9, size: 12, tint: 0x63d8ff },
   lavaBars: false,
   pendingColorMode: "gradient",
   pendingGradient: { high: 0x6d88ff, low: 0x34f5d5 },
@@ -315,7 +359,13 @@ const WATERFALL_AURORA_ICE: WaterfallVisualTheme = Object.freeze({
 const WATERFALL_SUNSET_PAPER: WaterfallVisualTheme = Object.freeze({
   ambientLight: { color: 0x6a3e3b, intensity: 0.4 },
   background: 0x0c0505,
-  bloom: { radius: 0.38, resolutionScale: 0.5, strength: 0.93, threshold: 0.09 },
+  bloom: {
+    radius: 0.3,
+    resolutionScale: 0.5,
+    strength: 0.7,
+    threshold: 0.24,
+    tint: 0xe9823a,
+  },
   feedback: { bad: 0xff5b72, good: 0x54ffb7, neutral: 0xffcb63 },
   fog: { color: 0x130808, far: 4300, near: 430 },
   hemiLight: { ground: 0x241011, intensity: 0.47, sky: 0x8f5f52 },
@@ -323,9 +373,11 @@ const WATERFALL_SUNSET_PAPER: WaterfallVisualTheme = Object.freeze({
     core: 0xffe8c4,
     coreThickness: 3,
     glow: 0xff7a2f,
+    glowFadePower: 6,
     glowOpacity: 0.4,
-    glowThickness: 14,
+    glowThickness: 200,
   },
+  particles: { opacity: 0.9, size: 12, tint: 0xe9823a },
   lavaBars: true,
   pendingColorMode: "gradient",
   pendingGradient: { high: 0xffd67a, low: 0xff5c3a },

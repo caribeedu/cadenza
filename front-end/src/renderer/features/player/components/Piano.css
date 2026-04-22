@@ -1,23 +1,10 @@
 .piano-host {
   position: relative;
   height: var(--piano-height);
-  background: var(--piano-host-bg, var(--bg));
+  background: var(--bg);
   border-top: 1px solid var(--border);
   user-select: none;
   overflow: hidden;
-}
-
-.piano-host::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    180deg,
-    var(--piano-host-gradient-start, transparent) 0%,
-    var(--piano-host-gradient-end, transparent) 100%
-  );
-  pointer-events: none;
-  z-index: 0;
 }
 
 .piano-svg {
