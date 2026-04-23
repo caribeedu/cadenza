@@ -399,9 +399,12 @@ export class WaterfallRenderer {
       group.visible = y > this.camera.bottom - 50 && y < this.camera.top + 50;
     }
 
-    for (const p of this._heldPitches) {
-      const x = this.laneGeometry.laneCenterPx(p) - w * 0.5;
-      this._impacts.streamAtLine(x, this._strikeLineY, dt, 36);
+    if (this._heldPitches.length > 0) {
+      const xs: number[] = [];
+      for (const p of this._heldPitches) {
+        xs.push(this.laneGeometry.laneCenterPx(p) - w * 0.5);
+      }
+      this._impacts.streamHeldLanes(xs, this._strikeLineY, dt, 36);
     }
 
     this.flashLayer.tick();

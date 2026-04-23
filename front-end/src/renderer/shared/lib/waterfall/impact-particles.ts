@@ -37,6 +37,13 @@ export class WaterfallImpactParticles {
     this._life = new Float32Array(POOL);
     this._alive = new Uint8Array(POOL);
 
+    // Float32Array defaults to 0: undrawn verts would sit at world origin → hundreds
+    // of additive sprites stack at screen center (UnrealBloomPass blows it into an orb).
+    // Match the post-death stash used in ``tick`` so inactive pool slots never render.
+    for (let i = 0; i < POOL; i++) {
+      pos[i * 3 + 1] = -1e5;
+    }
+
     this._geom = new THREE.BufferGeometry();
     this._geom.setAttribute("position", new THREE.BufferAttribute(pos, 3));
     this._geom.setDrawRange(0, POOL);
@@ -103,19 +110,25 @@ export class WaterfallImpactParticles {
     this._idx = (this._idx + n) % POOL;
   }
 
-  /** Wider than {@link _emitBlock}: sustain used to coalesce into one add+bloom disc. */
-  private _emitSustainBlock(
-    worldX: number,
+  /**
+   * Same spread as {@link _emitSustainBlock}, but each particle picks a random lane
+   * center so many held keys share **one** emission budget without piling at one X.
+   */
+  private _emitSustainAcrossLanes(
+    laneCentersX: readonly number[],
     worldY: number,
     n: number,
     life: number,
-  ) {
+  ): void {
+    if (laneCentersX.length === 0 || n < 1) return;
     const s = BURST_SPREAD;
     for (let k = 0; k < n; k++) {
+      const pick =
+        laneCentersX[Math.floor(Math.random() * laneCentersX.length)]!;
       const i = (this._idx + k) % POOL;
       this._life[i] = life;
       this._alive[i] = 1;
-      this._pos[i * 3] = worldX + (Math.random() - 0.5) * (28 * s);
+      this._pos[i * 3] = pick + (Math.random() - 0.5) * (28 * s);
       this._pos[i * 3 + 1] = worldY + (Math.random() - 0.5) * (10 * s);
       this._pos[i * 3 + 2] = (Math.random() - 0.5) * (0.45 * s);
       this._vel[i * 3] = (Math.random() - 0.5) * (100 * s);
@@ -143,23 +156,23 @@ export class WaterfallImpactParticles {
   }
 
   /**
-   * While a key is held: fractional spawns each frame so sparks continue
-   * for the full press duration. Uses {@link _emitSustainBlock} (wider
-   * spread) so sustain does not form one additive+bloom “orb”.
+   * Held keys: **one** sustain budget (`totalRatePerSec`), particles spread across
+   * `laneCentersX`. Prefer this over calling {@link streamAtLine} once per key — that
+   * multiplied rate into shared `_streamCarry` and stacked additive sparks.
    */
-  streamAtLine(
-    worldX: number,
+  streamHeldLanes(
+    laneCentersX: readonly number[],
     worldY: number,
     dt: number,
-    ratePerSec: number,
+    totalRatePerSec: number,
   ): void {
-    if (dt <= 0) return;
-    this._streamCarry += ratePerSec * dt;
+    if (dt <= 0 || laneCentersX.length === 0) return;
+    this._streamCarry += totalRatePerSec * dt;
     let n = Math.floor(this._streamCarry);
     this._streamCarry -= n;
     n = Math.min(12, n);
     if (n < 1) return;
-    this._emitSustainBlock(worldX, worldY, n, LIFE_STREAM);
+    this._emitSustainAcrossLanes(laneCentersX, worldY, n, LIFE_STREAM);
   }
 
   dispose(): void {

@@ -12,4 +12,13 @@ describe("WaterfallImpactParticles", () => {
     expect(mat.color.getHex()).toBe(tint);
     p.dispose();
   });
+
+  it("stashes inactive vertices off-screen so they do not stack at the origin", () => {
+    const p = new WaterfallImpactParticles();
+    const arr = (
+      p.object.geometry.attributes.position as THREE.BufferAttribute
+    ).array as Float32Array;
+    expect(arr[1]).toBe(-1e5);
+    p.dispose();
+  });
 });
