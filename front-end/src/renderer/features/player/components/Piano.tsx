@@ -222,8 +222,8 @@ function KeyRect({
       className={`${cls} ${stateClass}`.trim()}
       data-pitch={pitch}
       height={height}
-      rx={type === "white" ? 3 : 2}
-      ry={type === "white" ? 3 : 2}
+      rx={type === "white" ? 5 : 3}
+      ry={type === "white" ? 5 : 3}
       width={width}
       x={x}
       y={y}
