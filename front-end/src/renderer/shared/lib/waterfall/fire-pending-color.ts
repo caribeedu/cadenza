@@ -3,9 +3,6 @@ import * as THREE from "three";
 import { HIGHEST_MIDI, LOWEST_MIDI } from "../timeline";
 import { visualThemeConfig, type WaterfallTheme } from "./visual-theme";
 
-/** Deep ember; ramps toward gold with pitch. */
-const EMBER = 0xff1e12;
-const GOLD = 0xffcc4d;
 const PITCH_SPAN = HIGHEST_MIDI - LOWEST_MIDI;
 
 function lerpGradient(
@@ -19,14 +16,6 @@ function lerpGradient(
   return new THREE.Color(lowHex).lerp(new THREE.Color(highHex), t);
 }
 
-/**
- * Warm red → gold ramp by pitch (Phase A “fire” look). Only used for pending
- * notes when ``theme: 'fire'``.
- */
-export function firePendingColorForPitch(pitch: number): THREE.Color {
-  return lerpGradient(pitch, EMBER, GOLD);
-}
-
 export function pendingColorForTheme(
   theme: WaterfallTheme,
   pitch: number,
@@ -36,22 +25,29 @@ export function pendingColorForTheme(
 }
 
 /**
- * Top/bottom of the bar for lava-style gradient: ember at base, brighter
- * toward the “leading” (top) edge.
+ * Top/bottom of the lava bar: theme ``pendingGradient`` low→high, palette comes from the active theme.
  */
-export function fireBarGradient(pitch: number): {
+export function fireBarGradient(
+  pitch: number,
+  theme: WaterfallTheme,
+): {
   high: THREE.Color;
   low: THREE.Color;
 } {
+  const { high: highHex, low: lowHex } =
+    visualThemeConfig(theme).pendingGradient;
   if (PITCH_SPAN <= 0) {
     return {
-      high: new THREE.Color(GOLD),
-      low: new THREE.Color(EMBER),
+      high: new THREE.Color(highHex),
+      low: new THREE.Color(lowHex),
     };
   }
   const t =
-    (Math.max(LOWEST_MIDI, Math.min(HIGHEST_MIDI, pitch)) - LOWEST_MIDI) / PITCH_SPAN;
-  const c0 = new THREE.Color(EMBER).lerp(new THREE.Color(GOLD), t * 0.25);
-  const c1 = new THREE.Color(EMBER).lerp(new THREE.Color(GOLD), t * 0.25 + 0.65);
+    (Math.max(LOWEST_MIDI, Math.min(HIGHEST_MIDI, pitch)) - LOWEST_MIDI) /
+    PITCH_SPAN;
+  const cLow = new THREE.Color(lowHex);
+  const cHigh = new THREE.Color(highHex);
+  const c0 = cLow.clone().lerp(cHigh, t * 0.25);
+  const c1 = cLow.clone().lerp(cHigh, t * 0.25 + 0.65);
   return { high: c1, low: c0 };
 }

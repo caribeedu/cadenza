@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 
 import { DEFAULT_UI_THEME, UI_THEMES } from "@app/theme/ui-theme";
-import * as THREE from "three";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { NoteSpriteMaterialCache } from "./sprite-material-cache";

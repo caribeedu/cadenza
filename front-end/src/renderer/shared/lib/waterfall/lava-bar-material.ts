@@ -71,7 +71,7 @@ export function createLavaBarMaterial(
   pitch: number,
   theme: WaterfallTheme,
 ): THREE.ShaderMaterial {
-  const g = fireBarGradient(pitch);
+  const g = fireBarGradient(pitch, theme);
   const d = visualThemeConfig(theme).lavaAppearance;
   return new THREE.ShaderMaterial({
     depthTest: false,

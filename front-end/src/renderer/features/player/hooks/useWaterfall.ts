@@ -33,6 +33,8 @@ export interface UseWaterfallOptions {
   /** Bumps on every Start/Restart so we reset the waterfall when the
    *  server clock resets but ``serverPlaying`` never flips to false. */
   sessionRestartGeneration: number;
+  /** Bumps when the UI theme changes so the local score playhead resets. */
+  themeRestartGeneration: number;
   /** Pitches with keys still down; drives sustained strike-line particles. */
   heldMidiPitches: readonly number[];
 }
@@ -67,6 +69,7 @@ export function useWaterfall({
   serverPlaying,
   waterfallTheme,
   sessionRestartGeneration,
+  themeRestartGeneration,
   heldMidiPitches,
 }: UseWaterfallOptions): RefObject<null | WaterfallRenderer> {
   const [renderer, setRenderer] = useState<null | WaterfallRenderer>(null);
@@ -196,6 +199,12 @@ export function useWaterfall({
     if (sessionRestartGeneration === 0) return;
     renderer.startAt(0);
   }, [renderer, sessionRestartGeneration]);
+
+  useEffect(() => {
+    if (!renderer) return;
+    if (themeRestartGeneration === 0) return;
+    renderer.startAt(0);
+  }, [renderer, themeRestartGeneration]);
 
   useEffect(() => {
     if (!renderer || !latestNotePlayed) return;

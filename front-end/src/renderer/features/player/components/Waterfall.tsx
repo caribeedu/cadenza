@@ -30,7 +30,7 @@ export function Waterfall(): ReactElement {
     serverPlaying,
     sessionRestartGeneration,
   } = usePlayback();
-  const { waterfallTheme } = useThemeConfig();
+  const { themeRestartGeneration, waterfallTheme } = useThemeConfig();
 
   useWaterfall({
     canvasRef,
@@ -42,6 +42,7 @@ export function Waterfall(): ReactElement {
     serverPlaybackSpeed,
     serverPlaying,
     sessionRestartGeneration,
+    themeRestartGeneration,
     waterfallTheme,
     heldMidiPitches,
   });

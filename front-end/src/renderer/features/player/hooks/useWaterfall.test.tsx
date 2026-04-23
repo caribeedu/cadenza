@@ -96,6 +96,7 @@ interface HarnessProps {
   serverPlaying?: boolean;
   waterfallTheme?: WaterfallTheme;
   sessionRestartGeneration?: number;
+  themeRestartGeneration?: number;
   heldMidiPitches?: readonly number[];
 }
 
@@ -109,6 +110,7 @@ function Harness({
   serverPlaying = false,
   waterfallTheme = "cadenza-dark",
   sessionRestartGeneration = 0,
+  themeRestartGeneration = 0,
   heldMidiPitches = [],
 }: HarnessProps): ReactElement {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -128,6 +130,7 @@ function Harness({
     serverPlaying,
     waterfallTheme,
     sessionRestartGeneration,
+    themeRestartGeneration,
     heldMidiPitches,
   });
   if (rendererRefOut) rendererRefOut.current = rendererRef;

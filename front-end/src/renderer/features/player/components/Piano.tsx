@@ -48,18 +48,42 @@ export function Piano({
     new Map(),
   );
   const heldPitchesRef = useRef<Set<number>>(new Set());
+  const prevHeldRef = useRef<Set<number>>(new Set());
 
+  /** Sync physical hold state: clear highlight when a pitch is released (any duration). */
   useEffect(() => {
-    heldPitchesRef.current = new Set(heldMidiPitches);
-    if (heldMidiPitches.length > 0) return;
-    setKeyFlashes((prev) => {
-      if (prev.size === 0) return prev;
-      const next = new Map(prev);
-      for (const [pitch, kind] of prev.entries()) {
-        if (kind === "neutral") next.delete(pitch);
+    const held = new Set(heldMidiPitches);
+    heldPitchesRef.current = held;
+
+    const prev = prevHeldRef.current;
+    for (const pitch of prev) {
+      if (!held.has(pitch)) {
+        const existing = timersRef.current.get(pitch);
+        if (existing) clearTimeout(existing);
+        timersRef.current.delete(pitch);
+        setKeyFlashes((map) => {
+          if (!map.has(pitch)) return map;
+          const next = new Map(map);
+          next.delete(pitch);
+          return next;
+        });
       }
-      return next;
-    });
+    }
+    prevHeldRef.current = held;
+
+    if (heldMidiPitches.length === 0) {
+      setKeyFlashes((prevMap) => {
+        let changed = false;
+        const next = new Map(prevMap);
+        for (const [pitch, kind] of prevMap.entries()) {
+          if (kind === "neutral") {
+            next.delete(pitch);
+            changed = true;
+          }
+        }
+        return changed ? next : prevMap;
+      });
+    }
   }, [heldMidiPitches]);
 
   // Cleanup timers on unmount to avoid setState-on-unmounted warnings.
