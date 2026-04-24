@@ -3,12 +3,18 @@
   "version": "0.0.1",
   "private": true,
   "description": "Cadenza Electron desktop app — React + Vite + TypeScript renderer with a Three.js waterfall visualiser.",
+  "author": {
+    "name": "Edu Caribé",
+    "email": "caribeedu@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/caribeedu/cadenza",
+  "license": "MIT",
   "type": "module",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "dist": "npm run build && electron-builder --config electron-builder.yml",
+    "dist": "npm run build && electron-builder --publish never --config electron-builder.yml",
     "preview": "electron-vite preview",
     "start": "electron-vite preview",
     "typecheck": "tsc -b --pretty",

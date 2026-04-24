@@ -21,6 +21,8 @@ mac:
   target:
     - dmg
 linux:
+  category: Utility
+  maintainer: Edu Caribé <caribeedu@users.noreply.github.com>
   target:
     - AppImage
     - deb
