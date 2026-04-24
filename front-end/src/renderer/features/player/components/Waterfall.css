@@ -58,6 +58,7 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--timeline-label);
+  user-select: none;
 }
 
 .timeline-scrubber {
