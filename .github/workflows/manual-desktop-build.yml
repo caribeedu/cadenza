@@ -13,18 +13,12 @@ jobs:
           - os: windows-latest
             artifact_name: cadenza-windows-build
             backend_binary: front-end/release/backend/cadenza-server.exe
-            shell: pwsh
-            backend_script: ./scripts/build-sidecar.ps1
           - os: macos-latest
             artifact_name: cadenza-macos-build
             backend_binary: front-end/release/backend/cadenza-server
-            shell: bash
-            backend_script: bash ./scripts/build-sidecar.sh
           - os: ubuntu-latest
             artifact_name: cadenza-linux-build
             backend_binary: front-end/release/backend/cadenza-server
-            shell: bash
-            backend_script: bash ./scripts/build-sidecar.sh
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,10 +31,17 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@v5
 
-      - name: Build backend sidecar (PyInstaller)
-        shell: ${{ matrix.shell }}
+      - name: Build backend sidecar (PyInstaller, Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
         working-directory: back-end
-        run: ${{ matrix.backend_script }}
+        run: ./scripts/build-sidecar.ps1
+
+      - name: Build backend sidecar (PyInstaller, macOS/Linux)
+        if: runner.os != 'Windows'
+        shell: bash
+        working-directory: back-end
+        run: bash ./scripts/build-sidecar.sh
 
       - name: Setup Node
         uses: actions/setup-node@v4
