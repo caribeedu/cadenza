@@ -1,6 +1,6 @@
 {
   "name": "cadenza-frontend",
-  "version": "0.2.0",
+  "version": "0.0.1",
   "private": true,
   "description": "Cadenza Electron desktop app — React + Vite + TypeScript renderer with a Three.js waterfall visualiser.",
   "type": "module",
@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
+    "dist": "npm run build && electron-builder --config electron-builder.yml",
     "preview": "electron-vite preview",
     "start": "electron-vite preview",
     "typecheck": "tsc -b --pretty",
@@ -33,6 +34,7 @@
     "@types/three": "^0.184.0",
     "@vitejs/plugin-react": "^4.3.4",
     "electron": "^41.2.1",
+    "electron-builder": "^26.0.12",
     "electron-vite": "^3.0.0",
     "eslint": "^9.39.4",
     "eslint-plugin-perfectionist": "^5.9.0",

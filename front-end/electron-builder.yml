@@ -1,0 +1,30 @@
+appId: com.cadenza.desktop
+productName: Cadenza
+directories:
+  output: dist-installers
+files:
+  - out/**
+  - package.json
+extraResources:
+  - from: release/backend
+    to: backend
+    filter:
+      - "**/*"
+  - from: ../plugin
+    to: plugin
+    filter:
+      - "**/*"
+win:
+  target:
+    - nsis
+mac:
+  target:
+    - dmg
+linux:
+  target:
+    - AppImage
+    - deb
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true

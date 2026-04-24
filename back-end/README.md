@@ -99,6 +99,32 @@ uv run ruff format --check . # formatting
 uv run mypy src              # strict type-check
 ```
 
+## Build distributable
+
+To generate packaged sidecar binary used by desktop releases:
+
+```powershell
+cd back-end
+./scripts/build-sidecar.ps1
+```
+
+Output:
+
+- `back-end/dist/cadenza-server.exe`
+- copied to `front-end/release/backend/cadenza-server.exe` for installer bundling
+
+macOS/Linux:
+
+```bash
+cd back-end
+bash ./scripts/build-sidecar.sh
+```
+
+Output:
+
+- `back-end/dist/cadenza-server`
+- copied to `front-end/release/backend/cadenza-server` for installer bundling
+
 Run a single test module or select a test:
 
 ```bash

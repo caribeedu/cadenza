@@ -1,6 +1,6 @@
 [project]
 name = "cadenza-server"
-version = "0.2.0"
+version = "0.0.1"
 description = "Cadenza backend: FastAPI hub exposing a WebSocket endpoint for the Electron frontend and an HTTP score ingest for the MuseScore plugin."
 readme = "README.md"
 requires-python = ">=3.11"

@@ -81,8 +81,9 @@ test-results/
 playwright-report/
 playwright/.cache/
 
-# --- Electron packager / forge (packaged apps; keep source only) ---
+# --- Electron packager (packaged apps; keep source only) ---
 release/
+front-end/dist-installers/
 
 # --- Misc logs & temp ---
 *.log

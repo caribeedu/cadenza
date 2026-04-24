@@ -1,0 +1,66 @@
+name: Manual Desktop Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact_name: cadenza-windows-build
+            backend_binary: front-end/release/backend/cadenza-server.exe
+            shell: pwsh
+            backend_script: ./scripts/build-sidecar.ps1
+          - os: macos-latest
+            artifact_name: cadenza-macos-build
+            backend_binary: front-end/release/backend/cadenza-server
+            shell: bash
+            backend_script: bash ./scripts/build-sidecar.sh
+          - os: ubuntu-latest
+            artifact_name: cadenza-linux-build
+            backend_binary: front-end/release/backend/cadenza-server
+            shell: bash
+            backend_script: bash ./scripts/build-sidecar.sh
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Build backend sidecar (PyInstaller)
+        shell: ${{ matrix.shell }}
+        working-directory: back-end
+        run: ${{ matrix.backend_script }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: front-end/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: front-end
+        run: npm ci
+
+      - name: Build desktop installer
+        working-directory: front-end
+        run: npm run dist
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            front-end/dist-installers/**
+            ${{ matrix.backend_binary }}

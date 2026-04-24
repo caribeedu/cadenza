@@ -37,8 +37,39 @@ npm install
 npm start
 
 # 3. MuseScore plugin
-cp ./back-end/plugin/Cadenza.qml <destination-path>
+cp ./plugin/Cadenza.qml <destination-path>
 # then enable "Cadenza Sender" in MuseScore's Plugin Manager
+```
+
+## Release build
+
+Desktop release generation runs fully on local/CI machines:
+
+- Python backend is frozen with `PyInstaller` into `cadenza-server(.exe)`.
+- Electron installer is produced with `electron-builder`.
+- MuseScore plugin files from `plugin/` are embedded as installer resources.
+
+Manual GitHub trigger:
+
+- Open Actions and run workflow `Manual Desktop Build`.
+- The workflow builds backend + installer for Windows, macOS, Linux and uploads artifacts.
+
+Manual local Windows release:
+
+```powershell
+cd back-end
+./scripts/build-sidecar.ps1
+cd ../front-end
+npm run dist
+```
+
+Manual local macOS/Linux release:
+
+```bash
+cd back-end
+bash ./scripts/build-sidecar.sh
+cd ../front-end
+npm run dist
 ```
 
 ## Architecture

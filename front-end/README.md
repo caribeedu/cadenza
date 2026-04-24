@@ -26,10 +26,20 @@ npm install
 | -------------------- | --------------------------------------------------- |
 | `npm run dev`        | Vite dev server + Electron with renderer HMR       |
 | `npm run build`      | Production build (main + preload + renderer)       |
+| `npm run dist`       | Build Windows installer via `electron-builder`     |
 | `npm run preview`    | Launch Electron against the last production build  |
 | `npm start`          | Alias of `preview`                                 |
 | `npm test`           | Run the Vitest suite once                          |
 | `npm run test:watch` | Re-run tests on file changes                       |
+
+`npm run dist` expects a frozen backend binary in
+`front-end/release/backend/`:
+
+- `cadenza-server.exe` on Windows
+- `cadenza-server` on macOS/Linux
+
+In packaged builds, the Electron main process auto-spawns this sidecar from
+`resources/backend` and stops it on app exit.
 
 ## Project layout
 

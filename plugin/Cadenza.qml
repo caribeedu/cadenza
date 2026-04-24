@@ -17,6 +17,7 @@
 //      macOS   ~/Documents/MuseScore4/Plugins/Cadenza.qml
 //      Windows %USERPROFILE%\Documents\MuseScore4\Plugins\Cadenza.qml
 //  Then enable it from Plugins → Plugin Manager and launch via Plugins.
+//  Release version: 0.0.1
 //------------------------------------------------------------------------------
 
 import QtQuick 2.9
@@ -26,7 +27,7 @@ MuseScore {
     id: root
     title: "Cadenza Sender"
     description: "POSTs the current score to the Cadenza backend over HTTP."
-    version: "0.2.0"
+    version: "0.0.1"
     categoryCode: "composing-arranging-tools"
     requiresScore: true
 
