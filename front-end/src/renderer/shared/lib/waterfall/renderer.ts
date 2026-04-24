@@ -24,9 +24,8 @@ import {
   noteMeshKey,
   yForNote,
 } from "../timeline";
-import { applyBarFeedback, applyBarPending, feedbackColor } from "./bar-feedback";
+import { applyBarFeedback, applyBarPending } from "./bar-feedback";
 import { createWaterfallBloomPipeline } from "./bloom-pipeline";
-import { WaterfallFlashLayer } from "./flash-layer";
 import { createHitLine } from "./hit-line";
 import { WaterfallImpactParticles } from "./impact-particles";
 import { setLavaBarTime } from "./lava-bar-material";
@@ -53,7 +52,6 @@ const DEFAULT_THEME: WaterfallTheme = "lava-stage";
 export class WaterfallRenderer {
   readonly camera: THREE.OrthographicCamera;
   readonly canvas: HTMLCanvasElement;
-  readonly flashGroup: THREE.Group;
   /** Play line: additive band + hot core. */
   readonly hitLine: THREE.Group;
   laneGeometry: LaneGeometry;
@@ -80,7 +78,6 @@ export class WaterfallRenderer {
   private readonly spriteCache = new NoteSpriteMaterialCache();
   private noteFactory: WaterfallNoteGroupFactory;
   private readonly _theme: WaterfallTheme;
-  private readonly flashLayer: WaterfallFlashLayer;
   private readonly _reactiveBg: WaterfallReactiveBackground;
   private readonly _resizeObserver: ResizeObserver;
 
@@ -114,7 +111,6 @@ export class WaterfallRenderer {
       this.spriteCache,
       this._theme,
     );
-    this.flashLayer = new WaterfallFlashLayer(this.laneGeometry);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
     this.renderer.setPixelRatio(
@@ -146,13 +142,12 @@ export class WaterfallRenderer {
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -10, 10);
 
     this.hitLine = createHitLine(this._theme);
+    // Keep strike line as an internal timing anchor only (no visible artifact).
+    this.hitLine.visible = false;
     this.scene.add(this.hitLine);
 
     this.noteGroup = new THREE.Group();
     this.scene.add(this.noteGroup);
-
-    this.flashGroup = this.flashLayer.group;
-    this.scene.add(this.flashGroup);
 
     this._impacts = new WaterfallImpactParticles(this._theme);
     this.scene.add(this._impacts.object);
@@ -183,10 +178,6 @@ export class WaterfallRenderer {
   }
   set startTimestamp(v: null | number) {
     this.playhead.startTimestamp = v;
-  }
-
-  get flashes() {
-    return this.flashLayer.flashes;
   }
 
   get theme(): WaterfallTheme {
@@ -276,14 +267,7 @@ export class WaterfallRenderer {
         }
         return;
       }
-      if (correct === false && played_pitch !== null && played_pitch !== undefined) {
-        this.flashLayer.spawn(played_pitch, feedbackColor(this._theme, "bad"), w);
-      }
       return;
-    }
-
-    if (played_pitch !== null && played_pitch !== undefined) {
-      this.flashLayer.spawn(played_pitch, feedbackColor(this._theme, "neutral"), w);
     }
   }
 
@@ -312,7 +296,6 @@ export class WaterfallRenderer {
       this.spriteCache,
       this._theme,
     );
-    this.flashLayer.setLaneGeometry(this.laneGeometry);
     this._rebuildNotes();
   }
 
@@ -383,7 +366,6 @@ export class WaterfallRenderer {
     const keyTopPadPx = 0;
     this._strikeLineY = this.camera.bottom + keyTopPadPx;
     this.hitLine.position.y = this._strikeLineY;
-    this.flashLayer.setStrikeLineY(this._strikeLineY);
 
     const centerY = (this.camera.top + this.camera.bottom) * 0.5;
     this._reactiveBg.setFrustum(w, h, centerY, -8);
@@ -423,7 +405,6 @@ export class WaterfallRenderer {
       this._impacts.streamHeldLanes(xs, this._strikeLineY, dt, 36);
     }
 
-    this.flashLayer.tick();
     this._impacts.tick(dt);
     this._reactiveBg.tick(dt);
     this._bloom.composer.render();

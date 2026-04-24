@@ -15,6 +15,10 @@ describe("ui theme registry", () => {
       expect(theme.vars["--range-thumb"]).toBeTruthy();
       expect(theme.vars["--chip-on-bg"]).toBeTruthy();
       expect(theme.vars["--chip-err-bg"]).toBeTruthy();
+      expect(theme.vars["--timeline-bg"]).toBeTruthy();
+      expect(theme.vars["--timeline-border"]).toBeTruthy();
+      expect(theme.vars["--timeline-bin"]).toBeTruthy();
+      expect(theme.vars["--timeline-thumb"]).toBeTruthy();
     }
   });
 
