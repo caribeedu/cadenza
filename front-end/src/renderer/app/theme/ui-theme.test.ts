@@ -43,6 +43,9 @@ describe("ui theme registry", () => {
       UI_THEMES[UI_THEME_IDS.CadenzaDark].waterfall.hitLine.glowFadePower,
     ).toBeGreaterThan(0);
     for (const theme of Object.values(UI_THEMES)) {
+      expect(theme.waterfall.backdrop.deep).toBeGreaterThan(0);
+      expect(theme.waterfall.backdrop.mid).toBeGreaterThan(0);
+      expect(theme.waterfall.backdrop.glow).toBeGreaterThan(0);
       expect(theme.waterfall.particles.tint).toBeGreaterThan(0);
       expect(theme.waterfall.particles.size).toBeGreaterThan(0);
       expect(theme.waterfall.particles.opacity).toBeGreaterThan(0);

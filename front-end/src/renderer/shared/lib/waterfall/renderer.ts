@@ -13,6 +13,8 @@ import * as THREE from "three";
 
 import type { LaneGeometry } from "../../types/geometry";
 import type { NotePlayed, ScoreTimeline } from "../../types/score";
+import type { NoteUserData } from "./note-group-factory";
+import type { WaterfallTheme } from "./visual-theme";
 
 import {
   BAR_VERTICAL_GAP_PX,
@@ -22,29 +24,27 @@ import {
   noteMeshKey,
   yForNote,
 } from "../timeline";
-
 import { applyBarFeedback, applyBarPending, feedbackColor } from "./bar-feedback";
 import { createWaterfallBloomPipeline } from "./bloom-pipeline";
 import { WaterfallFlashLayer } from "./flash-layer";
 import { createHitLine } from "./hit-line";
 import { WaterfallImpactParticles } from "./impact-particles";
 import { setLavaBarTime } from "./lava-bar-material";
-import type { NoteUserData } from "./note-group-factory";
 import { WaterfallNoteGroupFactory } from "./note-group-factory";
+import { WaterfallReactiveBackground } from "./reactive-background";
 import { NoteSpriteMaterialCache } from "./sprite-material-cache";
+import { VirtualPlayhead } from "./virtual-playhead";
 import {
   MAX_DEVICE_PIXEL_RATIO,
   visualThemeConfig,
 } from "./visual-theme";
-import type { WaterfallTheme } from "./visual-theme";
-import { VirtualPlayhead } from "./virtual-playhead";
 
 export interface WaterfallOptions {
   leadMs?: number;
-  /** ``hand`` = per-hand “study” colours; ``fire`` = warm stage (default). */
-  theme?: WaterfallTheme;
   playbackSpeed?: number;
   pxPerMs?: number;
+  /** ``hand`` = per-hand “study” colours; ``fire`` = warm stage (default). */
+  theme?: WaterfallTheme;
 }
 
 const DEFAULT_PLAYBACK_SPEED = 1.0;
@@ -81,6 +81,7 @@ export class WaterfallRenderer {
   private noteFactory: WaterfallNoteGroupFactory;
   private readonly _theme: WaterfallTheme;
   private readonly flashLayer: WaterfallFlashLayer;
+  private readonly _reactiveBg: WaterfallReactiveBackground;
   private readonly _resizeObserver: ResizeObserver;
 
   constructor(
@@ -122,11 +123,13 @@ export class WaterfallRenderer {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(themeConfig.background);
+    this.scene.background = null;
+    this._reactiveBg = new WaterfallReactiveBackground(themeConfig);
+    this.scene.add(this._reactiveBg.mesh);
     this.scene.fog = new THREE.Fog(
       themeConfig.fog.color,
       themeConfig.fog.near,
-      themeConfig.fog.far,
+      themeConfig.fog.far * 1.06,
     );
 
     const amb = new THREE.AmbientLight(
@@ -194,6 +197,7 @@ export class WaterfallRenderer {
     this.renderer.setAnimationLoop(null);
     this._resizeObserver.disconnect();
     this._bloom.dispose();
+    this._reactiveBg.dispose();
     this._impacts.dispose();
     this.renderer.dispose();
     this.spriteCache.dispose();
@@ -243,6 +247,14 @@ export class WaterfallRenderer {
     const w = this._canvasWidthPx();
 
     if (played_pitch !== null && played_pitch !== undefined) {
+      const rippleU = this.laneGeometry.laneCenterPx(played_pitch) / Math.max(1, w);
+      const denom = this.camera.top - this.camera.bottom;
+      const rippleV =
+        denom > 1e-6
+          ? (this._strikeLineY - this.camera.bottom) / denom
+          : 0.72;
+      this._reactiveBg.onNotePlayed(msg, rippleU, rippleV);
+
       this._impacts.burst(
         this.laneGeometry.laneCenterPx(played_pitch) - w * 0.5,
         this._strikeLineY,
@@ -281,6 +293,7 @@ export class WaterfallRenderer {
    */
   setHeldPitches(pitches: readonly number[]): void {
     this._heldPitches = pitches.length ? [...pitches] : [];
+    this._reactiveBg.setHeldKeyCount(this._heldPitches.length);
     if (this._heldPitches.length === 0) {
       this._impacts.resetSustainEmission();
     }
@@ -372,6 +385,9 @@ export class WaterfallRenderer {
     this.hitLine.position.y = this._strikeLineY;
     this.flashLayer.setStrikeLineY(this._strikeLineY);
 
+    const centerY = (this.camera.top + this.camera.bottom) * 0.5;
+    this._reactiveBg.setFrustum(w, h, centerY, -8);
+
     this._rebuildNotes();
   }
 
@@ -409,6 +425,7 @@ export class WaterfallRenderer {
 
     this.flashLayer.tick();
     this._impacts.tick(dt);
+    this._reactiveBg.tick(dt);
     this._bloom.composer.render();
   }
 }

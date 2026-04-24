@@ -43,6 +43,11 @@ export interface NoteSpritesDims {
 export interface WaterfallVisualTheme {
   ambientLight: { color: number; intensity: number };
   background: number;
+  /**
+   * Full-screen mood backdrop: three hex stops (deep / mid / glow) for the
+   * ``WaterfallReactiveBackground`` shader only.
+   */
+  backdrop: { deep: number; glow: number; mid: number };
   bloom: {
     radius: number;
     resolutionScale: number;
@@ -285,6 +290,7 @@ const SUNSET_PAPER_COLORS = Object.freeze({
 const WATERFALL_CADENZA_DARK: WaterfallVisualTheme = Object.freeze({
   ambientLight: { color: 0x4a5568, intensity: 0.38 },
   background: 0x020203,
+  backdrop: { deep: 0x0a0504, mid: 0x2a150c, glow: 0xf07828 },
   bloom: {
     radius: 0.3,
     resolutionScale: 0.5,
@@ -337,6 +343,7 @@ const WATERFALL_CADENZA_DARK: WaterfallVisualTheme = Object.freeze({
 const WATERFALL_CADENZA_LIGHT: WaterfallVisualTheme = Object.freeze({
   ambientLight: { color: 0x4a5568, intensity: 0.38 },
   background: 0x020203,
+  backdrop: { deep: 0x051018, mid: 0x143a52, glow: 0x4ecfff },
   bloom: {
     radius: 0.28,
     resolutionScale: 0.5,
@@ -381,7 +388,7 @@ const WATERFALL_CADENZA_LIGHT: WaterfallVisualTheme = Object.freeze({
     labelToFingerGapPx: 3,
     labelWidthPx: 26,
   },
-  lavaBars: false,
+  lavaBars: true,
   pendingColorMode: "staff",
   pendingGradient: { high: 0x5b8bff, low: 0x39d5ff },
 });
@@ -389,6 +396,7 @@ const WATERFALL_CADENZA_LIGHT: WaterfallVisualTheme = Object.freeze({
 const WATERFALL_LAVA_STAGE: WaterfallVisualTheme = Object.freeze({
   ambientLight: { color: 0x6a3e3b, intensity: 0.4 },
   background: 0x0c0505,
+  backdrop: { deep: 0x140204, mid: 0x3c1208, glow: 0xff5c1a },
   bloom: {
     radius: 0.32,
     resolutionScale: 0.5,
@@ -441,6 +449,7 @@ const WATERFALL_LAVA_STAGE: WaterfallVisualTheme = Object.freeze({
 const WATERFALL_AURORA_ICE: WaterfallVisualTheme = Object.freeze({
   ambientLight: { color: 0x365a6f, intensity: 0.42 },
   background: 0x02060b,
+  backdrop: { deep: 0x020a12, mid: 0x0c4060, glow: 0x5ee8f8 },
   bloom: {
     radius: 0.3,
     resolutionScale: 0.55,
@@ -485,7 +494,7 @@ const WATERFALL_AURORA_ICE: WaterfallVisualTheme = Object.freeze({
     labelToFingerGapPx: 3,
     labelWidthPx: 26,
   },
-  lavaBars: false,
+  lavaBars: true,
   pendingColorMode: "gradient",
   pendingGradient: { high: 0x6d88ff, low: 0x34f5d5 },
 });
@@ -493,6 +502,7 @@ const WATERFALL_AURORA_ICE: WaterfallVisualTheme = Object.freeze({
 const WATERFALL_SUNSET_PAPER: WaterfallVisualTheme = Object.freeze({
   ambientLight: { color: 0x6a3e3b, intensity: 0.4 },
   background: 0x0c0505,
+  backdrop: { deep: 0x120805, mid: 0x3a2210, glow: 0xea9450 },
   bloom: {
     radius: 0.3,
     resolutionScale: 0.5,

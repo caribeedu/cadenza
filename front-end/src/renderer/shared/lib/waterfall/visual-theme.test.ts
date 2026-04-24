@@ -9,6 +9,7 @@ describe("waterfall visual themes", () => {
     expect(aurora.background).not.toBe(dark.background);
     expect(aurora.bloom.strength).not.toBe(dark.bloom.strength);
     expect(aurora.bloom.tint).not.toBe(dark.bloom.tint);
+    expect(aurora.backdrop.glow).not.toBe(dark.backdrop.glow);
   });
 
   it("provides per-theme feedback colors", () => {
