@@ -48,11 +48,10 @@ export interface ScoreConfigContextValue {
 const ScoreConfigContext = createContext<null | ScoreConfigContextValue>(null);
 
 // Holds user-tunable visualisation/scoring knobs that live purely on
-// the client: tolerance slider, colour palette, visualisation mode
-// (and, in the future, velocity curves). Tolerance is *also* mirrored
-// by the server, but this provider keeps the UI's authoritative value
-// in one place so controls don't need to reach into the playback
-// provider or the raw WebSocket each render.
+// the client: tolerance slider, colour palette, visualisation mode. 
+// Tolerance is *also* mirrored by the server, but this provider 
+// keeps the UI's authoritative value in one place so controls don't
+// need to reach into the playback provider or the raw WebSocket each render.
 export function ScoreConfigProvider({
   children,
 }: {

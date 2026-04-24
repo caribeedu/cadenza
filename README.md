@@ -1,60 +1,101 @@
 # Cadenza
 
-**Cadenza** is a local "waterfall" piano trainer in the spirit of Yousician or Simply Piano. A MuseScore 4 plugin streams the active score into a Python backend that validates MIDI against the score in real time, while the desktop UI renders falling notes with Three.js.
+[![Desktop Build](https://github.com/caribeedu/cadenza/actions/workflows/manual-desktop-build.yml/badge.svg)](https://github.com/caribeedu/cadenza/actions/workflows/manual-desktop-build.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/caribeedu/cadenza)
+[![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](https://github.com/caribeedu/cadenza/releases)
 
-## Why "Cadenza"?
+Open-source local piano practice app with live score validation. In classical music, a *cadenza* is the solo passage where the performer steps forward with technical freedom and expression. The name also echoes the idea of falling motion (*cadere*), matching the waterfall-style note visualization in the app.
 
-In classical music, a **cadenza** is the solo passage where the player steps forward—technically demanding, personal, and immediate. The name also echoes *cadere* (Latin "to fall"), which fits the way notes cascade toward the keyboard in the UI. It is a nod to both expression and the falling-note metaphor.
+Cadenza aims to be both:
+- expressive practice software for real musicians, and
+- a transparent OSS codebase that anyone can run, inspect, and improve.
 
-## Open source & free
+And combines:
+- a MuseScore 4 plugin that exports score data,
+- a Python backend that validates MIDI in real time,
+- an Electron desktop UI that renders a high-performance waterfall.
 
-Cadenza is **open-source** and **free to use**. The code is published under a permissive license (see the repository’s `LICENSE` if present, or `back-end/pyproject.toml` for the backend’s stated license). No paywall for practice—fork it, run it locally, and improve it with us.
+No account required. No score export files required. Everything runs locally.
 
-## Layout
+## Main features
+
+- Live waterfall visualization with Three.js in a desktop Electron app.
+- Timeline scrubber with density preview for fast navigation through long pieces.
+- Real-time note validation (`note_on`) against score timeline with tolerance window.
+- Auto finger numbering for missing fingerings using backend fingering assignment.
+- MIDI device listing and selection (USB/Bluetooth keyboards).
+- MuseScore 4 plugin ingest path (HTTP) with tempo map support.
+- Score timeline conversion to absolute milliseconds via `music21`.
+- Practice controls for timing window (`Timing` slider) and replay speed (`Speed` slider).
+- Theme selector for UI/waterfall look-and-feel presets.
+- Low-latency backend architecture using async hub + thread-safe MIDI callbacks.
+- Cross-platform packaging pipeline (Windows, macOS, Linux) with sidecar backend binary.
+- Plugin auto-bundled in release artifacts and installed to MuseScore plugin directory.
+
+## Architecture
 
 ```
-front-end/              Electron + Three.js visualiser
-back-end/
-├── plugin/             MuseScore 4 QML plugin (producer)
-└── server/             Python 3.11 backend — uv-managed
+MuseScore Plugin (QML) --> Python Hub (FastAPI/WebSocket) --> Electron UI (React + Three.js)
+                                 ^
+                                 |
+                         MIDI keyboard input
 ```
 
-The stack may grow (for example **FastAPI** and **React**) while keeping front-end, back-end, and plugin in this single repo.
+Transport model:
+- Plugin sends score payload to `http://127.0.0.1:8765/score` (HTTP).
+- Frontend talks to `ws://127.0.0.1:8765/` (WebSocket).
+- Backend broadcasts `score_timeline`, `status`, `midi_ports`, `note_played`.
 
-Each sub-folder has its own README with install, run, and test instructions.
+## Repository layout
 
-## Quick start
+```
+front-end/   Electron + React + Three.js desktop app
+back-end/    Python 3.11 FastAPI hub, validator, MIDI engine
+plugin/      MuseScore 4 QML plugin (Cadenza.qml)
+```
+
+Detailed setup docs:
+- `front-end/README.md`
+- `back-end/README.md`
+- `plugin/README.md`
+
+## Quick start (dev)
+
+### 1) Start backend
 
 ```bash
-# 1. Backend (requires uv)
-cd ./back-end
+cd back-end
 uv sync --all-groups
 uv run cadenza-server
-
-# 2. Frontend (requires Node 20+)
-cd ./front-end
-npm install
-npm start
-
-# 3. MuseScore plugin
-cp ./plugin/Cadenza.qml <destination-path>
-# then enable "Cadenza Sender" in MuseScore's Plugin Manager
 ```
 
-## Release build
+### 2) Start desktop app
 
-Desktop release generation runs fully on local/CI machines:
+```bash
+cd front-end
+npm install
+npm run dev
+```
 
-- Python backend is frozen with `PyInstaller` into `cadenza-server(.exe)`.
-- Electron installer is produced with `electron-builder`.
-- MuseScore plugin files from `plugin/` are embedded as installer resources.
+### 3) Install MuseScore plugin
 
-Manual GitHub trigger:
+Copy `plugin/Cadenza.qml` to MuseScore plugin directory:
+- Linux: `~/.local/share/MuseScore/MuseScore4/Plugins/`
+- macOS: `~/Documents/MuseScore4/Plugins/`
+- Windows: `%USERPROFILE%\Documents\MuseScore4\Plugins\`
 
-- Open Actions and run workflow `Manual Desktop Build`.
-- The workflow builds backend + installer for Windows, macOS, Linux and uploads artifacts.
+Enable plugin in MuseScore Plugin Manager, then run `Cadenza Sender`.
 
-Manual local Windows release:
+## Build desktop installers
+
+Pipeline:
+- Freeze backend with `PyInstaller`.
+- Build Electron installers with `electron-builder`.
+- Bundle plugin files into app resources.
+
+### Local release build
+
+Windows:
 
 ```powershell
 cd back-end
@@ -63,7 +104,7 @@ cd ../front-end
 npm run dist
 ```
 
-Manual local macOS/Linux release:
+macOS/Linux:
 
 ```bash
 cd back-end
@@ -72,31 +113,43 @@ cd ../front-end
 npm run dist
 ```
 
-## Architecture
+### GitHub Actions build
 
-```
-MuseScore QML plugin  ──ws──▶  Python backend  ──ws──▶  Electron frontend
-                                       ▲
-                                       │ note_on events (async queue)
-                               mido + python-rtmidi
-                                       │
-                              MIDI keyboard (USB / BT)
-```
+Use workflow: `Manual Desktop Build`
+- builds Windows, macOS, Linux installers,
+- uploads artifacts per OS.
 
-- All payloads are JSON over WebSocket — nothing is ever persisted.
-- The backend uses `music21`'s `secondsMap` to convert score offsets
-  (quarter lengths) into absolute millisecond timings.
-- MIDI callbacks run on a background thread and are bounced into the
-  asyncio loop with `loop.call_soon_threadsafe`.
-- Validation uses a configurable tolerance window (default ±100 ms) and
-  never matches the same scored note twice.
+## Quality and testing
 
-## Tests
+Backend:
 
 ```bash
-# Python
-cd ./back-end && uv run pytest
-
-# JavaScript
-cd ./front-end && npm test
+cd back-end
+uv run pytest
 ```
+
+Frontend:
+
+```bash
+cd front-end
+npm test
+```
+
+## Project status
+
+Current release: `0.0.1`
+
+This is early but functional OSS foundation for local piano learning workflows.
+Roadmap includes richer pedagogy feedback, better settings UX, and improved release ergonomics.
+
+## Contributing
+
+Issues and PRs welcome.
+
+- Keep changes scoped and reviewable.
+- Add/adjust tests with behavior changes.
+- Prefer local-first and low-latency architecture.
+
+## License
+
+MIT.
