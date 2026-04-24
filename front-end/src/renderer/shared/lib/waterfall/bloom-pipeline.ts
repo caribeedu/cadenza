@@ -4,7 +4,7 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 
-import type { WaterfallVisualTheme } from "@app/theme/ui-theme";
+import type { WaterfallVisualTheme } from "@app/theme/theme";
 
 export interface WaterfallBloomPipeline {
   readonly composer: EffectComposer;

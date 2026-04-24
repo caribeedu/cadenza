@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 
-import type { NoteSpritesDims } from "@app/theme/ui-theme";
+import type { NoteSpritesDims } from "@app/theme/theme";
 
 import type { LaneGeometry } from "../../types/geometry";
 import type { ScoreNote } from "../../types/score";

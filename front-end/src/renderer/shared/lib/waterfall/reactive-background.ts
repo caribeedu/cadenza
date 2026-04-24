@@ -1,4 +1,4 @@
-import type { WaterfallVisualTheme } from "@app/theme/ui-theme";
+import type { WaterfallVisualTheme } from "@app/theme/theme";
 
 import * as THREE from "three";
 

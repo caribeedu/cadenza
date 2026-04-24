@@ -1,8 +1,8 @@
-import { DEFAULT_UI_THEME, UI_THEMES } from "@app/theme/ui-theme";
+import { DEFAULT_THEME, THEMES } from "@app/theme/theme";
 import { describe, expect, it } from "vitest";
 
 const DEFAULT_NOTE_SPRITES =
-  UI_THEMES[DEFAULT_UI_THEME].waterfall.noteSprites;
+  THEMES[DEFAULT_THEME].waterfall.noteSprites;
 
 import {
   classifyNoteSpriteStack,

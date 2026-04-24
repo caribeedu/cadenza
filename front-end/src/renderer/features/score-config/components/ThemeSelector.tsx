@@ -1,12 +1,12 @@
 import { useThemeConfig } from "@app/providers/ThemeProvider";
-import { type UiThemeId, UI_THEME_LIST } from "@app/theme/ui-theme";
+import { type ThemeId, THEME_LIST } from "@app/theme/theme";
 import type { ChangeEvent, ReactElement } from "react";
 
 export function ThemeSelector(): ReactElement {
-  const { setUiTheme, uiTheme } = useThemeConfig();
+  const { setTheme, theme } = useThemeConfig();
 
   const onChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    setUiTheme(event.target.value as UiThemeId);
+    setTheme(event.target.value as ThemeId);
   };
 
   return (
@@ -15,9 +15,9 @@ export function ThemeSelector(): ReactElement {
       <select
         aria-label="UI theme"
         onChange={onChange}
-        value={uiTheme}
+        value={theme}
       >
-        {UI_THEME_LIST.map((theme) => (
+        {THEME_LIST.map((theme) => (
           <option key={theme.id} value={theme.id}>
             {theme.label}
           </option>

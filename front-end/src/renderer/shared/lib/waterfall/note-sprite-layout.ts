@@ -1,4 +1,4 @@
-import type { NoteSpritesDims } from "@app/theme/ui-theme";
+import type { NoteSpritesDims } from "@app/theme/theme";
 
 import { minBarHeightForFingerPx, minBarHeightForLabelPx } from "./constants";
 

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { describe, expect, it, vi } from "vitest";
 
-import { UI_THEME_IDS, UI_THEMES } from "@app/theme/ui-theme";
+import { THEME_IDS, THEMES } from "@app/theme/theme";
 
 import type { ScoreNote } from "../../types/score";
 import {
@@ -35,7 +35,7 @@ describe("WaterfallNoteGroupFactory", () => {
     laneWidthPx: () => 40,
   };
 
-  const lightSprites = UI_THEMES[UI_THEME_IDS.CadenzaLight].waterfall.noteSprites;
+  const lightSprites = THEMES[THEME_IDS.CadenzaLight].waterfall.noteSprites;
 
   it("createGroup attaches userData with score fields and mesh key from id", () => {
     const factory = new WaterfallNoteGroupFactory(

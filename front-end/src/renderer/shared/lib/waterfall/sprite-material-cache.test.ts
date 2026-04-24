@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { DEFAULT_UI_THEME, UI_THEMES } from "@app/theme/ui-theme";
+import { DEFAULT_THEME, THEMES } from "@app/theme/theme";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { NoteSpriteMaterialCache } from "./sprite-material-cache";
@@ -34,7 +34,7 @@ function stubCanvas2d(): void {
   );
 }
 
-const S = UI_THEMES[DEFAULT_UI_THEME].waterfall.noteSprites;
+const S = THEMES[DEFAULT_THEME].waterfall.noteSprites;
 
 describe("NoteSpriteMaterialCache", () => {
   beforeEach(() => {

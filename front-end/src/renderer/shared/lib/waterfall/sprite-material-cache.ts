@@ -1,4 +1,4 @@
-import type { NoteSpritesDims } from "@app/theme/ui-theme";
+import type { NoteSpritesDims } from "@app/theme/theme";
 import * as THREE from "three";
 
 import { isAccidental } from "../timeline";

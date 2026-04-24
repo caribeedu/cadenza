@@ -12,16 +12,16 @@ import {
 
 import {
   bootTheme,
-  DEFAULT_UI_THEME,
-  type UiThemeId,
-  UI_THEMES,
-} from "../theme/ui-theme";
+  DEFAULT_THEME,
+  type ThemeId,
+  THEMES,
+} from "../theme/theme";
 
 export interface ThemeContextValue {
-  setUiTheme: (theme: UiThemeId) => void;
+  setTheme: (theme: ThemeId) => void;
   themeRestartGeneration: number;
-  uiTheme: UiThemeId;
-  waterfallTheme: UiThemeId;
+  theme: ThemeId;
+  waterfallTheme: ThemeId;
 }
 
 const ThemeContext = createContext<null | ThemeContextValue>(null);
@@ -31,19 +31,19 @@ export function ThemeProvider({
 }: {
   children: ReactNode;
 }): ReactElement {
-  const [uiTheme, setUiThemeState] = useState<UiThemeId>(DEFAULT_UI_THEME);
+  const [theme, setThemeState] = useState<ThemeId>(DEFAULT_THEME);
   const [themeRestartGeneration, setThemeRestartGeneration] = useState(0);
   const skipThemeRestartBumpRef = useRef(true);
-  const waterfallTheme = uiTheme;
+  const waterfallTheme = theme;
 
-  const setUiTheme = useCallback((theme: UiThemeId) => {
-    if (!UI_THEMES[theme]) return;
-    setUiThemeState(theme);
+  const setTheme = useCallback((theme: ThemeId) => {
+    if (!THEMES[theme]) return;
+    setThemeState(theme);
   }, []);
 
   useEffect(() => {
-    bootTheme(uiTheme);
-  }, [uiTheme]);
+    bootTheme(theme);
+  }, [theme]);
 
   /** Bumps after each theme switch so the waterfall playhead resets like a session restart. */
   useEffect(() => {
@@ -52,16 +52,16 @@ export function ThemeProvider({
       return;
     }
     setThemeRestartGeneration((g) => g + 1);
-  }, [uiTheme]);
+  }, [theme]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({
-      setUiTheme,
+      setTheme,
       themeRestartGeneration,
-      uiTheme,
+      theme,
       waterfallTheme,
     }),
-    [setUiTheme, themeRestartGeneration, uiTheme, waterfallTheme],
+    [setTheme, themeRestartGeneration, theme, waterfallTheme],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

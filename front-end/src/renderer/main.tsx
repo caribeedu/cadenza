@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { App } from "./App";
-import { bootTheme } from "@app/theme/ui-theme";
+import { bootTheme } from "@app/theme/theme";
 
 import "@shared/styles/globals.css";
 

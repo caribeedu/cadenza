@@ -1,12 +1,12 @@
 import * as THREE from "three";
 import {
-  type UiThemeId,
-  UI_THEMES,
+  type ThemeId,
+  THEMES,
   type WaterfallVisualTheme,
-} from "@app/theme/ui-theme";
+} from "@app/theme/theme";
 
 /** Pending-note palette and hit-line look follows selected app theme id. */
-export type WaterfallTheme = UiThemeId;
+export type WaterfallTheme = ThemeId;
 
 // ---------------------------------------------------------------------------
 // Phase A — stage (near black, soft fog so emissive/bloom stay visible)
@@ -21,7 +21,7 @@ export const EMISSIVE_GOOD = 0.48;
 export const EMISSIVE_BAD = 0.38;
 
 export function visualThemeConfig(theme: WaterfallTheme): WaterfallVisualTheme {
-  return UI_THEMES[theme].waterfall;
+  return THEMES[theme].waterfall;
 }
 
 export function feedbackForTheme(

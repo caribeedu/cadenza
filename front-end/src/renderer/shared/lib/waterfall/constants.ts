@@ -1,6 +1,6 @@
 /** Layout helpers derived from {@link WaterfallVisualTheme.noteSprites}. */
 
-import type { NoteSpritesDims } from "@app/theme/ui-theme";
+import type { NoteSpritesDims } from "@app/theme/theme";
 
 export function minBarHeightForFingerPx(s: NoteSpritesDims): number {
   return (
