@@ -4,8 +4,8 @@ import * as THREE from "three";
 import { isAccidental } from "../timeline";
 import { midiFromName } from "./pitch-name";
 
-const LABEL_FONT_SCALE = 0.78;
-const FINGER_FONT_SCALE = 0.82;
+const LABEL_FONT_SCALE = 1.050;
+const FINGER_FONT_SCALE = 1.200;
 
 /**
  * Canvas-backed sprite materials for pitch labels and finger digits.
@@ -56,15 +56,26 @@ export class NoteSpriteMaterialCache {
     ctx.font = `700 ${Math.floor(ch * LABEL_FONT_SCALE)}px system-ui, -apple-system, "Segoe UI", sans-serif`;
 
     const strokeW = Math.max(3, Math.floor(ch * 0.22));
+    const cx = cw / 2;
+    const cy = ch / 2 + 1;
+    // Label shadow slightly stronger than finger shadow for a middle-ground separation.
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.55)";
+    ctx.shadowBlur = Math.max(4, Math.floor(ch * 0.24));
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = Math.max(1, Math.floor(ch * 0.08));
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillText(text, cx, cy);
+    ctx.restore();
     ctx.lineWidth = strokeW;
     ctx.lineJoin = "round";
     ctx.miterLimit = 2;
     ctx.strokeStyle = "rgba(8,10,20,0.96)";
-    ctx.strokeText(text, cw / 2, ch / 2 + 1);
+    ctx.strokeText(text, cx, cy);
     ctx.fillStyle = isAccidental(midiFromName(text))
       ? "rgba(242,246,255,0.92)"
       : "rgba(255,255,255,1)";
-    ctx.fillText(text, cw / 2, ch / 2 + 1);
+    ctx.fillText(text, cx, cy);
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.anisotropy = 4;
@@ -109,10 +120,10 @@ export class NoteSpriteMaterialCache {
     ctx.miterLimit = 2;
 
     ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.88)";
-    ctx.shadowBlur = Math.max(5, Math.floor(ch * 0.38));
+    ctx.shadowColor = "rgba(0,0,0,0.62)";
+    ctx.shadowBlur = Math.max(3, Math.floor(ch * 0.22));
     ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = Math.max(1, Math.floor(ch * 0.12));
+    ctx.shadowOffsetY = Math.max(1, Math.floor(ch * 0.08));
     ctx.strokeStyle = "rgba(6,8,16,0.55)";
     ctx.lineWidth = strokeW + 5;
     ctx.strokeText(digit, cx, cy);
