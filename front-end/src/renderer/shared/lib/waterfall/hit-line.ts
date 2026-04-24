@@ -31,7 +31,7 @@ void main() {
  * A bright core plus wide additive band so the play line reads through bloom.
  */
 export function createHitLine(
-  theme: WaterfallTheme = "cadenza-dark",
+  theme: WaterfallTheme = "lava-stage",
 ): THREE.Group {
   const line = visualThemeConfig(theme).hitLine;
   const g = new THREE.Group();

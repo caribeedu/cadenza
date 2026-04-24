@@ -6,13 +6,13 @@ import { visualThemeConfig } from "./visual-theme";
 
 describe("createHitLine", () => {
   it("returns a group with glow and core quads for fire theme", () => {
-    const g = createHitLine("cadenza-dark");
+    const g = createHitLine("lava-stage");
     expect(g).toBeInstanceOf(THREE.Group);
     expect(g.children.length).toBe(2);
     const [glow, core] = g.children;
     const glowM = (glow as THREE.Mesh).material as THREE.ShaderMaterial;
     const coreM = (core as THREE.Mesh).material as THREE.MeshBasicMaterial;
-    const darkLine = visualThemeConfig("cadenza-dark").hitLine;
+    const darkLine = visualThemeConfig("lava-stage").hitLine;
     const glowColor = glowM.uniforms.uColor.value as THREE.Color;
     expect(glowColor.getHex()).toBe(darkLine.glow);
     expect(glowM.uniforms.uFadePower.value).toBe(darkLine.glowFadePower);

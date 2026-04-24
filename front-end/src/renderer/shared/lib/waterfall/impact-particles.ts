@@ -28,7 +28,7 @@ export class WaterfallImpactParticles {
   private readonly _tex: THREE.DataTexture;
   private readonly _points: THREE.Points;
 
-  constructor(theme: WaterfallTheme = "cadenza-dark") {
+  constructor(theme: WaterfallTheme = "lava-stage") {
     const spec = visualThemeConfig(theme).particles;
 
     const pos = new Float32Array(POOL * 3);

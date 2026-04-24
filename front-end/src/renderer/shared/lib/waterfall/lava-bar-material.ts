@@ -21,6 +21,7 @@ const FRAG = /* glsl */ `
 varying vec2 vUv;
 uniform vec3 uColorLow;
 uniform vec3 uColorHigh;
+uniform vec3 uHandTint;
 uniform vec3 uGood;
 uniform vec3 uBad;
 uniform float uTime;
@@ -31,6 +32,7 @@ uniform float uNoiseValueBase;
 uniform float uNoiseValueAmp;
 uniform float uMixGood;
 uniform float uMixBad;
+uniform float uHandTintMix;
 float hash21(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
@@ -60,6 +62,8 @@ void main() {
   float f = fbm(uv * uNoiseUvScale + vec2(0.0, uTime * uNoiseTimeScale));
   float n = uNoiseValueBase + uNoiseValueAmp * f;
   vec3 base = mix(uColorLow, uColorHigh, uv.y) * n;
+  vec3 handBias = mix(base * uHandTint, uHandTint * (0.4 + 0.6 * n), 0.36);
+  base = mix(base, handBias, uHandTintMix);
   vec3 c = base;
   if (uStatus == 1) c = mix(base, uGood, uMixGood);
   else if (uStatus == 2) c = mix(base, uBad, uMixBad);
@@ -69,10 +73,18 @@ void main() {
 
 export function createLavaBarMaterial(
   pitch: number,
+  staff: number | undefined,
+  track: number | undefined,
   theme: WaterfallTheme,
 ): THREE.ShaderMaterial {
   const g = fireBarGradient(pitch, theme);
   const d = visualThemeConfig(theme).lavaAppearance;
+  const leftHand =
+    staff === 1 ||
+    (staff == null && track === 1) ||
+    (staff == null && track == null && pitch < 60);
+  const handTintHex = leftHand ? d.handLeftTint : d.handRightTint;
+  const handTint = new THREE.Color(handTintHex);
   return new THREE.ShaderMaterial({
     depthTest: false,
     depthWrite: false,
@@ -81,7 +93,9 @@ export function createLavaBarMaterial(
       uBad: { value: new THREE.Vector3() },
       uColorHigh: { value: g.high },
       uColorLow: { value: g.low },
+      uHandTint: { value: new THREE.Vector3(handTint.r, handTint.g, handTint.b) },
       uGood: { value: new THREE.Vector3() },
+      uHandTintMix: { value: d.handTintMix },
       uMixBad: { value: d.mixBad },
       uMixGood: { value: d.mixGood },
       uNoiseTimeScale: { value: d.noiseTimeScale },
@@ -99,7 +113,7 @@ export function createLavaBarMaterial(
 
 export function initLavaBarFeedbackUniforms(
   mat: THREE.ShaderMaterial,
-  theme: WaterfallTheme = "cadenza-dark",
+  theme: WaterfallTheme = "lava-stage",
 ): void {
   const good = feedbackForTheme(theme, "good");
   const bad = feedbackForTheme(theme, "bad");

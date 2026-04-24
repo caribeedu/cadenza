@@ -48,7 +48,7 @@ export interface WaterfallOptions {
 }
 
 const DEFAULT_PLAYBACK_SPEED = 1.0;
-const DEFAULT_THEME: WaterfallTheme = "cadenza-dark";
+const DEFAULT_THEME: WaterfallTheme = "lava-stage";
 
 export class WaterfallRenderer {
   readonly camera: THREE.OrthographicCamera;

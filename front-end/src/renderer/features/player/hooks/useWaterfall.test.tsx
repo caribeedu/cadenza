@@ -108,7 +108,7 @@ function Harness({
   serverPaused = false,
   serverPlaybackSpeed = 1,
   serverPlaying = false,
-  waterfallTheme = "cadenza-dark",
+  waterfallTheme = "lava-stage",
   sessionRestartGeneration = 0,
   themeRestartGeneration = 0,
   heldMidiPitches = [],
@@ -266,7 +266,7 @@ describe("useWaterfall", () => {
 
   it("rebuilds the renderer when waterfall visual theme changes", () => {
     const { rerender } = render(
-      <Harness geometry={makeGeometry("a")} waterfallTheme="cadenza-dark" />,
+      <Harness geometry={makeGeometry("a")} waterfallTheme="lava-stage" />,
     );
     expect(rendererSpies).toHaveLength(1);
     const first = rendererSpies[0];

@@ -8,6 +8,12 @@ export type WaterfallTheme = ThemeId;
 
 /** Procedural lava bar appearance (noise domain, brightness, feedback mix). */
 export interface LavaAppearance {
+  /** Per-hand tint applied on top of animated lava base (sRGB hex). */
+  handLeftTint: number;
+  /** Per-hand tint applied on top of animated lava base (sRGB hex). */
+  handRightTint: number;
+  /** 0..1 tint strength; keeps procedural lava visible while separating hands. */
+  handTintMix: number;
   mixBad: number;
   mixGood: number;
   noiseTimeScale: number;
@@ -156,7 +162,7 @@ const UI_AURORA_ICE = Object.freeze({
   "--key-stroke-black": "#0d111b",
   "--key-pressed-good": "var(--good)",
   "--key-pressed-bad": "var(--bad)",
-  "--key-pressed-neutral": "var(--accent)",
+  "--key-pressed-neutral": "#42c8ff",
   "--key-target": "#b8c7e7",
   "--topbar-gradient-start": "#ffffff",
   "--topbar-gradient-end": "#edf2fb",
@@ -205,7 +211,7 @@ const UI_LAVA_STAGE = Object.freeze({
   "--key-stroke-black": "#060103",
   "--key-pressed-good": "var(--good)",
   "--key-pressed-bad": "var(--bad)",
-  "--key-pressed-neutral": "var(--accent)",
+  "--key-pressed-neutral": "#ffcb63",
   "--key-target": "#5f2738",
   "--topbar-gradient-start": "#1a1418",
   "--topbar-gradient-end": "#100d10",
@@ -241,6 +247,9 @@ const WATERFALL_AURORA_ICE: WaterfallVisualTheme = Object.freeze({
   },
   particles: { opacity: 0.9, size: 12, tint: 0x63d8ff },
   lavaAppearance: {
+    handLeftTint: 0x8c5dff,
+    handRightTint: 0x39d4ff,
+    handTintMix: 0.56,
     mixBad: 0.9,
     mixGood: 0.88,
     noiseTimeScale: 0.6,
@@ -294,6 +303,9 @@ const WATERFALL_LAVA_STAGE: WaterfallVisualTheme = Object.freeze({
   },
   particles: { opacity: 0.9, size: 12, tint: 0xff8d42 },
   lavaAppearance: {
+    handLeftTint: 0xb04a9a,
+    handRightTint: 0xffa037,
+    handTintMix: 0.52,
     mixBad: 0.9,
     mixGood: 0.88,
     noiseTimeScale: 0.6,

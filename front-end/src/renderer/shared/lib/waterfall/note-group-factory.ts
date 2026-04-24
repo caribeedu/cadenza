@@ -98,7 +98,12 @@ export class WaterfallNoteGroupFactory {
     );
     const mat = isLava
       ? (() => {
-          const m = createLavaBarMaterial(note.pitch, this.theme);
+          const m = createLavaBarMaterial(
+            note.pitch,
+            note.staff,
+            note.track,
+            this.theme,
+          );
           initLavaBarFeedbackUniforms(m, this.theme);
           return m;
         })()

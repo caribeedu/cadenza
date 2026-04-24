@@ -40,6 +40,10 @@ describe("ui theme registry", () => {
       expect(theme.waterfall.backdrop.deep).toBeGreaterThan(0);
       expect(theme.waterfall.backdrop.mid).toBeGreaterThan(0);
       expect(theme.waterfall.backdrop.glow).toBeGreaterThan(0);
+      expect(theme.waterfall.lavaAppearance.handLeftTint).toBeGreaterThan(0);
+      expect(theme.waterfall.lavaAppearance.handRightTint).toBeGreaterThan(0);
+      expect(theme.waterfall.lavaAppearance.handTintMix).toBeGreaterThan(0);
+      expect(theme.waterfall.lavaAppearance.handTintMix).toBeLessThanOrEqual(1);
       expect(theme.waterfall.particles.tint).toBeGreaterThan(0);
       expect(theme.waterfall.particles.size).toBeGreaterThan(0);
       expect(theme.waterfall.particles.opacity).toBeGreaterThan(0);
