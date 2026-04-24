@@ -5,18 +5,22 @@ on:
 
 jobs:
   build:
+    name: ${{ matrix.job_name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: windows-latest
+            job_name: Build Windows Installer
             artifact_name: cadenza-windows-build
             backend_binary: front-end/release/backend/cadenza-server.exe
           - os: macos-latest
+            job_name: Build macOS Installer
             artifact_name: cadenza-macos-build
             backend_binary: front-end/release/backend/cadenza-server
           - os: ubuntu-latest
+            job_name: Build Linux Installer
             artifact_name: cadenza-linux-build
             backend_binary: front-end/release/backend/cadenza-server
     steps:
