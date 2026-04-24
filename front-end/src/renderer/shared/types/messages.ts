@@ -13,6 +13,7 @@ import type {
   MSG_NOTE_TRIGGER,
   MSG_PAUSE,
   MSG_RESUME,
+  MSG_SEEK,
   MSG_SCORE,
   MSG_FINGERING_PROGRESS,
   MSG_SCORE_TIMELINE,
@@ -55,6 +56,11 @@ export interface StopMessage {
   type: typeof MSG_STOP;
 }
 
+export interface SeekMessage {
+  elapsed_ms: number;
+  type: typeof MSG_SEEK;
+}
+
 export interface SetToleranceMessage {
   tolerance_ms: number;
   type: typeof MSG_SET_TOLERANCE;
@@ -75,6 +81,7 @@ export type ClientMessage =
   | ListMidiMessage
   | PauseMessage
   | ResumeMessage
+  | SeekMessage
   | ScoreMessage
   | SelectMidiMessage
   | SetPlaybackSpeedMessage

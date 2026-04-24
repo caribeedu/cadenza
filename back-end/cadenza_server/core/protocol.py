@@ -31,6 +31,7 @@ class MessageType(StrEnum):
     PAUSE = "pause"
     RESUME = "resume"
     STOP = "stop"
+    SEEK = "seek"
     SET_TOLERANCE = "set_tolerance"
     SET_PLAYBACK_SPEED = "set_playback_speed"
 
@@ -54,6 +55,7 @@ MSG_START = MessageType.START
 MSG_PAUSE = MessageType.PAUSE
 MSG_RESUME = MessageType.RESUME
 MSG_STOP = MessageType.STOP
+MSG_SEEK = MessageType.SEEK
 MSG_SET_TOLERANCE = MessageType.SET_TOLERANCE
 MSG_SET_PLAYBACK_SPEED = MessageType.SET_PLAYBACK_SPEED
 MSG_STATUS = MessageType.STATUS

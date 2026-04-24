@@ -10,6 +10,7 @@ const EMPTY_SCORE_TIMELINE: ScoreTimeline = {
   duration_ms: 0,
   notes: [],
 };
+const ELAPSED_REALIGN_EPSILON_MS = 8;
 import {
   type RefObject,
   useEffect,
@@ -77,6 +78,7 @@ export function useWaterfall({
   const previousPlayingRef = useRef(false);
   const previousPausedRef = useRef(false);
   const previousNoteRef = useRef<NotePlayed | null>(null);
+  const lastPausedAlignMsRef = useRef<null | number>(null);
   // Last server speed we actually pushed into the renderer. Tracked
   // separately from ``serverPlaybackSpeed`` so the sync effect is a
   // no-op on status frames that only carry an ``elapsed_ms`` update
@@ -118,6 +120,7 @@ export function useWaterfall({
       prevAppliedSpeedRef.current = null;
       previousPlayingRef.current = false;
       previousPausedRef.current = false;
+      lastPausedAlignMsRef.current = null;
     };
     // We intentionally ignore ``laneGeometry`` identity changes here —
     // reflows are handled by ``setLaneGeometry`` below; rebuilding the
@@ -187,6 +190,27 @@ export function useWaterfall({
     // by one network RTT on each broadcast and visibly stutter).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [renderer, serverPlaying, serverPaused]);
+
+  // Keep paused renderer pinned to authoritative ``elapsed_ms`` after
+  // seek (including paused→paused seek where no play/pause transition fires).
+  // Guard with epsilon to avoid status-broadcast micro-jitter.
+  useEffect(() => {
+    if (!renderer) return;
+    if (!serverPaused) {
+      lastPausedAlignMsRef.current = null;
+      return;
+    }
+    if (typeof serverElapsedMs !== "number") return;
+    const prev = lastPausedAlignMsRef.current;
+    if (
+      prev != null &&
+      Math.abs(serverElapsedMs - prev) < ELAPSED_REALIGN_EPSILON_MS
+    ) {
+      return;
+    }
+    renderer.pauseAt(serverElapsedMs);
+    lastPausedAlignMsRef.current = serverElapsedMs;
+  }, [renderer, serverPaused, serverElapsedMs]);
 
   // ``MSG_START`` always runs ``mark_time_zero()`` on the hub, but when
   // the user restarts *while already playing* the play/pause transition

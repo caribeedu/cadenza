@@ -14,7 +14,7 @@ describe("waterfall visual themes", () => {
 
   it("provides per-theme feedback colors", () => {
     const darkNeutral = feedbackForTheme("lava-stage", "neutral").getHex();
-    const lightNeutral = feedbackForTheme("cadenza-light", "neutral").getHex();
+    const lightNeutral = feedbackForTheme("aurora-ice", "neutral").getHex();
     expect(darkNeutral).not.toBe(lightNeutral);
   });
 });

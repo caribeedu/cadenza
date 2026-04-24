@@ -25,11 +25,11 @@ describe("createHitLine", () => {
   });
 
   it("uses hand palette for study theme", () => {
-    const g = createHitLine("cadenza-light");
+    const g = createHitLine("aurora-ice");
     const [glow, core] = g.children;
     const glowM = (glow as THREE.Mesh).material as THREE.ShaderMaterial;
     const coreM = (core as THREE.Mesh).material as THREE.MeshBasicMaterial;
-    const lightLine = visualThemeConfig("cadenza-light").hitLine;
+    const lightLine = visualThemeConfig("aurora-ice").hitLine;
     const glowColor = glowM.uniforms.uColor.value as THREE.Color;
     expect(glowColor.getHex()).toBe(lightLine.glow);
     expect(glowM.uniforms.uFadePower.value).toBe(lightLine.glowFadePower);

@@ -31,6 +31,7 @@ class TestProtocol:
         assert MessageType.STATUS == "status"
         assert MessageType.NOTE_PLAYED == "note_played"
         assert MessageType.NOTE_OFF == "note_off"
+        assert MessageType.SEEK == "seek"
 
     def test_pause_and_resume_constants_exist(self) -> None:
         # Regression guard: the pause-in-place UX relies on MSG_PAUSE and
@@ -39,6 +40,7 @@ class TestProtocol:
         # the user sees Pause/Resume "do nothing".
         assert protocol.MSG_PAUSE == "pause"
         assert protocol.MSG_RESUME == "resume"
+        assert protocol.MSG_SEEK == "seek"
         assert protocol.MSG_PAUSE != protocol.MSG_STOP
 
     def test_set_tolerance_constant_exists(self) -> None:

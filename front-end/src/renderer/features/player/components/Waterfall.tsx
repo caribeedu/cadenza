@@ -6,6 +6,7 @@ import { type ReactElement, useRef } from "react";
 import { useKeyboardLayout } from "../hooks/useKeyboardLayout";
 import { useWaterfall } from "../hooks/useWaterfall";
 import { Piano } from "./Piano";
+import { TimelineScrubber } from "./TimelineScrubber";
 import "./Piano.css";
 import "./Waterfall.css";
 
@@ -28,6 +29,7 @@ export function Waterfall(): ReactElement {
     serverPaused,
     serverPlaybackSpeed,
     serverPlaying,
+    seekTo,
     sessionRestartGeneration,
   } = usePlayback();
   const { themeRestartGeneration, waterfallTheme } = useThemeConfig();
@@ -49,7 +51,19 @@ export function Waterfall(): ReactElement {
 
   return (
     <div className="playfield" ref={playfieldRef}>
-      <canvas className="waterfall-canvas" ref={canvasRef} />
+      <div className="waterfall-stage">
+        <canvas className="waterfall-canvas" ref={canvasRef} />
+        <div className="waterfall-timeline-overlay">
+          <TimelineScrubber
+            onSeek={seekTo}
+            score={score}
+            serverElapsedMs={serverElapsedMs}
+            serverPaused={serverPaused}
+            serverPlaybackSpeed={serverPlaybackSpeed}
+            serverPlaying={serverPlaying}
+          />
+        </div>
+      </div>
       <div className="piano-host" ref={pianoHostRef}>
         <Piano
           height={pianoSize?.height}

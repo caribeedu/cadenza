@@ -8,6 +8,7 @@ export const MSG_START = "start";
 export const MSG_PAUSE = "pause";
 export const MSG_RESUME = "resume";
 export const MSG_STOP = "stop";
+export const MSG_SEEK = "seek";
 export const MSG_SET_TOLERANCE = "set_tolerance";
 export const MSG_SET_PLAYBACK_SPEED = "set_playback_speed";
 

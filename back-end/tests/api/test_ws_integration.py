@@ -198,6 +198,26 @@ class TestStatusElapsedMs:
             )
 
 
+class TestSeekFlow:
+    def test_seek_pauses_and_updates_elapsed(self, client: TestClient) -> None:
+        with client.websocket_connect("/") as ws:
+            _drain_status(ws)
+            ws.send_json({"type": "start"})
+            _recv_of_type(ws, "status")
+            ws.send_json({"type": "seek", "elapsed_ms": 1500})
+            status = _recv_of_type(ws, "status")
+            assert status["paused"] is True
+            assert status["playing"] is False
+            assert status["elapsed_ms"] == pytest.approx(1500.0, abs=25.0)
+
+    def test_negative_seek_rejected(self, client: TestClient) -> None:
+        with client.websocket_connect("/") as ws:
+            _drain_status(ws)
+            ws.send_json({"type": "seek", "elapsed_ms": -1})
+            err = _recv_of_type(ws, "error")
+            assert "elapsed_ms" in err["error"]
+
+
 class TestScoreTitleBroadcast:
     def test_title_forwarded_in_score_timeline(self, client: TestClient) -> None:
         with client.websocket_connect("/") as frontend, client.websocket_connect("/") as plugin:

@@ -187,6 +187,7 @@ class Hub:
             MessageType.PAUSE.value: self._on_pause,
             MessageType.RESUME.value: self._on_resume,
             MessageType.STOP.value: self._on_stop,
+            MessageType.SEEK.value: self._on_seek,
             MessageType.SET_TOLERANCE.value: self._on_set_tolerance,
             MessageType.SET_PLAYBACK_SPEED.value: self._on_set_playback_speed,
         }
@@ -258,6 +259,33 @@ class Hub:
     async def _on_stop(self, _client: Client, _msg: dict[str, Any]) -> None:
         self._state.playing = False
         self._state.paused = False
+        await self._broadcast_status()
+
+    async def _on_seek(self, client: Client, msg: dict[str, Any]) -> None:
+        value = msg.get("elapsed_ms")
+        parsed: float | None
+        try:
+            parsed = float(value)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            parsed = None
+        if parsed is None or isinstance(value, bool) or parsed < 0 or parsed != parsed:
+            await self._send(
+                client,
+                {
+                    "type": MessageType.ERROR,
+                    "error": "elapsed_ms must be a non-negative finite number",
+                },
+            )
+            return
+        # Seeking while running must pause session; frontend expects this and
+        # server remains authoritative even if frames arrive out of order.
+        if self._state.playing and not self._state.paused:
+            self.midi.pause()
+        self.midi.seek_to_ms(parsed)
+        self._state.playing = False
+        self._state.paused = True
+        if self._state.validator is not None:
+            self._state.validator.reset()
         await self._broadcast_status()
 
     async def _on_set_tolerance(self, client: Client, msg: dict[str, Any]) -> None:

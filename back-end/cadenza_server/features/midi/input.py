@@ -195,6 +195,21 @@ class MidiInput:
         self._start_time = self._loop.time() - self._paused_elapsed_s / self._speed
         self._paused_elapsed_s = None
 
+    def seek_to_ms(self, target_ms: float) -> None:
+        """Move virtual playhead to ``target_ms`` (non-negative).
+
+        Keeps current pause/run mode:
+        - paused: rewrites stored paused elapsed
+        - running: rebases start time so ``virtual_elapsed_ms`` jumps immediately
+        """
+        if target_ms != target_ms or target_ms < 0:
+            raise ValueError("elapsed_ms must be a non-negative finite number")
+        target_s = float(target_ms) / 1000.0
+        if self._paused_elapsed_s is not None:
+            self._paused_elapsed_s = target_s
+            return
+        self._start_time = self._loop.time() - target_s / self._speed
+
     def open(self, port_name: str) -> None:
         """Blocking open. Prefer :meth:`open_async` from async call sites.
 

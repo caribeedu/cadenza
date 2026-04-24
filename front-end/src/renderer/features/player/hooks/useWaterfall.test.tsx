@@ -272,7 +272,7 @@ describe("useWaterfall", () => {
     const first = rendererSpies[0];
 
     act(() => {
-      rerender(<Harness geometry={makeGeometry("a")} waterfallTheme="cadenza-light" />);
+      rerender(<Harness geometry={makeGeometry("a")} waterfallTheme="aurora-ice" />);
     });
 
     expect(first.destroyed).toBe(true);
@@ -445,6 +445,58 @@ describe("useWaterfall", () => {
       });
       expect(rendererSpies[0].pauseAt).toHaveBeenCalledWith(3_400);
       expect(rendererSpies[0].pause).not.toHaveBeenCalled();
+    });
+
+    it("realigns on paused-to-paused seek elapsed changes", () => {
+      const { rerender } = render(
+        <Harness
+          geometry={makeGeometry()}
+          serverElapsedMs={1_000}
+          serverPaused={true}
+          serverPlaying={false}
+        />,
+      );
+      expect(rendererSpies).toHaveLength(1);
+      const spy = rendererSpies[0];
+      (spy.pauseAt as unknown as { mockClear: () => void }).mockClear();
+
+      act(() => {
+        rerender(
+          <Harness
+            geometry={makeGeometry()}
+            serverElapsedMs={2_500}
+            serverPaused={true}
+            serverPlaying={false}
+          />,
+        );
+      });
+      expect(spy.pauseAt).toHaveBeenCalledWith(2_500);
+    });
+
+    it("ignores tiny paused elapsed jitter to prevent visible snapping", () => {
+      const { rerender } = render(
+        <Harness
+          geometry={makeGeometry()}
+          serverElapsedMs={2_000}
+          serverPaused={true}
+          serverPlaying={false}
+        />,
+      );
+      expect(rendererSpies).toHaveLength(1);
+      const spy = rendererSpies[0];
+      (spy.pauseAt as unknown as { mockClear: () => void }).mockClear();
+
+      act(() => {
+        rerender(
+          <Harness
+            geometry={makeGeometry()}
+            serverElapsedMs={2_003}
+            serverPaused={true}
+            serverPlaying={false}
+          />,
+        );
+      });
+      expect(spy.pauseAt).not.toHaveBeenCalled();
     });
 
     it("recenters the waterfall when sessionRestartGeneration bumps mid-play", () => {

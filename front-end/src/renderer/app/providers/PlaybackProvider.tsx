@@ -12,6 +12,7 @@ import {
   MSG_LIST_MIDI,
   MSG_PAUSE,
   MSG_RESUME,
+  MSG_SEEK,
   MSG_SELECT_MIDI,
   MSG_SET_PLAYBACK_SPEED,
   MSG_SET_TOLERANCE,
@@ -48,6 +49,7 @@ export interface PlaybackContextValue extends PlaybackState {
   pause: () => void;
   refreshMidi: () => void;
   resume: () => void;
+  seekTo: (virtualMs: number) => void;
   selectMidi: (port: string) => void;
   start: () => void;
   togglePause: () => void;
@@ -261,6 +263,18 @@ export function PlaybackProvider({
     log("Playback resumed", "ok");
   }, [send, log]);
 
+  const seekTo = useCallback(
+    (virtualMs: number) => {
+      const ms = Math.max(0, Math.round(virtualMs));
+      if (state.serverPlaying) {
+        send({ type: MSG_PAUSE });
+      }
+      send({ elapsed_ms: ms, type: MSG_SEEK });
+      log(`Seek → ${ms} ms${state.serverPlaying ? " (paused)" : ""}`, "dim");
+    },
+    [send, log, state.serverPlaying],
+  );
+
   const togglePause = useCallback(() => {
     if (state.serverPaused) resume();
     else if (state.serverPlaying) pause();
@@ -289,6 +303,7 @@ export function PlaybackProvider({
       pause,
       refreshMidi,
       resume,
+      seekTo,
       selectMidi,
       start,
       togglePause,
@@ -301,6 +316,7 @@ export function PlaybackProvider({
       togglePause,
       refreshMidi,
       selectMidi,
+      seekTo,
       commitTolerance,
       commitPlaybackSpeed,
     ],
