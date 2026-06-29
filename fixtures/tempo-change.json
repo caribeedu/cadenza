@@ -1,0 +1,20 @@
+{
+  "type": "score",
+  "bpm": 120,
+  "tempo_map": [
+    { "offset_ql": 0.0, "bpm": 120 },
+    { "offset_ql": 4.0, "bpm": 90 },
+    { "offset_ql": 8.0, "bpm": 60 }
+  ],
+  "notes": [
+    { "pitch": 60, "offset_ql": 0.0, "duration_ql": 1.0 },
+    { "pitch": 62, "offset_ql": 1.0, "duration_ql": 1.0 },
+    { "pitch": 64, "offset_ql": 2.0, "duration_ql": 1.0 },
+    { "pitch": 65, "offset_ql": 3.0, "duration_ql": 1.0 },
+    { "pitch": 67, "offset_ql": 4.0, "duration_ql": 1.0 },
+    { "pitch": 69, "offset_ql": 5.0, "duration_ql": 1.0 },
+    { "pitch": 71, "offset_ql": 6.0, "duration_ql": 1.0 },
+    { "pitch": 72, "offset_ql": 7.0, "duration_ql": 1.0 }
+  ],
+  "meta": { "title": "Tempo changes", "parts": 1 }
+}

@@ -3,12 +3,10 @@
 //
 //  Extracts pitch, duration (quarterLength) and offset (quarterLength) for
 //  every note in the currently open score and streams the result as JSON
-//  over HTTP POST to the Cadenza Python backend at
+//  over HTTP POST to the Cadenza desktop app at
 //  http://127.0.0.1:8765/score.
 //
-//  MuseScore 4 does NOT ship the Qt.WebSockets QML module on Windows or
-//  macOS builds (see back-end TECH-DEBTS TD-05). ``XMLHttpRequest``
-//  is always available in any QtQml runtime, so we use plain HTTP.
+//  Requires the Cadenza Tauri app to be running (it starts the HTTP server).
 //
 //  Nothing is written to disk.
 //
@@ -26,7 +24,7 @@ import MuseScore 3.0
 MuseScore {
     id: root
     title: "Cadenza Sender"
-    description: "POSTs the current score to the Cadenza backend over HTTP."
+    description: "POSTs the current score to the Cadenza desktop app over HTTP."
     version: "0.0.1"
     categoryCode: "composing-arranging-tools"
     requiresScore: true
@@ -37,9 +35,9 @@ MuseScore {
     //
     // Returns ``{ bpm, tempoMap }`` where:
     //   - ``bpm`` is the *initial* tempo (convenient scalar for the HUD
-    //     and for a legacy backend that only understands a single tempo).
+    //     and for legacy clients that only understand a single tempo).
     //   - ``tempoMap`` is an array ``[{offset_ql, bpm}, ...]`` sorted by
-    //     offset, covering every mid-piece tempo change. The backend
+    //     offset, covering every mid-piece tempo change. Cadenza
     //     inserts one MetronomeMark per entry so accelerando /
     //     ritardando / multi-section pieces get correct timing.
     //
@@ -179,7 +177,7 @@ MuseScore {
     // Prefer the authored "Work Title" (File → Project Properties) over
     // ``curScore.title``, which in MuseScore 4 typically resolves to the
     // filename without extension. Falls back to ``curScore.title`` and
-    // then to an empty string so the backend never sees ``undefined``.
+    // then to an empty string so Cadenza never receives ``undefined``.
     // Defensive try/catch: ``metaTag`` is not present on every MuseScore
     // build and throws rather than returning undefined when missing.
     function resolveTitle(score) {
@@ -224,14 +222,13 @@ MuseScore {
                 return;
             }
             if (xhr.status === 200) {
-                console.log("[Cadenza] score accepted by backend:", xhr.responseText);
+                console.log("[Cadenza] score accepted:", xhr.responseText);
             } else if (xhr.status === 0) {
-                // status 0 in Qt's XHR means the connection failed before a
-                // response line arrived (typically: backend not listening).
-                console.log("[Cadenza] connection failed — is the backend running on",
-                            root.backendUrl, "?");
+                console.log("[Cadenza] connection failed — is the Cadenza app running?",
+                            "Start Cadenza, then run this plugin again.",
+                            root.backendUrl);
             } else {
-                console.log("[Cadenza] backend rejected payload:",
+                console.log("[Cadenza] Cadenza rejected the score:",
                             xhr.status, xhr.statusText, xhr.responseText);
             }
         };

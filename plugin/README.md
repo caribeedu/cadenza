@@ -2,7 +2,7 @@
 
 A QML plugin for **MuseScore 4.x** that walks the current score with a
 `Cursor`, extracts `pitch`, `offset` and `duration` (in quarter-note units),
-and POSTs the resulting JSON payload to the Cadenza Python backend over
+and POSTs the resulting JSON payload to the **Cadenza desktop app** over
 HTTP — no intermediate files are written.
 
 ## Why HTTP and not WebSocket?
@@ -12,8 +12,8 @@ QML module on Windows or macOS (confirmed error:
 `module "Qt.WebSockets" is not installed`, see `TECH-DEBTS.md` TD-05).
 `XMLHttpRequest` is part of the QtQml runtime itself and is always
 available, so a plain HTTP POST is the most portable transport. The
-backend still speaks WebSockets to the Electron frontend — the plugin
-just feeds the hub through a different door.
+Cadenza Tauri app listens on `127.0.0.1:8765` and pushes updates to the
+SolidJS UI via Tauri events.
 
 ## File
 
@@ -36,10 +36,8 @@ Then enable it in **Plugins → Plugin Manager** and **restart MuseScore**
 
 ## Run
 
-1. Start the backend: `cd back-end && uv run cadenza-server`.
-   It binds a single FastAPI app to `127.0.0.1:8765` exposing:
-   - `ws://127.0.0.1:8765/` — WebSocket hub for the Electron frontend.
-   - `http://127.0.0.1:8765/score` — HTTP ingest for this plugin.
+1. Start Cadenza: `npm run tauri:dev` (from repo root).
+   The app binds HTTP ingest to `http://127.0.0.1:8765/score`.
 2. Open a score in MuseScore 4 and run **Plugins → Cadenza Sender**.
 3. The plugin POSTs a single JSON document to `http://127.0.0.1:8765/score`:
 
@@ -55,29 +53,23 @@ Then enable it in **Plugins → Plugin Manager** and **restart MuseScore**
 }
 ```
 
-4. On `HTTP 200`, the backend converts `offset_ql` / `duration_ql` into
-   absolute milliseconds using `music21`'s tempo-aware `secondsMap` and
-   forwards the resulting timeline to the Electron frontend as a
-   `score_timeline` WebSocket frame.
+4. On `HTTP 200`, Cadenza converts quarter-length offsets into absolute
+   milliseconds and updates the desktop UI timeline.
 
-The backend answers with a short ack, e.g.
-`{"ok": true, "notes": 128, "bpm": 120.0}`. The plugin logs it to the
-MuseScore log.
+Cadenza answers with a short ack, e.g.
+`{"ok": true, "notes": 128, "bpm": 120.0, "duration_ms": 64000.0}`. The
+plugin logs it to the MuseScore log.
 
-## Unit tests
+## Tests
 
-The plugin is QML and is exercised end-to-end by loading it inside
-MuseScore. Core data-transformation logic (tempo scaling, validation,
-payload normalisation, HTTP ingest) lives in the Python backend and is
-covered by `back-end`'s `pytest` suite — run `uv run pytest` from
-`back-end/` to execute it. The HTTP ingest path is covered by
-`tests/api/test_score_ingest.py` and the end-to-end WebSocket broadcast
-fan-out is covered by `tests/api/test_ws_integration.py`.
+Plugin behaviour is covered end-to-end in MuseScore. Score transformation,
+validation, and HTTP ingest are tested in Rust (`cargo test` in `src-tauri/`)
+and Vitest (`npm test` at repo root).
 
 ## Customising
 
 - `backendUrl` (QML property at the top of `Cadenza.qml`) changes the
-  target URL. Default: `http://127.0.0.1:8765/score`.
+  ingest URL. Default: `http://127.0.0.1:8765/score`.
 - The plugin only reads the first staff/voice per part (`track =
   partIdx * 4`). Adjust the loop in `collectNotes` if you need to
   include additional voices.
@@ -96,11 +88,11 @@ log on stderr. Key lines to look for:
 
 - `[Cadenza] collected N notes ... → POSTing to http://127.0.0.1:8765/score`
   — the plugin ran and built a payload.
-- `[Cadenza] score accepted by backend: {...}` — success (HTTP 200).
-- `[Cadenza] connection failed — is the backend running ...` — the
-  backend is not listening on the configured URL/port.
-- `[Cadenza] backend rejected payload: 400 ...` — backend reachable but
-  payload rejected (unknown type, invalid JSON, etc.).
+- `[Cadenza] score accepted: {...}` — success (HTTP 200).
+- `[Cadenza] connection failed — is the Cadenza app running?` — Cadenza
+  is not listening on the configured URL/port.
+- `[Cadenza] Cadenza rejected the score: 400 ...` — app reachable but
+  payload rejected (invalid BPM, malformed JSON, etc.).
 
 ## Known failure mode: `module "Qt.WebSockets" is not installed`
 

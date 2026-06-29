@@ -1,0 +1,12 @@
+{
+  "type": "score",
+  "bpm": 120,
+  "notes": [
+    { "pitch": 60, "offset_ql": 0.0, "duration_ql": 1.0, "track": 0, "staff": 0, "finger": 1 },
+    { "pitch": 62, "offset_ql": 1.0, "duration_ql": 1.0, "track": 0, "staff": 0, "finger": 2 },
+    { "pitch": 64, "offset_ql": 2.0, "duration_ql": 1.0, "track": 0, "staff": 0, "finger": 3 },
+    { "pitch": 65, "offset_ql": 3.0, "duration_ql": 1.0, "track": 0, "staff": 0, "finger": 4 },
+    { "pitch": 67, "offset_ql": 4.0, "duration_ql": 1.0, "track": 0, "staff": 0, "finger": 5 }
+  ],
+  "meta": { "title": "Fingered scale", "parts": 1 }
+}

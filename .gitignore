@@ -85,6 +85,9 @@ playwright/.cache/
 release/
 front-end/dist-installers/
 
+# --- Rust / Tauri ---
+src-tauri/target/
+
 # --- Misc logs & temp ---
 *.log
 tmp/

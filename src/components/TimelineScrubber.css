@@ -1,0 +1,49 @@
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.timeline-scrubber {
+  position: relative;
+  height: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  background: rgba(20, 20, 20, 0.85);
+  overflow: hidden;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.timeline[data-enabled="0"] .timeline-scrubber {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.timeline-scrubber__bins {
+  position: absolute;
+  inset: 3px 6px;
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.timeline-scrubber__bin {
+  flex: 1;
+  min-width: 1px;
+  background: rgba(92, 157, 237, 0.55);
+  border-radius: 1px 1px 0 0;
+}
+
+.timeline-scrubber__thumb {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 3px;
+  margin-left: -1px;
+  background: #fff;
+  border-radius: 2px;
+  pointer-events: none;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+}

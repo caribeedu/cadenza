@@ -2,153 +2,105 @@
 
 [![Desktop Build](https://github.com/caribeedu/cadenza/actions/workflows/manual-desktop-build.yml/badge.svg)](https://github.com/caribeedu/cadenza/actions/workflows/manual-desktop-build.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/caribeedu/cadenza)
-[![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](https://github.com/caribeedu/cadenza/releases)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/caribeedu/cadenza/releases)
 
-Open-source local piano practice app with live score validation. In classical music, a *cadenza* is the solo passage where the performer steps forward with technical freedom and expression. The name also echoes the idea of falling motion (*cadere*), matching the waterfall-style note visualization in the app.
+Open-source local piano practice app with live score validation.
 
-Cadenza aims to be both:
-- expressive practice software for real musicians, and
-- a transparent OSS codebase that anyone can run, inspect, and improve.
-
-And combines:
-- a MuseScore 4 plugin that exports score data,
-- a Python backend that validates MIDI in real time,
-- an Electron desktop UI that renders a high-performance waterfall.
+Cadenza combines:
+- a **MuseScore 4 plugin** that exports score data over HTTP,
+- a **Rust core** (Tauri) for timeline, MIDI, validation, and fingering,
+- a **SolidJS + Three.js** desktop UI with waterfall visualization.
 
 No account required. No score export files required. Everything runs locally.
 
 ## Main features
 
-- Live waterfall visualization with Three.js in a desktop Electron app.
-- Timeline scrubber with density preview for fast navigation through long pieces.
-- Real-time note validation (`note_on`) against score timeline with tolerance window.
-- Auto finger numbering for missing fingerings using backend fingering assignment.
-- MIDI device listing and selection (USB/Bluetooth keyboards).
-- MuseScore 4 plugin ingest path (HTTP) with tempo map support.
-- Score timeline conversion to absolute milliseconds via `music21`.
-- Practice controls for timing window (`Timing` slider) and replay speed (`Speed` slider).
-- Theme selector for UI/waterfall look-and-feel presets.
-- Low-latency backend architecture using async hub + thread-safe MIDI callbacks.
-- Cross-platform packaging pipeline (Windows, macOS, Linux) with sidecar backend binary.
-- Plugin auto-bundled in release artifacts and installed to MuseScore plugin directory.
+- Live waterfall visualization with Three.js.
+- Timeline scrubber with density preview.
+- Real-time note validation against score timeline with tolerance window.
+- Auto finger numbering (Performer DP algorithm) for missing fingerings.
+- MIDI device listing and selection.
+- MuseScore plugin ingest on `POST http://127.0.0.1:8765/score`.
+- Playback speed and tolerance sliders.
+- One-click MuseScore plugin install from the app.
 
 ## Architecture
 
 ```
-MuseScore Plugin (QML) --> Python Hub (FastAPI/WebSocket) --> Electron UI (React + Three.js)
-                                 ^
-                                 |
-                         MIDI keyboard input
+MuseScore Plugin (QML) --> Rust core (Tauri) --> SolidJS UI
+                                ^
+                                |
+                         MIDI keyboard
 ```
-
-Transport model:
-- Plugin sends score payload to `http://127.0.0.1:8765/score` (HTTP).
-- Frontend talks to `ws://127.0.0.1:8765/` (WebSocket).
-- Backend broadcasts `score_timeline`, `status`, `midi_ports`, `note_played`.
 
 ## Repository layout
 
 ```
-front-end/   Electron + React + Three.js desktop app
-back-end/    Python 3.11 FastAPI hub, validator, MIDI engine
-plugin/      MuseScore 4 QML plugin (Cadenza.qml)
+src/           SolidJS + Vite UI
+src-tauri/     Rust core (HTTP, MIDI, validator, fingering)
+plugin/        MuseScore 4 QML plugin
+fixtures/      JSON score contract samples
+docs/          protocol + architecture
 ```
-
-Detailed setup docs:
-- `front-end/README.md`
-- `back-end/README.md`
-- `plugin/README.md`
 
 ## Quick start (dev)
 
-### 1) Start backend
-
 ```bash
-cd back-end
-uv sync --all-groups
-uv run cadenza-server
-```
-
-### 2) Start desktop app
-
-```bash
-cd front-end
 npm install
-npm run dev
+npm run tauri:dev
 ```
 
-### 3) Install MuseScore plugin
+The app starts the HTTP ingest server on `127.0.0.1:8765` automatically.
 
-Copy `plugin/Cadenza.qml` to MuseScore plugin directory:
-- Linux: `~/.local/share/MuseScore/MuseScore4/Plugins/`
-- macOS: `~/Documents/MuseScore4/Plugins/`
-- Windows: `%USERPROFILE%\Documents\MuseScore4\Plugins\`
+### Install MuseScore plugin
 
-Enable plugin in MuseScore Plugin Manager, then run `Cadenza Sender`.
+Use **Install plugin** in the app, or copy `plugin/Cadenza.qml` manually:
 
-## Build desktop installers
+| OS      | Path                                           |
+| ------- | ---------------------------------------------- |
+| Linux   | `~/.local/share/MuseScore/MuseScore4/Plugins/` |
+| macOS   | `~/Documents/MuseScore4/Plugins/`              |
+| Windows | `%USERPROFILE%\Documents\MuseScore4\Plugins\` |
 
-Pipeline:
-- Freeze backend with `PyInstaller`.
-- Build Electron installers with `electron-builder`.
-- Bundle plugin files into app resources.
+Restart MuseScore, enable the plugin, then run **Plugins → Cadenza Sender**.
 
-### Local release build
-
-Windows:
-
-```powershell
-cd back-end
-./scripts/build-sidecar.ps1
-cd ../front-end
-npm run dist
-```
-
-macOS/Linux:
+### Load a test score
 
 ```bash
-cd back-end
-bash ./scripts/build-sidecar.sh
-cd ../front-end
-npm run dist
+curl -X POST http://127.0.0.1:8765/score \
+  -H 'Content-Type: application/json' \
+  -d @fixtures/simple-scale.json
+
+# Stress / instancing path (88 notes):
+curl -X POST http://127.0.0.1:8765/score \
+  -H 'Content-Type: application/json' \
+  -d @fixtures/large-score.json
 ```
 
-### GitHub Actions build
+Scores with 60+ notes use instanced waterfall bars automatically.
 
-Use workflow: `Manual Desktop Build`
-- builds Windows, macOS, Linux installers,
-- uploads artifacts per OS.
+## Local log file
 
-## Quality and testing
+The Rust core appends structured lines to `cadenza.log` in the Tauri app log directory (e.g. `~/.local/share/.../logs/cadenza.log` on Linux). Events include score ingest, playback, validation, and errors.
 
-Backend:
+## Build release installer
 
 ```bash
-cd back-end
-uv run pytest
+npm run tauri:build
 ```
 
-Frontend:
+Artifacts land in `src-tauri/target/release/bundle/`.
+
+### GitHub Actions
+
+Workflow **Manual Desktop Build** builds Windows, macOS, and Linux installers.
+
+## Testing
 
 ```bash
-cd front-end
-npm test
+npm test                  # Vitest — shared UI libs
+cd src-tauri && cargo test  # Rust — timeline, validator, fingering, MIDI
 ```
-
-## Project status
-
-Current release: `0.0.1`
-
-This is early but functional OSS foundation for local piano learning workflows.
-Roadmap includes richer pedagogy feedback, better settings UX, and improved release ergonomics.
-
-## Contributing
-
-Issues and PRs welcome.
-
-- Keep changes scoped and reviewable.
-- Add/adjust tests with behavior changes.
-- Prefer local-first and low-latency architecture.
 
 ## License
 

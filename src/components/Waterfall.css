@@ -1,0 +1,41 @@
+.waterfall-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+}
+
+.playfield {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 420px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.waterfall-stage {
+  position: relative;
+  min-height: 0;
+  height: 100%;
+}
+
+.waterfall-empty {
+  height: 100%;
+  min-height: 280px;
+}
+
+.waterfall-timeline-overlay {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(680px, calc(100% - 20px));
+  z-index: 5;
+  pointer-events: none;
+}
+
+.waterfall-timeline-overlay .timeline-scrubber {
+  pointer-events: auto;
+}

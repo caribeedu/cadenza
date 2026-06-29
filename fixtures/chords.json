@@ -1,0 +1,13 @@
+{
+  "type": "score",
+  "bpm": 100,
+  "notes": [
+    { "pitch": 60, "offset_ql": 0.0, "duration_ql": 2.0, "track": 0, "staff": 0 },
+    { "pitch": 64, "offset_ql": 0.0, "duration_ql": 2.0, "track": 0, "staff": 0 },
+    { "pitch": 67, "offset_ql": 0.0, "duration_ql": 2.0, "track": 0, "staff": 0 },
+    { "pitch": 62, "offset_ql": 2.0, "duration_ql": 2.0, "track": 0, "staff": 0 },
+    { "pitch": 65, "offset_ql": 2.0, "duration_ql": 2.0, "track": 0, "staff": 0 },
+    { "pitch": 69, "offset_ql": 2.0, "duration_ql": 2.0, "track": 0, "staff": 0 }
+  ],
+  "meta": { "title": "Block chords", "parts": 1 }
+}

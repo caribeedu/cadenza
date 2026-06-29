@@ -1,0 +1,628 @@
+{
+  "type": "score",
+  "bpm": 120,
+  "tempo_map": [],
+  "notes": [
+    {
+      "pitch": 21,
+      "offset_ql": 0.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 22,
+      "offset_ql": 0.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 23,
+      "offset_ql": 1.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 24,
+      "offset_ql": 1.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 25,
+      "offset_ql": 2.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 26,
+      "offset_ql": 2.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 27,
+      "offset_ql": 3.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 28,
+      "offset_ql": 3.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 29,
+      "offset_ql": 4.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 30,
+      "offset_ql": 4.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 31,
+      "offset_ql": 5.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 32,
+      "offset_ql": 5.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 33,
+      "offset_ql": 6.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 34,
+      "offset_ql": 6.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 35,
+      "offset_ql": 7.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 36,
+      "offset_ql": 7.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 37,
+      "offset_ql": 8.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 38,
+      "offset_ql": 8.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 39,
+      "offset_ql": 9.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 40,
+      "offset_ql": 9.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 41,
+      "offset_ql": 10.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 42,
+      "offset_ql": 10.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 43,
+      "offset_ql": 11.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 44,
+      "offset_ql": 11.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 45,
+      "offset_ql": 12.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 46,
+      "offset_ql": 12.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 47,
+      "offset_ql": 13.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 48,
+      "offset_ql": 13.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 49,
+      "offset_ql": 14.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 50,
+      "offset_ql": 14.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 51,
+      "offset_ql": 15.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 52,
+      "offset_ql": 15.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 53,
+      "offset_ql": 16.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 54,
+      "offset_ql": 16.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 55,
+      "offset_ql": 17.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 56,
+      "offset_ql": 17.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 57,
+      "offset_ql": 18.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 58,
+      "offset_ql": 18.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 59,
+      "offset_ql": 19.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 60,
+      "offset_ql": 19.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 61,
+      "offset_ql": 20.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 62,
+      "offset_ql": 20.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 63,
+      "offset_ql": 21.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 64,
+      "offset_ql": 21.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 0
+    },
+    {
+      "pitch": 65,
+      "offset_ql": 22.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 66,
+      "offset_ql": 22.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 67,
+      "offset_ql": 23.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 68,
+      "offset_ql": 23.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 69,
+      "offset_ql": 24.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 70,
+      "offset_ql": 24.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 71,
+      "offset_ql": 25.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 72,
+      "offset_ql": 25.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 73,
+      "offset_ql": 26.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 74,
+      "offset_ql": 26.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 75,
+      "offset_ql": 27.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 76,
+      "offset_ql": 27.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 77,
+      "offset_ql": 28.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 78,
+      "offset_ql": 28.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 79,
+      "offset_ql": 29.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 80,
+      "offset_ql": 29.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 81,
+      "offset_ql": 30.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 82,
+      "offset_ql": 30.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 83,
+      "offset_ql": 31.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 84,
+      "offset_ql": 31.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 85,
+      "offset_ql": 32.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 86,
+      "offset_ql": 32.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 87,
+      "offset_ql": 33.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 88,
+      "offset_ql": 33.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 89,
+      "offset_ql": 34.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 90,
+      "offset_ql": 34.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 91,
+      "offset_ql": 35.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 92,
+      "offset_ql": 35.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 93,
+      "offset_ql": 36.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 94,
+      "offset_ql": 36.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 95,
+      "offset_ql": 37.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 96,
+      "offset_ql": 37.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 97,
+      "offset_ql": 38.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 98,
+      "offset_ql": 38.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 99,
+      "offset_ql": 39.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 100,
+      "offset_ql": 39.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 101,
+      "offset_ql": 40.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 102,
+      "offset_ql": 40.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 103,
+      "offset_ql": 41.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 104,
+      "offset_ql": 41.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 105,
+      "offset_ql": 42.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 106,
+      "offset_ql": 42.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 107,
+      "offset_ql": 43.0,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    },
+    {
+      "pitch": 108,
+      "offset_ql": 43.5,
+      "duration_ql": 0.45,
+      "track": 0,
+      "staff": 1
+    }
+  ],
+  "meta": {
+    "title": "Large chromatic drill",
+    "composer": "Fixture",
+    "parts": 2
+  }
+}

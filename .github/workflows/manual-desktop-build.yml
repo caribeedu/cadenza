@@ -14,58 +14,51 @@ jobs:
           - os: windows-latest
             job_name: Build Windows Installer
             artifact_name: cadenza-windows-build
-            backend_binary: front-end/release/backend/cadenza-server.exe
           - os: macos-latest
             job_name: Build macOS Installer
             artifact_name: cadenza-macos-build
-            backend_binary: front-end/release/backend/cadenza-server
           - os: ubuntu-latest
             job_name: Build Linux Installer
             artifact_name: cadenza-linux-build
-            backend_binary: front-end/release/backend/cadenza-server
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Build backend sidecar (PyInstaller, Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        working-directory: back-end
-        run: ./scripts/build-sidecar.ps1
-
-      - name: Build backend sidecar (PyInstaller, macOS/Linux)
-        if: runner.os != 'Windows'
-        shell: bash
-        working-directory: back-end
-        run: bash ./scripts/build-sidecar.sh
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: front-end/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install frontend dependencies
-        working-directory: front-end
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libasound2-dev
+
+      - name: Install dependencies
         run: npm ci
 
-      - name: Build desktop installer
-        working-directory: front-end
-        run: npm run dist
+      - name: Run tests
+        run: |
+          npm test
+          cd src-tauri && cargo test
+
+      - name: Build Tauri installer
+        run: npm run tauri:build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: |
-            front-end/dist-installers/**
-            ${{ matrix.backend_binary }}
+            src-tauri/target/release/bundle/**/*

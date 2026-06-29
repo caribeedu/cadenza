@@ -1,0 +1,8 @@
+{
+  "type": "score",
+  "bpm": 120,
+  "tempo_map": [],
+  "notes": [
+    { "offset_ql": 0.0, "duration_ql": 1.0, "track": 0, "staff": 0 }
+  ]
+}

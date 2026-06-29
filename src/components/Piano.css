@@ -1,0 +1,47 @@
+.piano-host {
+  position: relative;
+  height: 140px;
+  background: linear-gradient(180deg, #1a1a1a 0%, #121212 100%);
+  border-top: 1px solid #333;
+  overflow: hidden;
+}
+
+.piano-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.key-white {
+  fill: #f0f0f0;
+  stroke: #888;
+  stroke-width: 1;
+}
+
+.key-black {
+  fill: #222;
+  stroke: #111;
+  stroke-width: 1;
+}
+
+.key-pressed-good {
+  fill: var(--piano-good, #81c995) !important;
+  stroke: #5a9e6f !important;
+}
+
+.key-pressed-bad {
+  fill: var(--piano-bad, #f28b82) !important;
+  stroke: #c5221f !important;
+}
+
+.key-pressed-neutral {
+  fill: var(--piano-neutral, #fdd663) !important;
+  stroke: var(--piano-heat, #c9a227) !important;
+}
+
+.key-label {
+  fill: #666;
+  font-size: 10px;
+  font-family: system-ui, sans-serif;
+  pointer-events: none;
+}
