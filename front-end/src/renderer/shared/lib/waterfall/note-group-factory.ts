@@ -1,10 +1,11 @@
+import type { NoteSpritesDims } from "@app/theme/theme";
+
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 
-import type { NoteSpritesDims } from "@app/theme/theme";
-
 import type { LaneGeometry } from "../../types/geometry";
 import type { ScoreNote } from "../../types/score";
+import type { NoteSpriteMaterialCache } from "./sprite-material-cache";
 
 import { pendingNoteColorHex } from "../note-hand-colors";
 import { barHeightPx, isAccidental, nameForPitch, noteMeshKey } from "../timeline";
@@ -20,7 +21,6 @@ import {
   labelOnlySpriteY,
   resolveFingerDigit,
 } from "./note-sprite-layout";
-import type { NoteSpriteMaterialCache } from "./sprite-material-cache";
 import { visualThemeConfig, type WaterfallTheme } from "./visual-theme";
 
 export type NoteStatus = "bad" | "good" | "pending";

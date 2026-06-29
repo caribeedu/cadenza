@@ -1,6 +1,7 @@
-import { useThemeConfig } from "@app/providers/ThemeProvider";
-import { type ThemeId, THEME_LIST } from "@app/theme/theme";
 import type { ChangeEvent, ReactElement } from "react";
+
+import { useThemeConfig } from "@app/providers/ThemeProvider";
+import { THEME_LIST, type ThemeId } from "@app/theme/theme";
 
 export function ThemeSelector(): ReactElement {
   const { setTheme, theme } = useThemeConfig();

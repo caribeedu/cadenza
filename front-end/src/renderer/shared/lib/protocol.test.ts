@@ -1,3 +1,5 @@
+import { describe, expect, it } from "vitest";
+
 import {
   decode,
   encode,
@@ -9,7 +11,6 @@ import {
   MSG_START,
   MSG_STOP,
 } from "./protocol";
-import { describe, expect, it } from "vitest";
 
 describe("encode / decode", () => {
   it("round-trips an object", () => {

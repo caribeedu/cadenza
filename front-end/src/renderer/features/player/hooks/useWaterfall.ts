@@ -1,5 +1,5 @@
-import type { LaneGeometry } from "@shared/types/geometry";
 import type { WaterfallTheme } from "@shared/lib/waterfall";
+import type { LaneGeometry } from "@shared/types/geometry";
 import type { NotePlayed, ScoreTimeline } from "@shared/types/score";
 
 import { WaterfallRenderer } from "@shared/lib/waterfall";
@@ -20,6 +20,8 @@ import {
 
 export interface UseWaterfallOptions {
   canvasRef: RefObject<HTMLCanvasElement | null>;
+  /** Pitches with keys still down; drives sustained strike-line particles. */
+  heldMidiPitches: readonly number[];
   laneGeometry: LaneGeometry | null;
   latestNotePlayed: NotePlayed | null;
   score: null | ScoreTimeline;
@@ -30,14 +32,12 @@ export interface UseWaterfallOptions {
   serverPaused: boolean;
   serverPlaybackSpeed: number;
   serverPlaying: boolean;
-  waterfallTheme: WaterfallTheme;
   /** Bumps on every Start/Restart so we reset the waterfall when the
    *  server clock resets but ``serverPlaying`` never flips to false. */
   sessionRestartGeneration: number;
   /** Bumps when the UI theme changes so the local score playhead resets. */
   themeRestartGeneration: number;
-  /** Pitches with keys still down; drives sustained strike-line particles. */
-  heldMidiPitches: readonly number[];
+  waterfallTheme: WaterfallTheme;
 }
 
 // Imperative bridge between React and the Three.js renderer.

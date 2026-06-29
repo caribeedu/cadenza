@@ -1,9 +1,9 @@
-import * as THREE from "three";
 import {
   type ThemeId,
   THEMES,
   type WaterfallVisualTheme,
 } from "@app/theme/theme";
+import * as THREE from "three";
 
 /** Pending-note palette and hit-line look follows selected app theme id. */
 export type WaterfallTheme = ThemeId;

@@ -27,7 +27,7 @@ export function createNoteBarMaterial(base: THREE.Color): THREE.MeshStandardMate
 export function setNoteBarFaceColor(
   mat: THREE.MeshStandardMaterial,
   color: THREE.Color,
-  state: "pending" | "good" | "bad",
+  state: "bad" | "good" | "pending",
 ): void {
   mat.color.copy(color);
   const s =

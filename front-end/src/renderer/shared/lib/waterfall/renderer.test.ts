@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 
+import type * as ThreeModule from "three";
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockRender = vi.fn();
@@ -28,7 +30,7 @@ vi.mock("./bloom-pipeline", () => ({
 }));
 
 vi.mock("three", async (importOriginal) => {
-  const THREE = await importOriginal<typeof import("three")>();
+  const THREE = await importOriginal<typeof ThreeModule>();
   return {
     ...THREE,
     WebGLRenderer: vi.fn().mockImplementation(() => ({

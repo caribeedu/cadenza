@@ -3,7 +3,7 @@ import type { NoteSpritesDims } from "@app/theme/theme";
 import { minBarHeightForFingerPx, minBarHeightForLabelPx } from "./constants";
 
 /** 1–5 when showable; ``null`` if missing or out of range. */
-export function resolveFingerDigit(raw: unknown): number | null {
+export function resolveFingerDigit(raw: unknown): null | number {
   if (raw == null || !Number.isFinite(Number(raw))) return null;
   const v = Math.abs(Math.trunc(Number(raw)));
   if (v < 1 || v > 5) return null;
@@ -14,7 +14,7 @@ export type NoteSpriteStackMode = "finger_and_label" | "label_only" | "none";
 
 export function classifyNoteSpriteStack(
   barHeightPx: number,
-  fingerDigit: number | null,
+  fingerDigit: null | number,
   sprites: NoteSpritesDims,
 ): NoteSpriteStackMode {
   if (

@@ -8,12 +8,12 @@ export interface FingeringProgressState {
 }
 
 export interface PlaybackState {
+  fingeringProgress: FingeringProgressState | null;
   /**
    * Pitches with keys still physically down, from ``note_played`` / ``note_off``.
    * Used for sustained waterfall VFX (e.g. particles).
    */
   heldMidiPitches: number[];
-  fingeringProgress: null | FingeringProgressState;
   latestNotePlayed: NotePlayed | null;
   midiOpen: boolean;
   midiPort: null | string;
@@ -28,13 +28,13 @@ export interface PlaybackState {
 }
 
 export type PlaybackAction =
-  | { type: "connection_lost" }
   | { payload: FingeringProgressState; type: "fingering_progress" }
   | { payload: MidiPortsMessage; type: "midi_ports" }
   | { payload: NotePlayed; type: "note_played" }
   | { payload: number; type: "note_off" }
   | { payload: ScoreTimeline; type: "score_timeline" }
   | { payload: StatusMessage; type: "status" }
+  | { type: "connection_lost" }
   | { type: "session_restart" };
 
 export const initialPlaybackState: PlaybackState = {

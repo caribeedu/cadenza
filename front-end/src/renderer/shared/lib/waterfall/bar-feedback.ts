@@ -4,13 +4,13 @@ import { pendingNoteColorHex } from "../note-hand-colors";
 import { setNoteBarFaceColor } from "./bar-material";
 import { pendingColorForTheme } from "./fire-pending-color";
 import {
-  setLavaBarStatus,
   type LavaBarStatus,
+  setLavaBarStatus,
 } from "./lava-bar-material";
 import {
   feedbackForTheme,
-  type WaterfallTheme,
   visualThemeConfig,
+  type WaterfallTheme,
 } from "./visual-theme";
 
 function pendingColour(

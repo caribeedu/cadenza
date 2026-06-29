@@ -1,4 +1,5 @@
-import * as THREE from "three";
+import type * as THREE from "three";
+
 import { describe, expect, it } from "vitest";
 
 import { WaterfallImpactParticles } from "./impact-particles";

@@ -4,9 +4,9 @@
  * modules.
  */
 export {
-  WaterfallRenderer,
   type NoteUserData,
   type WaterfallOptions,
+  WaterfallRenderer,
   type WaterfallTheme,
 } from "./renderer";
 

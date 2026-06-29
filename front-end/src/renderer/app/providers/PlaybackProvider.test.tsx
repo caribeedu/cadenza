@@ -1,6 +1,7 @@
+import type { ReactElement } from "react";
+
 // @vitest-environment jsdom
 import { act, render } from "@testing-library/react";
-import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { PlaybackProvider, usePlayback } from "./PlaybackProvider";
@@ -50,7 +51,7 @@ describe("PlaybackProvider seekTo", () => {
   it("sends pause then seek when currently playing", () => {
     sendMock.mockClear();
     subscribers.clear();
-    let apiRef: ReturnType<typeof usePlayback> | null = null;
+    let apiRef: null | ReturnType<typeof usePlayback> = null;
     render(
       <PlaybackProvider>
         <Harness onReady={(api) => (apiRef = api)} />
@@ -83,7 +84,7 @@ describe("PlaybackProvider seekTo", () => {
   it("sends seek only when already paused", () => {
     sendMock.mockClear();
     subscribers.clear();
-    let apiRef: ReturnType<typeof usePlayback> | null = null;
+    let apiRef: null | ReturnType<typeof usePlayback> = null;
     render(
       <PlaybackProvider>
         <Harness onReady={(api) => (apiRef = api)} />

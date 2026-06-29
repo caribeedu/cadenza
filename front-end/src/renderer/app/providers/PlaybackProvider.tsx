@@ -7,6 +7,7 @@ import type {
 import type { NotePlayed } from "@shared/types/score";
 
 import {
+  type DecodedMessage,
   MSG_FINGERING_PROGRESS,
   MSG_HELLO,
   MSG_LIST_MIDI,
@@ -17,7 +18,6 @@ import {
   MSG_SET_PLAYBACK_SPEED,
   MSG_SET_TOLERANCE,
   MSG_START,
-  type DecodedMessage,
 } from "@shared/lib/protocol";
 import {
   createContext,
@@ -33,9 +33,9 @@ import {
 
 import {
   type FingeringProgressState,
-  type PlaybackState,
   initialPlaybackState,
   playbackReducer,
+  type PlaybackState,
 } from "../state/playback-reducer";
 import { useEventLog } from "./EventLogProvider";
 import { useScoreConfig } from "./ScoreConfigProvider";

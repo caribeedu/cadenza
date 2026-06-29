@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import type { LaneGeometry } from "@shared/types/geometry";
 import type { WaterfallTheme } from "@shared/lib/waterfall";
+import type { LaneGeometry } from "@shared/types/geometry";
 import type { ScoreTimeline } from "@shared/types/score";
 
 import { act, render } from "@testing-library/react";
@@ -86,6 +86,7 @@ const SAMPLE_SCORE: ScoreTimeline = {
 
 interface HarnessProps {
   geometry: LaneGeometry | null;
+  heldMidiPitches?: readonly number[];
   rendererRefOut?: {
     current: null | RefObject<unknown>;
   };
@@ -94,10 +95,9 @@ interface HarnessProps {
   serverPaused?: boolean;
   serverPlaybackSpeed?: number;
   serverPlaying?: boolean;
-  waterfallTheme?: WaterfallTheme;
   sessionRestartGeneration?: number;
   themeRestartGeneration?: number;
-  heldMidiPitches?: readonly number[];
+  waterfallTheme?: WaterfallTheme;
 }
 
 function Harness({

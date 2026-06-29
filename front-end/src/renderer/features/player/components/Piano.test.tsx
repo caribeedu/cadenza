@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import type { KeyboardLayout } from "@shared/types/geometry";
+
 import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 

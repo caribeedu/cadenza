@@ -19,8 +19,8 @@ import {
 
 export interface ThemeContextValue {
   setTheme: (theme: ThemeId) => void;
-  themeRestartGeneration: number;
   theme: ThemeId;
+  themeRestartGeneration: number;
   waterfallTheme: ThemeId;
 }
 

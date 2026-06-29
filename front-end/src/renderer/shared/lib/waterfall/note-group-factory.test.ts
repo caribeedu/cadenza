@@ -1,16 +1,16 @@
+import { THEME_IDS, THEMES } from "@app/theme/theme";
 import * as THREE from "three";
 import { describe, expect, it, vi } from "vitest";
 
-import { THEME_IDS, THEMES } from "@app/theme/theme";
-
 import type { ScoreNote } from "../../types/score";
+import type { NoteSpriteMaterialCache } from "./sprite-material-cache";
+
 import {
   barHeightPx,
   DEFAULT_PX_PER_MS,
 } from "../timeline";
 import { minBarHeightForFingerPx, minBarHeightForLabelPx } from "./constants";
 import { WaterfallNoteGroupFactory } from "./note-group-factory";
-import type { NoteSpriteMaterialCache } from "./sprite-material-cache";
 
 function makeMockSpriteCache(): NoteSpriteMaterialCache {
   return {

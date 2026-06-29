@@ -45,18 +45,18 @@ export interface NoteSpritesDims {
 
 export interface WaterfallVisualTheme {
   ambientLight: { color: number; intensity: number };
-  background: number;
   /**
    * Full-screen mood backdrop: three hex stops (deep / mid / glow) for the
    * ``WaterfallReactiveBackground`` shader only.
    */
   backdrop: { deep: number; glow: number; mid: number };
+  background: number;
   bloom: {
     radius: number;
     resolutionScale: number;
     strength: number;
-    tint: number;
     threshold: number;
+    tint: number;
   };
   feedback: {
     bad: number;
@@ -74,6 +74,10 @@ export interface WaterfallVisualTheme {
     glowOpacity: number;
     glowThickness: number;
   };
+  lavaAppearance: LavaAppearance;
+  lavaBars: boolean;
+  noteBarGeometry: NoteBarGeometry;
+  noteSprites: NoteSpritesDims;
   /**
    * Strike-line additive point sprites. ``tint`` matches {@link bloom.tint} by
    * default so sparks read coherent with bloom highlights; tune per theme.
@@ -83,10 +87,6 @@ export interface WaterfallVisualTheme {
     size: number;
     tint: number;
   };
-  noteBarGeometry: NoteBarGeometry;
-  noteSprites: NoteSpritesDims;
-  lavaAppearance: LavaAppearance;
-  lavaBars: boolean;
   pendingColorMode: "gradient" | "staff";
   pendingGradient: { high: number; low: number };
 }
@@ -94,8 +94,8 @@ export interface WaterfallVisualTheme {
 export interface ThemeDefinition {
   id: ThemeId;
   label: string;
-  waterfall: WaterfallVisualTheme;
   vars: Readonly<Record<`--${string}`, string>>;
+  waterfall: WaterfallVisualTheme;
 }
 
 const BASE_DIMENSIONS = Object.freeze({

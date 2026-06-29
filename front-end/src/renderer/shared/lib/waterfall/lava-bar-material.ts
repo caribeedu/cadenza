@@ -1,11 +1,11 @@
 import * as THREE from "three";
 
+import { fireBarGradient } from "./fire-pending-color";
 import {
   feedbackForTheme,
   visualThemeConfig,
   type WaterfallTheme,
 } from "./visual-theme";
-import { fireBarGradient } from "./fire-pending-color";
 
 export type LavaBarStatus = "bad" | "good" | "pending";
 

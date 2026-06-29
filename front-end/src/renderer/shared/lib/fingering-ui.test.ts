@@ -1,5 +1,6 @@
-import { formatFingeringProgressLabel } from "./fingering-ui";
 import { describe, expect, it } from "vitest";
+
+import { formatFingeringProgressLabel } from "./fingering-ui";
 
 describe("formatFingeringProgressLabel", () => {
   it("formats left-hand progress with percent and counts", () => {

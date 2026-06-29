@@ -1,9 +1,10 @@
+import { describe, expect, it } from "vitest";
+
 import {
   computeKeyboardLayout,
   isBlackKey,
   isWhiteKey,
 } from "./piano-layout";
-import { describe, expect, it } from "vitest";
 
 const EPS = 1e-9;
 

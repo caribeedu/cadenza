@@ -1,19 +1,19 @@
+import type { WaterfallVisualTheme } from "@app/theme/theme";
+
 import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 
-import type { WaterfallVisualTheme } from "@app/theme/theme";
-
 export interface WaterfallBloomPipeline {
   readonly composer: EffectComposer;
+  dispose(): void;
   /**
    * Match composer + renderer to the CSS size and DPR, then downscale the
    * internal bloom buffer by {@link BLOOM.resolutionScale} for cost.
    */
   syncSize(cssWidth: number, cssHeight: number, pixelRatio: number): void;
-  dispose(): void;
 }
 
 /**

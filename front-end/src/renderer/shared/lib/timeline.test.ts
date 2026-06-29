@@ -1,3 +1,5 @@
+import { describe, expect, it } from "vitest";
+
 import {
   BAR_VERTICAL_GAP_PX,
   barHeightPx,
@@ -12,7 +14,6 @@ import {
   visibleNotes,
   yForNote,
 } from "./timeline";
-import { describe, expect, it } from "vitest";
 
 describe("yForNote", () => {
   it("returns zero when a note lands on the hit-line", () => {

@@ -1,4 +1,5 @@
 import type { ScoreTimeline } from "@shared/types/score";
+
 import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 
 import {

@@ -5,18 +5,18 @@
 
 import type {
   MSG_ERROR,
+  MSG_FINGERING_PROGRESS,
   MSG_HELLO,
   MSG_LIST_MIDI,
   MSG_MIDI_PORTS,
-  MSG_NOTE_PLAYED,
   MSG_NOTE_OFF,
+  MSG_NOTE_PLAYED,
   MSG_NOTE_TRIGGER,
   MSG_PAUSE,
   MSG_RESUME,
-  MSG_SEEK,
   MSG_SCORE,
-  MSG_FINGERING_PROGRESS,
   MSG_SCORE_TIMELINE,
+  MSG_SEEK,
   MSG_SELECT_MIDI,
   MSG_SET_PLAYBACK_SPEED,
   MSG_SET_TOLERANCE,
@@ -81,8 +81,8 @@ export type ClientMessage =
   | ListMidiMessage
   | PauseMessage
   | ResumeMessage
-  | SeekMessage
   | ScoreMessage
+  | SeekMessage
   | SelectMidiMessage
   | SetPlaybackSpeedMessage
   | SetToleranceMessage
@@ -142,8 +142,8 @@ export type ServerMessage =
   | ErrorMessage
   | FingeringProgressMessage
   | MidiPortsMessage
-  | NotePlayedMessage
   | NoteOffMessage
+  | NotePlayedMessage
   | NoteTriggerMessage
   | ScoreTimelineMessage
   | StatusMessage;

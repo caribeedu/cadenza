@@ -1,5 +1,6 @@
-import { CadenzaClient, type WebSocketCtor } from "./ws-client";
 import { beforeEach, describe, expect, it } from "vitest";
+
+import { CadenzaClient, type WebSocketCtor } from "./ws-client";
 
 class MockSocket extends EventTarget {
   static CLOSED = 3;

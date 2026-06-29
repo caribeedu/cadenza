@@ -1,3 +1,5 @@
+import { describe, expect, it } from "vitest";
+
 import {
   LH_PENDING_BLACK_HEX,
   LH_PENDING_WHITE_HEX,
@@ -5,7 +7,6 @@ import {
   RH_PENDING_BLACK_HEX,
   RH_PENDING_WHITE_HEX,
 } from "./note-hand-colors";
-import { describe, expect, it } from "vitest";
 
 describe("pendingNoteColorHex", () => {
   it("uses purple variants for left hand (staff 1)", () => {

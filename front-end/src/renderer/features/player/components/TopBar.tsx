@@ -2,13 +2,13 @@ import type { ReactElement } from "react";
 
 import { usePlayback } from "@app/providers/PlaybackProvider";
 import { useWebSocket } from "@app/providers/WebSocketProvider";
-import { formatFingeringProgressLabel } from "@shared/lib/fingering-ui";
 import { MidiDeviceSelector } from "@features/midi/components/MidiDeviceSelector";
 import { PlaybackSpeedSlider } from "@features/score-config/components/PlaybackSpeedSlider";
 import { ThemeSelector } from "@features/score-config/components/ThemeSelector";
 import { ToleranceSlider } from "@features/score-config/components/ToleranceSlider";
 import { BackendUrlInput } from "@features/websocket/components/BackendUrlInput";
 import { type ChipState, StatusChip } from "@shared/components/StatusChip";
+import { formatFingeringProgressLabel } from "@shared/lib/fingering-ui";
 import "@features/score-config/components/score-config.css";
 
 import { usePlaybackTransportHotkeys } from "../hooks/usePlaybackTransportHotkeys";
