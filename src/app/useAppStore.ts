@@ -75,6 +75,11 @@ export function createAppStore() {
   const [heldMidiPitches, setHeldMidiPitches] = createSignal<number[]>([]);
   const [fingeringProgress, setFingeringProgress] = createSignal<FingeringProgress | null>(null);
   const [pluginMessage, setPluginMessage] = createSignal("");
+  const [pluginStatus, setPluginStatus] = createSignal<{
+    dest: string;
+    installed: boolean;
+    upToDate: boolean;
+  } | null>(null);
   const [waterfallThemeId, setWaterfallThemeId] = createSignal<WaterfallThemeId>(readStoredTheme());
   const [eventLog, setEventLog] = createSignal<EventLogEntry[]>([]);
   const [bannerError, setBannerError] = createSignal<string | null>(null);
@@ -103,7 +108,11 @@ export function createAppStore() {
   });
 
   async function refreshStatus() {
-    setStatus(await invoke<AppStatus>("get_status"));
+    const s = await invoke<AppStatus>("get_status");
+    setStatus(s);
+    if (s.midiSelected != null) {
+      setSelectedMidi(s.midiSelected);
+    }
   }
 
   async function loadTimeline() {
@@ -193,6 +202,17 @@ export function createAppStore() {
     log("midi", `Selected ${port}`);
   }
 
+  async function refreshPluginStatus() {
+    try {
+      const status = await invoke<{ dest: string; installed: boolean; upToDate: boolean }>(
+        "check_musescore_plugin",
+      );
+      setPluginStatus(status);
+    } catch {
+      setPluginStatus(null);
+    }
+  }
+
   async function installPlugin() {
     const r = await invoke<{ dest: string; alreadyInstalled: boolean }>("install_musescore_plugin");
     setPluginMessage(
@@ -201,6 +221,7 @@ export function createAppStore() {
         : `Installed to ${r.dest}`,
     );
     log("info", r.alreadyInstalled ? "Plugin up to date" : "Plugin installed");
+    await refreshPluginStatus();
     return r;
   }
 
@@ -209,6 +230,7 @@ export function createAppStore() {
     await refreshStatus();
     await loadTimeline();
     await refreshMidiPorts();
+    await refreshPluginStatus();
 
     await listen<Timeline>("score_loaded", async (e) => {
       clearHeldPitches();
@@ -265,6 +287,8 @@ export function createAppStore() {
     fingeringProgress,
     pluginMessage,
     setPluginMessage,
+    pluginStatus,
+    refreshPluginStatus,
     waterfallThemeId,
     setTheme,
     eventLog,

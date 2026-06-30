@@ -11,6 +11,7 @@
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 0.9rem;
+  line-height: 18px;
   font-weight: 500;
   cursor: pointer;
   transition:
@@ -93,9 +94,12 @@
 .chip {
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
   gap: 0.35rem;
   padding: 0.25rem 0.65rem;
-  border-radius: 999px;
+  border-radius: var(--radius-md);
   font-size: 0.78rem;
   font-weight: 500;
   background: var(--accent-muted);
@@ -107,6 +111,7 @@
   background: rgba(94, 232, 154, 0.12);
   color: var(--color-success);
   border-color: rgba(94, 232, 154, 0.3);
+  border-radius: var(--radius-md);
 }
 
 .chip--live {
@@ -143,7 +148,7 @@
   padding: 0.6rem 0.85rem;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--select-bg);
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 0.9rem;

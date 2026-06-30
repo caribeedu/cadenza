@@ -51,4 +51,15 @@
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-screen: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Scrubber — overridden by theme sync */
+  --scrubber-bin: rgba(92, 157, 237, 0.55);
+  --scrubber-track: rgba(12, 12, 18, 0.85);
+  --scrubber-border: rgba(255, 255, 255, 0.15);
+  --scrubber-thumb: #ffffff;
+  --scrubber-thumb-glow: rgba(255, 255, 255, 0.5);
+
+  /* Select */
+  --select-bg: #0a0a10;
+  --select-option-hover-bg: #050508;
 }

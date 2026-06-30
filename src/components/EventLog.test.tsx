@@ -27,4 +27,12 @@ describe("EventLog", () => {
     expect(host.querySelector(".event-log-error")).not.toBeNull();
     dispose();
   });
+
+  it("renders embedded log without panel heading", () => {
+    const host = document.createElement("div");
+    const dispose = render(() => <EventLog entries={[]} embedded />, host);
+    expect(host.textContent).not.toContain("Event log");
+    expect(host.textContent).toContain("Events appear here as you play.");
+    dispose();
+  });
 });

@@ -177,6 +177,12 @@ export class WaterfallRenderer {
     this._bloom.syncSize(w, h, dpr);
 
     this.rebuildNotes();
+    this.refreshLayout();
+  }
+
+  /** Reposition visible bars for the current playhead (e.g. after theme rebuild). */
+  refreshLayout() {
+    this.syncBarLayout(performance.now() * 0.001, 0);
   }
 
   destroy() {

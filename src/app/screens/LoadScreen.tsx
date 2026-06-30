@@ -52,12 +52,14 @@ export function LoadScreen(props: Props) {
         <span class="chip chip--live">● Listening on 127.0.0.1:8765</span>
       </div>
 
-      <p class="load-hint">
-        Need the plugin?{" "}
-        <button type="button" class="load-link" onClick={() => props.onGoHome()}>
-          Install from Home
-        </button>
-      </p>
+      <Show when={!store.pluginStatus()?.upToDate}>
+        <p class="load-hint">
+          Need the plugin?{" "}
+          <button type="button" class="load-link" onClick={() => props.onGoHome()}>
+            Install from Home
+          </button>
+        </p>
+      </Show>
     </ScreenLayout>
   );
 }

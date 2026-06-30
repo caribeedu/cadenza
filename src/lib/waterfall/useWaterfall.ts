@@ -1,4 +1,4 @@
-import { createEffect, onCleanup } from "solid-js";
+import { createEffect, onCleanup, untrack } from "solid-js";
 import type { LaneGeometry } from "../geometry";
 import { WaterfallRenderer, type NotePlayed, type ScoreTimeline, type WaterfallThemeId } from "./renderer";
 
@@ -38,8 +38,14 @@ export function useWaterfall(options: UseWaterfallOptions) {
     const laneGeometry = options.laneGeometry();
     if (!canvas || !laneGeometry) return;
 
-    const themeId = options.waterfallThemeId();
-    const instance = new WaterfallRenderer(canvas, laneGeometry, serverSpeed, undefined, themeId);
+    const initialTheme = untrack(() => options.waterfallThemeId());
+    const instance = new WaterfallRenderer(
+      canvas,
+      laneGeometry,
+      serverSpeed,
+      undefined,
+      initialTheme,
+    );
     renderer = instance;
 
     onCleanup(() => {
@@ -150,5 +156,15 @@ export function useWaterfall(options: UseWaterfallOptions) {
   createEffect(() => {
     if (!renderer) return;
     renderer.setTheme(options.waterfallThemeId());
+    const elapsed = options.serverElapsedMs();
+    if (typeof elapsed !== "number") return;
+    const playing = options.serverPlaying();
+    const paused = options.serverPaused();
+    if (playing && !paused) {
+      renderer.startAt(elapsed);
+    } else if (paused || elapsed > 0) {
+      renderer.pauseAt(elapsed);
+    }
+    renderer.refreshLayout();
   });
 }

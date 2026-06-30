@@ -1,4 +1,4 @@
-import { createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, Show } from "solid-js";
 import { useAppStore } from "../AppProvider";
 import { IsometricStage } from "../../components/decor/IsometricStage";
 import { Button } from "../../components/ui/Button";
@@ -24,6 +24,11 @@ type Props = {
 export function HomeScreen(props: Props) {
   const store = useAppStore();
   const [installError, setInstallError] = createSignal<string | null>(null);
+
+  const midiOptions = createMemo(() => [
+    { value: "", label: "Select device…" },
+    ...store.midiPorts().map((port) => ({ value: port, label: port })),
+  ]);
 
   async function handleInstall() {
     setInstallError(null);
@@ -59,32 +64,41 @@ export function HomeScreen(props: Props) {
           <Select
             label="Device"
             value={store.selectedMidi()}
-            onChange={(e) => {
-              const port = e.currentTarget.value;
+            options={midiOptions()}
+            onChange={(port) => {
               void store.selectMidi(port).catch((err) => store.log("error", String(err)));
             }}
-          >
-            <option value="">Select device…</option>
-            <For each={store.midiPorts()}>{(port) => <option value={port}>{port}</option>}</For>
-          </Select>
+          />
           <Button variant="ghost" size="sm" onClick={() => void store.refreshMidiPorts()}>
             Refresh
           </Button>
         </div>
         <Show when={store.selectedMidi()}>
-          {(port) => <span class="chip chip--success">Connected · {port()}</span>}
+          <span class="chip chip--success">Connected</span>
         </Show>
       </Card>
 
       <Card class="home-section">
         <h3>MuseScore plugin</h3>
-        <p class="home-hint">
-          Installs <code>Cadenza.qml</code> to your MuseScore 4 plugins folder. Restart MuseScore,
-          then run <strong>Plugins → Cadenza Sender</strong>.
-        </p>
-        <Button variant="ghost" onClick={() => void handleInstall()}>
-          Install plugin
-        </Button>
+        <Show
+          when={store.pluginStatus()?.upToDate}
+          fallback={
+            <>
+              <p class="home-hint">
+                Installs <code>Cadenza.qml</code> to your MuseScore 4 plugins folder. Restart MuseScore,
+                then run <strong>Plugins → Cadenza Sender</strong>.
+              </p>
+              <Button variant="ghost" onClick={() => void handleInstall()}>
+                {store.pluginStatus()?.installed ? "Update plugin" : "Install plugin"}
+              </Button>
+            </>
+          }
+        >
+          <span class="chip chip--success">Plugin installed</span>
+          <p class="home-hint home-hint--chip-follow">
+            Restart MuseScore if needed, then run <strong>Plugins → Cadenza Sender</strong>.
+          </p>
+        </Show>
         <Show when={store.pluginMessage()}>
           <p class="home-status home-status--ok">{store.pluginMessage()}</p>
         </Show>

@@ -26,4 +26,9 @@ export function applyPianoThemeVars(themeId: WaterfallThemeId): void {
     "--border-accent",
     `${hex(theme.bloom.tint)}66`,
   );
+  root.style.setProperty("--scrubber-bin", `${hex(theme.pendingGradient.high)}8c`);
+  root.style.setProperty("--scrubber-track", `${hex(theme.background)}d9`);
+  root.style.setProperty("--scrubber-border", `${hex(theme.bloom.tint)}40`);
+  root.style.setProperty("--scrubber-thumb", hex(theme.bloom.tint));
+  root.style.setProperty("--scrubber-thumb-glow", `${hex(theme.bloom.tint)}cc`);
 }

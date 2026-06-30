@@ -8,9 +8,9 @@
 .timeline-scrubber {
   position: relative;
   height: 26px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--scrubber-border);
   border-radius: 6px;
-  background: rgba(20, 20, 20, 0.85);
+  background: var(--scrubber-track);
   overflow: hidden;
   cursor: pointer;
   backdrop-filter: blur(6px);
@@ -32,7 +32,7 @@
 .timeline-scrubber__bin {
   flex: 1;
   min-width: 1px;
-  background: rgba(92, 157, 237, 0.55);
+  background: var(--scrubber-bin);
   border-radius: 1px 1px 0 0;
 }
 
@@ -42,8 +42,8 @@
   bottom: 2px;
   width: 3px;
   margin-left: -1px;
-  background: #fff;
+  background: var(--scrubber-thumb);
   border-radius: 2px;
   pointer-events: none;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 6px var(--scrubber-thumb-glow);
 }

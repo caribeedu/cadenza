@@ -81,6 +81,11 @@ pub fn muse_score_plugin_dir() -> Result<String, String> {
 }
 
 #[tauri::command]
+pub fn check_musescore_plugin(app: tauri::AppHandle) -> Result<crate::plugin_install::PluginStatus, String> {
+    crate::plugin_install::musescore_plugin_status(&app)
+}
+
+#[tauri::command]
 pub fn install_musescore_plugin(app: tauri::AppHandle) -> Result<crate::plugin_install::PluginInstallResult, String> {
     crate::plugin_install::install_musescore_plugin(&app)
 }

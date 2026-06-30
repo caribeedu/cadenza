@@ -1,4 +1,4 @@
-import { createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, Show } from "solid-js";
 import { useAppStore } from "../AppProvider";
 import { EventLog } from "../../components/EventLog";
 import { Button } from "../../components/ui/Button";
@@ -24,6 +24,11 @@ type Props = {
 export function SettingsOverlay(props: Props) {
   const store = useAppStore();
   const [advancedOpen, setAdvancedOpen] = createSignal(false);
+
+  const midiOptions = createMemo(() => [
+    { value: "", label: "Select device…" },
+    ...store.midiPorts().map((port) => ({ value: port, label: port })),
+  ]);
 
   return (
     <>
@@ -74,14 +79,11 @@ export function SettingsOverlay(props: Props) {
             <div class="settings-midi-row">
               <Select
                 value={store.selectedMidi()}
-                onChange={(e) => {
-                  const port = e.currentTarget.value;
+                options={midiOptions()}
+                onChange={(port) => {
                   void store.selectMidi(port).catch((err) => store.log("error", String(err)));
                 }}
-              >
-                <option value="">Select device…</option>
-                <For each={store.midiPorts()}>{(port) => <option value={port}>{port}</option>}</For>
-              </Select>
+              />
               <Button variant="ghost" size="sm" onClick={() => void store.refreshMidiPorts()}>
                 Refresh
               </Button>

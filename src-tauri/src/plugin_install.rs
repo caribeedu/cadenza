@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use tauri::{AppHandle, Manager};
 
@@ -8,6 +8,39 @@ use tauri::{AppHandle, Manager};
 pub struct PluginInstallResult {
     pub dest: String,
     pub already_installed: bool,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PluginStatus {
+    pub dest: String,
+    pub installed: bool,
+    pub up_to_date: bool,
+}
+
+fn plugin_dest_path() -> Result<PathBuf, String> {
+    Ok(muse_score_plugins_dir()?.join("Cadenza.qml"))
+}
+
+fn files_match(dest: &Path, source: &Path) -> bool {
+    dest.is_file()
+        && fs::read(dest)
+            .ok()
+            .zip(fs::read(source).ok())
+            .map(|(a, b)| a == b)
+            .unwrap_or(false)
+}
+
+pub fn musescore_plugin_status(app: &AppHandle) -> Result<PluginStatus, String> {
+    let source = bundled_plugin_source(app)?;
+    let dest = plugin_dest_path()?;
+    let installed = dest.is_file();
+    let up_to_date = installed && files_match(&dest, &source);
+    Ok(PluginStatus {
+        dest: dest.display().to_string(),
+        installed,
+        up_to_date,
+    })
 }
 
 pub fn muse_score_plugins_dir() -> Result<PathBuf, String> {
@@ -52,12 +85,7 @@ pub fn install_musescore_plugin(app: &AppHandle) -> Result<PluginInstallResult, 
     let dest_dir = muse_score_plugins_dir()?;
     fs::create_dir_all(&dest_dir).map_err(|e| format!("create plugin dir: {e}"))?;
     let dest = dest_dir.join("Cadenza.qml");
-    let already_installed = dest.is_file()
-        && fs::read(&dest)
-            .ok()
-            .zip(fs::read(&source).ok())
-            .map(|(a, b)| a == b)
-            .unwrap_or(false);
+    let already_installed = files_match(&dest, &source);
 
     fs::copy(&source, &dest).map_err(|e| format!("copy plugin: {e}"))?;
 

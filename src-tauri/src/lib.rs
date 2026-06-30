@@ -18,7 +18,7 @@ use std::sync::Arc;
 
 use app_state::{spawn_playback_loop, AppState};
 use commands::{
-    get_status, get_timeline, install_musescore_plugin, list_midi_ports, muse_score_plugin_dir,
+    get_status, get_timeline, check_musescore_plugin, install_musescore_plugin, list_midi_ports, muse_score_plugin_dir,
     pause, ping, play, resume, seek, select_midi, set_speed, set_tolerance, stop, validate_note,
 };
 use tauri::Manager;
@@ -59,6 +59,7 @@ pub fn run() {
             select_midi,
             list_midi_ports,
             validate_note,
+            check_musescore_plugin,
             install_musescore_plugin,
             muse_score_plugin_dir,
         ])
