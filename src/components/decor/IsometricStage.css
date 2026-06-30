@@ -1,0 +1,53 @@
+.iso-stage {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto var(--space-lg);
+}
+
+.iso-stage__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.iso-note {
+  animation: iso-float 3s ease-in-out infinite;
+}
+
+.iso-note--delay {
+  animation-delay: 0.8s;
+}
+
+.iso-glow {
+  animation: iso-pulse 4s ease-in-out infinite;
+}
+
+.iso-flow {
+  animation: iso-dash 1.5s linear infinite;
+}
+
+@keyframes iso-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes iso-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes iso-dash {
+  to {
+    stroke-dashoffset: -14;
+  }
+}

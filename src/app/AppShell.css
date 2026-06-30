@@ -1,0 +1,5 @@
+.app-shell {
+  min-height: 100vh;
+  background: var(--surface-base);
+  background-image: radial-gradient(ellipse 100% 60% at 50% -10%, var(--accent-muted), transparent);
+}

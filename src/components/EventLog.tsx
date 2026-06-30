@@ -4,12 +4,13 @@ import "./EventLog.css";
 
 type Props = {
   entries: EventLogEntry[];
+  embedded?: boolean;
 };
 
 export function EventLog(props: Props) {
   return (
-    <section class="panel event-log-panel">
-      <h2>Event log</h2>
+    <section class={props.embedded ? "event-log-embedded" : "panel event-log-panel"}>
+      {!props.embedded ? <h2>Event log</h2> : null}
       <Show
         when={props.entries.length > 0}
         fallback={<p class="event-log-empty">Events appear here as you play.</p>}

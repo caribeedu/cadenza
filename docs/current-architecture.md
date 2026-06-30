@@ -37,8 +37,15 @@ src-tauri/src/
 
 ```
 src/
-  App.tsx              shell + event wiring
-  components/          Piano, Waterfall, TimelineScrubber
+  App.tsx              thin shell → AppProvider + AppShell
+  app/
+    useAppStore.ts     Tauri state, commands, event listeners
+    AppProvider.tsx    Solid context
+    AppShell.tsx       screen router (home | load | player)
+    navigation.ts      routing helpers
+    screens/           HomeScreen, LoadScreen, PlayerScreen, SettingsOverlay
+  components/          Piano, Waterfall, TimelineScrubber, ui/, decor/
+  styles/              design tokens, typography, shared components
   lib/waterfall/       Three.js renderer
   lib/piano-layout.ts  keyboard geometry
 ```

@@ -1,0 +1,63 @@
+.player-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--surface-base);
+  background-image: radial-gradient(ellipse 80% 50% at 50% 0%, var(--accent-muted), transparent);
+  animation: screen-enter var(--transition-screen) both;
+}
+
+.player-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--surface-glass);
+  border-bottom: 1px solid var(--border-subtle);
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.player-topbar__info {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem;
+}
+
+.player-topbar__title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.player-topbar__meta {
+  color: var(--text-muted);
+}
+
+.player-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+
+.player-toast {
+  margin: var(--space-sm) var(--space-lg) 0;
+  flex-shrink: 0;
+}
+
+.player-playfield {
+  flex: 1;
+  min-height: 0;
+  margin: var(--space-sm) var(--space-md) var(--space-md);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.player-playfield.playfield {
+  margin-bottom: var(--space-md);
+}

@@ -46,8 +46,11 @@
   color: #a8b0b8;
 }
 
-.event-log-empty {
-  margin: 0;
-  color: #7a7f85;
-  font-size: 0.85rem;
+.event-log-embedded {
+  max-height: 200px;
+  overflow: hidden;
+}
+
+.event-log-embedded .event-log-list {
+  max-height: 180px;
 }

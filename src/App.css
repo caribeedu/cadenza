@@ -1,105 +1,14 @@
-:root {
-  font-family: system-ui, -apple-system, sans-serif;
-  line-height: 1.5;
-  color: #e8e8e8;
-  background: #121212;
-}
-
-body {
-  margin: 0;
-}
-
-.container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 1.5rem 1rem 2rem;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.grid .panel:last-child {
-  grid-column: 1 / -1;
-}
-
-@media (max-width: 720px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.waterfall-panel {
-  margin-bottom: 1rem;
-}
-
-/* playfield lives in Waterfall.css */
-
-.header h1 {
-  margin: 0 0 0.25rem;
-  font-size: 2rem;
-}
-
-.subtitle {
-  margin: 0 0 2rem;
-  color: #9aa0a6;
-}
-
+/* Legacy styles kept for EventLog embedded mode */
 .panel {
-  background: #1e1e1e;
-  border: 1px solid #333;
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1rem;
+  background: var(--surface-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
 }
 
 .panel h2 {
-  margin: 0 0 0.75rem;
-  font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #9aa0a6;
-}
-
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.theme-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-bottom: 0.75rem;
-  font-size: 0.9rem;
-  color: #c8c8c8;
-}
-
-.theme-row select {
-  max-width: 12rem;
-}
-
-.app-banner {
-  margin: 0 0 1rem;
-  padding: 0.65rem 0.9rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-
-.app-banner-hint {
-  background: #1a2838;
-  border: 1px solid #2a4a68;
-  color: #9ad4ff;
-}
-
-.app-banner-error {
-  background: #2a1418;
-  border: 1px solid #6a3038;
-  color: #ff9aaa;
+  margin: 0 0 var(--space-sm);
+  font-size: 0.85rem;
 }
 
 .waterfall-empty {
@@ -108,114 +17,43 @@ body {
   justify-content: center;
   height: 100%;
   min-height: 200px;
-  color: #7a7f85;
+  color: var(--text-muted);
   font-size: 0.95rem;
 }
 
-.grid .event-log-panel {
-  grid-column: 1 / -1;
+.playfield {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 420px;
+  overflow: hidden;
 }
 
-.meta,
-.hint,
-.panel-hint {
-  color: #9aa0a6;
-  font-size: 0.9rem;
+.waterfall-stage {
+  position: relative;
+  min-height: 0;
+  height: 100%;
 }
 
-.panel-hint {
-  margin: 0 0 0.75rem;
-  line-height: 1.45;
+.waterfall-timeline-overlay {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(680px, calc(100% - 20px));
+  z-index: 5;
+  pointer-events: none;
 }
 
-.plugin-status {
-  margin: 0.75rem 0 0;
-  font-size: 0.85rem;
-  color: #81c995;
-  word-break: break-all;
+.waterfall-timeline-overlay .timeline-scrubber {
+  pointer-events: auto;
 }
 
-.error {
-  color: #f28b82;
-}
-
-.timeline-scroll {
-  max-height: 320px;
-  overflow: auto;
-  border: 1px solid #333;
-  border-radius: 6px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-}
-
-th,
-td {
-  padding: 0.35rem 0.5rem;
-  text-align: left;
-  border-bottom: 1px solid #2a2a2a;
-}
-
-th {
-  position: sticky;
-  top: 0;
-  background: #1e1e1e;
-}
-
-select,
-input[type="number"] {
-  padding: 0.45rem 0.6rem;
-  border: 1px solid #555;
-  border-radius: 6px;
-  background: #2a2a2a;
-  color: inherit;
-}
-
-.controls {
-  margin-bottom: 0;
-}
-
-.slider-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-top: 0.75rem;
-  font-size: 0.85rem;
-  color: #9aa0a6;
-}
-
-.slider-row input[type="range"] {
-  width: 100%;
-}
-
-.panel ul {
-  margin: 0;
-  padding-left: 1.25rem;
-}
-
-button {
-  margin-top: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: 1px solid #555;
-  border-radius: 6px;
-  background: #2a2a2a;
-  color: inherit;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #333;
+.piano-host {
+  flex-shrink: 0;
 }
 
 code {
-  background: #2a2a2a;
+  background: rgba(255, 255, 255, 0.06);
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
-}
-
-.success {
-  color: #81c995;
 }

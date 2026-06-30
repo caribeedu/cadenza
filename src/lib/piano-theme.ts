@@ -4,7 +4,7 @@ function hex(n: number): string {
   return `#${n.toString(16).padStart(6, "0")}`;
 }
 
-/** Sync piano key flash colors with the active waterfall theme. */
+/** Sync piano key flash colors and UI accent vars with the active waterfall theme. */
 export function applyPianoThemeVars(themeId: WaterfallThemeId): void {
   const theme = getWaterfallTheme(themeId);
   const root = document.documentElement;
@@ -12,4 +12,18 @@ export function applyPianoThemeVars(themeId: WaterfallThemeId): void {
   root.style.setProperty("--piano-bad", hex(theme.feedback.bad));
   root.style.setProperty("--piano-neutral", hex(theme.feedback.neutral));
   root.style.setProperty("--piano-heat", hex(theme.bloom.tint));
+  root.style.setProperty("--accent", hex(theme.bloom.tint));
+  root.style.setProperty("--accent-secondary", hex(theme.backdrop.glow));
+  root.style.setProperty(
+    "--accent-glow",
+    `${hex(theme.bloom.tint)}59`,
+  );
+  root.style.setProperty(
+    "--accent-muted",
+    `${hex(theme.bloom.tint)}26`,
+  );
+  root.style.setProperty(
+    "--border-accent",
+    `${hex(theme.bloom.tint)}66`,
+  );
 }
