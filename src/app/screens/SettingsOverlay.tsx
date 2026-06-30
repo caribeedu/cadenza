@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
 import { Slider } from "../../components/ui/Slider";
 import { ThemeGrid } from "../../components/ui/ThemeCard";
+import { DEFAULT_PLAYBACK_SPEED, DEFAULT_TOLERANCE_MS } from "../../lib/playback-defaults";
 import {
   WATERFALL_THEME_IDS,
   type WaterfallThemeId,
@@ -43,11 +44,21 @@ export function SettingsOverlay(props: Props) {
 
         <div class="overlay-panel__body">
           <section class="overlay-panel__section">
-            <h3>Playback</h3>
+            <div class="settings-playback-header">
+              <h3>Playback</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                class="settings-reset-defaults"
+                onClick={() => void store.resetPlaybackDefaults()}
+              >
+                Reset defaults
+              </Button>
+            </div>
             <Slider
               label="Speed"
-              value={store.status()?.speed ?? 1}
-              displayValue={`${(store.status()?.speed ?? 1).toFixed(2)}×`}
+              value={store.status()?.speed ?? DEFAULT_PLAYBACK_SPEED}
+              displayValue={`${(store.status()?.speed ?? DEFAULT_PLAYBACK_SPEED).toFixed(2)}×`}
               min={0.25}
               max={2}
               step={0.05}
@@ -55,8 +66,8 @@ export function SettingsOverlay(props: Props) {
             />
             <Slider
               label="Tolerance"
-              value={store.status()?.toleranceMs ?? 130}
-              displayValue={`${Math.round(store.status()?.toleranceMs ?? 130)} ms`}
+              value={store.status()?.toleranceMs ?? DEFAULT_TOLERANCE_MS}
+              displayValue={`${Math.round(store.status()?.toleranceMs ?? DEFAULT_TOLERANCE_MS)} ms`}
               min={50}
               max={300}
               step={5}

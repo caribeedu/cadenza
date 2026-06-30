@@ -7,6 +7,23 @@
   letter-spacing: 0;
 }
 
+.settings-playback-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.settings-reset-defaults {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.settings-reset-defaults:hover:not(:disabled) {
+  color: var(--text-secondary);
+}
+
 .settings-midi-row {
   display: flex;
   gap: var(--space-sm);

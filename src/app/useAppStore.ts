@@ -12,6 +12,7 @@ import {
 } from "../lib/waterfall/theme";
 import type { NotePlayed } from "../components/Piano";
 import type { WaterfallNote } from "../components/Waterfall";
+import { DEFAULT_PLAYBACK_SPEED, DEFAULT_TOLERANCE_MS } from "../lib/playback-defaults";
 
 export type AppStatus = {
   hasScore: boolean;
@@ -191,6 +192,13 @@ export function createAppStore() {
     await refreshStatus();
   }
 
+  async function resetPlaybackDefaults() {
+    await invoke("set_speed", { speed: DEFAULT_PLAYBACK_SPEED });
+    await invoke("set_tolerance", { toleranceMs: DEFAULT_TOLERANCE_MS });
+    await refreshStatus();
+    log("playback", "Reset speed and tolerance to defaults");
+  }
+
   async function refreshMidiPorts() {
     setMidiPorts(await invoke<string[]>("list_midi_ports"));
   }
@@ -305,6 +313,7 @@ export function createAppStore() {
     seek,
     setSpeed,
     setTolerance,
+    resetPlaybackDefaults,
     refreshMidiPorts,
     selectMidi,
     installPlugin,

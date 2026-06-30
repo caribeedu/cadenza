@@ -48,6 +48,7 @@ describe("SettingsOverlay", () => {
     await Promise.resolve();
     expect(root.textContent).toContain("Settings");
     expect(root.textContent).toContain("Speed");
+    expect(root.textContent).toContain("Reset defaults");
     expect(root.textContent).toContain("1.25×");
     expect(root.textContent).toContain("Back to menu");
     root.remove();
