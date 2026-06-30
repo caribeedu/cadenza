@@ -1,5 +1,6 @@
 import { createEffect, onCleanup, untrack } from "solid-js";
 import type { LaneGeometry } from "../geometry";
+import { resolvePlaybackSyncAction } from "./playback-sync";
 import { WaterfallRenderer, type NotePlayed, type ScoreTimeline, type WaterfallThemeId } from "./renderer";
 
 const EMPTY_SCORE: ScoreTimeline = { bpm: 120, duration_ms: 0, notes: [] };
@@ -87,20 +88,29 @@ export function useWaterfall(options: UseWaterfallOptions) {
     const wasPlaying = previousPlaying;
     const wasPaused = previousPaused;
 
-    if (!serverPaused && wasPaused) {
-      renderer.resume();
-    } else if (serverPlaying && !wasPlaying && !serverPaused) {
-      if (typeof serverElapsedMs === "number") renderer.startAt(serverElapsedMs);
-      else renderer.start();
-    } else if (serverPaused && !wasPaused) {
-      if (typeof serverElapsedMs === "number") renderer.pauseAt(serverElapsedMs);
-    } else if (!serverPlaying && !serverPaused && (wasPlaying || wasPaused)) {
-      const elapsed = options.serverElapsedMs();
-      if (typeof elapsed === "number" && elapsed > 0) {
-        renderer.pauseAt(elapsed);
-      } else {
+    const action = resolvePlaybackSyncAction({
+      serverPlaying,
+      serverPaused,
+      wasPlaying,
+      wasPaused,
+      serverElapsedMs: serverElapsedMs ?? null,
+    });
+
+    switch (action.type) {
+      case "stop":
         renderer.stop();
-      }
+        break;
+      case "resume":
+        renderer.resume();
+        break;
+      case "start":
+        renderer.startAt(action.atMs);
+        break;
+      case "pause":
+        renderer.pauseAt(action.atMs);
+        break;
+      case "none":
+        break;
     }
 
     previousPlaying = serverPlaying;
