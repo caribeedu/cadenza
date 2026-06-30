@@ -7,9 +7,8 @@ import type { NoteStatus, ScoreNote } from "./note-factory";
 /**
  * Use instanced draw path at or above this note count (see `large-score.json`).
  *
- * Instanced mode draws lava bars only — finger labels and note sprites are
- * omitted to keep draw calls low on large scores. Scores below the threshold
- * (or non-lava themes) use per-note meshes with sprites.
+ * Instanced mode draws lava bars with a separate sprite layer for finger/name
+ * labels (see `NoteAnnotationSprites`).
  */
 export const NOTE_INSTANCING_THRESHOLD = 60;
 
@@ -251,6 +250,13 @@ export class InstancedNoteBars {
       this._statuses[i] = "pending";
     }
     this._statusAttr.needsUpdate = true;
+  }
+
+  clearVisible(): void {
+    for (let i = 0; i < this._meta.length; i++) {
+      this._hideInstance(i);
+    }
+    this.mesh.instanceMatrix.needsUpdate = true;
   }
 
   updateLayout(

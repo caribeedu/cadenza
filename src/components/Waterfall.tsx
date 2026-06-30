@@ -14,6 +14,7 @@ type Props = {
   serverPlaybackSpeed: number;
   latestNotePlayed: NotePlayed | null;
   sessionRestartGeneration: number;
+  seekGeneration: number;
   heldMidiPitches: readonly number[];
   waterfallThemeId: WaterfallThemeId;
 };
@@ -31,6 +32,7 @@ export function Waterfall(props: Props) {
     serverPlaybackSpeed: () => props.serverPlaybackSpeed,
     latestNotePlayed: () => props.latestNotePlayed,
     sessionRestartGeneration: () => props.sessionRestartGeneration,
+    seekGeneration: () => props.seekGeneration,
     heldMidiPitches: () => props.heldMidiPitches,
     waterfallThemeId: () => props.waterfallThemeId,
   });

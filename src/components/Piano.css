@@ -1,6 +1,8 @@
 .piano-host {
   position: relative;
+  flex-shrink: 0;
   height: 140px;
+  min-height: 140px;
   background: linear-gradient(180deg, #1a1a1a 0%, #121212 100%);
   border-top: 1px solid #333;
   overflow: hidden;

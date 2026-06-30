@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, For, onMount, Show } from "solid-js";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { EventLog } from "./components/EventLog";
@@ -11,6 +11,7 @@ import { computeKeyboardLayout } from "./lib/piano-layout";
 import { applyPianoThemeVars } from "./lib/piano-theme";
 import { addHeldPitch, removeHeldPitch } from "./lib/held-pitches";
 import { formatFingeringProgressLabel, type FingeringProgress } from "./lib/fingering-ui";
+import { useElementWidth } from "./hooks/useElementWidth";
 import { HIGHEST_MIDI, LOWEST_MIDI } from "./lib/timeline";
 import {
   WATERFALL_THEME_IDS,
@@ -18,6 +19,7 @@ import {
   type WaterfallThemeId,
 } from "./lib/waterfall/theme";
 import "./App.css";
+import "./components/Piano.css";
 import "./components/Waterfall.css";
 
 type AppStatus = {
@@ -78,15 +80,14 @@ function App() {
   const [latestNote, setLatestNote] = createSignal<NotePlayed | null>(null);
   const [waterfallNote, setWaterfallNote] = createSignal<WaterfallNotePlayed | null>(null);
   const [sessionRestartGeneration, setSessionRestartGeneration] = createSignal(0);
+  const [seekGeneration, setSeekGeneration] = createSignal(0);
   const [heldMidiPitches, setHeldMidiPitches] = createSignal<number[]>([]);
   const [fingeringProgress, setFingeringProgress] = createSignal<FingeringProgress | null>(null);
   const [pluginMessage, setPluginMessage] = createSignal("");
-  const [pianoWidth, setPianoWidth] = createSignal(0);
+  const { ref: pianoHostRef, width: pianoWidth } = useElementWidth();
   const [waterfallThemeId, setWaterfallThemeId] = createSignal<WaterfallThemeId>(readStoredTheme());
   const [eventLog, setEventLog] = createSignal<EventLogEntry[]>([]);
   const [bannerError, setBannerError] = createSignal<string | null>(null);
-
-  let pianoHost: HTMLDivElement | undefined;
 
   const layout = createMemo(() => {
     const w = pianoWidth();
@@ -163,6 +164,7 @@ function App() {
   async function stop() {
     await invoke("stop");
     clearHeldPitches();
+    setSeekGeneration(0);
     log("playback", "Stopped");
     await refreshStatus();
   }
@@ -179,8 +181,10 @@ function App() {
   }
 
   async function seek(ms: number) {
+    clearHeldPitches();
     await invoke("seek", { positionMs: ms });
     await refreshStatus();
+    setSeekGeneration((g) => g + 1);
   }
 
   onMount(async () => {
@@ -190,18 +194,9 @@ function App() {
     const ports = await invoke<string[]>("list_midi_ports");
     setMidiPorts(ports);
 
-    if (pianoHost) {
-      const ro = new ResizeObserver((entries) => {
-        const w = entries[0]?.contentRect.width ?? 0;
-        setPianoWidth(w);
-      });
-      ro.observe(pianoHost);
-      setPianoWidth(pianoHost.clientWidth);
-      onCleanup(() => ro.disconnect());
-    }
-
     await listen<Timeline>("score_loaded", async (e) => {
       clearHeldPitches();
+      setSeekGeneration(0);
       setFingeringProgress(null);
       setBannerError(null);
       await loadTimeline();
@@ -299,6 +294,7 @@ function App() {
                 serverPlaybackSpeed={status()?.speed ?? 1}
                 latestNotePlayed={waterfallNote()}
                 sessionRestartGeneration={sessionRestartGeneration()}
+                seekGeneration={seekGeneration()}
                 heldMidiPitches={heldMidiPitches()}
                 waterfallThemeId={waterfallThemeId()}
               />
@@ -317,7 +313,7 @@ function App() {
             />
           </div>
         </div>
-        <div class="piano-host" ref={pianoHost}>
+        <div class="piano-host" ref={pianoHostRef}>
           <Piano
             layout={layout()}
             latestNotePlayed={latestNote()}

@@ -1,23 +1,31 @@
-import { createSignal, onCleanup, onMount } from "solid-js";
+import { createEffect, createSignal, onCleanup } from "solid-js";
 
+/**
+ * Tracks an element's content width via ResizeObserver.
+ * Pass `ref` to the host element (Solid signal-setter ref pattern).
+ */
 export function useElementWidth() {
   const [width, setWidth] = createSignal(0);
-  let el: HTMLElement | undefined;
+  const [el, setEl] = createSignal<HTMLElement | undefined>();
 
-  onMount(() => {
-    if (!el) return;
+  createEffect(() => {
+    const node = el();
+    if (!node) return;
+
+    const measure = () => {
+      const w = node.clientWidth;
+      if (w > 0) setWidth(w);
+    };
+
     const ro = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (entry) setWidth(entry.contentRect.width);
+      const w = entries[0]?.contentRect.width ?? 0;
+      if (w > 0) setWidth(w);
     });
-    ro.observe(el);
-    setWidth(el.clientWidth);
+    ro.observe(node);
+    measure();
+
     onCleanup(() => ro.disconnect());
   });
 
-  const ref = (node: HTMLElement) => {
-    el = node;
-  };
-
-  return { ref, width };
+  return { ref: setEl, width };
 }

@@ -15,6 +15,7 @@ export type UseWaterfallOptions = {
   serverPlaybackSpeed: () => number;
   latestNotePlayed: () => NotePlayed | null;
   sessionRestartGeneration: () => number;
+  seekGeneration: () => number;
   heldMidiPitches: () => readonly number[];
   waterfallThemeId: () => WaterfallThemeId;
 };
@@ -88,7 +89,12 @@ export function useWaterfall(options: UseWaterfallOptions) {
     } else if (serverPaused && !wasPaused) {
       if (typeof serverElapsedMs === "number") renderer.pauseAt(serverElapsedMs);
     } else if (!serverPlaying && !serverPaused && (wasPlaying || wasPaused)) {
-      renderer.stop();
+      const elapsed = options.serverElapsedMs();
+      if (typeof elapsed === "number" && elapsed > 0) {
+        renderer.pauseAt(elapsed);
+      } else {
+        renderer.stop();
+      }
     }
 
     previousPlaying = serverPlaying;
@@ -117,6 +123,14 @@ export function useWaterfall(options: UseWaterfallOptions) {
     if (!renderer) return;
     if (options.sessionRestartGeneration() === 0) return;
     renderer.startAt(0);
+  });
+
+  createEffect(() => {
+    if (!renderer) return;
+    if (options.seekGeneration() === 0) return;
+    const elapsed = options.serverElapsedMs();
+    if (typeof elapsed !== "number") return;
+    renderer.seekTo(elapsed, options.serverPlaying(), options.serverPaused());
   });
 
   createEffect(() => {

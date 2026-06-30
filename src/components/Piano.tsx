@@ -185,7 +185,8 @@ function KeyRect(props: {
   height: number;
   flash?: FlashKind;
 }) {
-  const base = () => (props.type === "white" ? "key-white" : "key-black");
+  const baseFill = () => (props.type === "white" ? "#f0f0f0" : "#222222");
+  const baseStroke = () => (props.type === "white" ? "#888888" : "#111111");
   const state = () => {
     if (props.flash === "good") return "key-pressed-good";
     if (props.flash === "bad") return "key-pressed-bad";
@@ -196,8 +197,11 @@ function KeyRect(props: {
 
   return (
     <rect
-      class={`${base()} ${state()}`.trim()}
+      class={`${props.type === "white" ? "key-white" : "key-black"} ${state()}`.trim()}
       data-pitch={props.pitch}
+      fill={baseFill()}
+      stroke={baseStroke()}
+      stroke-width="1"
       x={props.x}
       y={props.y}
       width={props.width}

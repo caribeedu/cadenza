@@ -16,6 +16,7 @@ import {
   InstancedNoteBars,
   shouldUseNoteInstancing,
 } from "./instanced-note-bars";
+import { NoteAnnotationSprites } from "./note-annotation-sprites";
 import { createNoteGroup, type NoteUserData, type ScoreNote } from "./note-factory";
 import { WaterfallReactiveBackground } from "./reactive-background";
 import { NoteSpriteMaterialCache } from "./sprite-material-cache";
@@ -53,6 +54,8 @@ export class WaterfallRenderer {
   readonly hitLine: THREE.Group;
   readonly noteGroup: THREE.Group;
   readonly noteMeshes = new Map<string, THREE.Group>();
+  /** One Three.js group per score note (non-instanced path). */
+  private _bars: THREE.Group[] = [];
   laneGeometry: LaneGeometry;
   score: ScoreTimeline = { bpm: 120, duration_ms: 0, notes: [] };
 
@@ -71,6 +74,7 @@ export class WaterfallRenderer {
   private _lastFrameT = 0;
   private _resizeObserver: ResizeObserver;
   private _instanced: InstancedNoteBars | null = null;
+  private _annotations: NoteAnnotationSprites | null = null;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -223,6 +227,18 @@ export class WaterfallRenderer {
     this.playhead.stop();
   }
 
+  /** Scrub: sync playhead, clear on-screen bars, redraw for the new section. */
+  seekTo(virtualMs: number, playing: boolean, paused: boolean) {
+    if (playing && !paused) {
+      this.playhead.startAt(virtualMs);
+    } else {
+      this.playhead.pauseAt(virtualMs);
+    }
+    this.resetBarsPending();
+    this.clearVisibleBars();
+    this.syncBarLayout(performance.now() * 0.001, 0);
+  }
+
   setHeldPitches(pitches: readonly number[]) {
     this._heldPitches = pitches.length ? [...pitches] : [];
     this._reactiveBg.setHeldKeyCount(this._heldPitches.length);
@@ -293,10 +309,18 @@ export class WaterfallRenderer {
         this.pxPerMs,
         this._theme,
       );
+      this._annotations = new NoteAnnotationSprites(
+        this.score.notes,
+        this.spriteCache,
+        this._theme,
+        this.pxPerMs,
+      );
       this.noteGroup.add(this._instanced.mesh);
+      this.noteGroup.add(this._annotations.group);
       return;
     }
 
+    this._bars = [];
     for (const n of this.score.notes) {
       const { group, key } = createNoteGroup(
         n,
@@ -306,11 +330,16 @@ export class WaterfallRenderer {
         this._theme,
       );
       if (key) this.noteMeshes.set(key, group);
+      this._bars.push(group);
       this.noteGroup.add(group);
     }
   }
 
   private _disposeNoteMeshes() {
+    if (this._annotations) {
+      this._annotations.dispose();
+      this._annotations = null;
+    }
     if (this._instanced) {
       this._instanced.dispose();
       this._instanced = null;
@@ -321,6 +350,64 @@ export class WaterfallRenderer {
       (data.bar.material as THREE.Material).dispose();
     }
     this.noteMeshes.clear();
+    this._bars = [];
+  }
+
+  private clearVisibleBars(): void {
+    for (const group of this._bars) {
+      if (group.visible) group.visible = false;
+    }
+    this._instanced?.clearVisible();
+    this._annotations?.clearVisible();
+  }
+
+  private syncBarLayout(t: number, dt: number): void {
+    const nowMs = this.playhead.getVirtualNowMs();
+    const w = this._canvasWidthPx();
+
+    if (this._instanced) {
+      this._instanced.setLavaTime(t);
+      this._instanced.updateLayout(
+        nowMs,
+        this.laneGeometry,
+        this.pxPerMs,
+        this._strikeLineY,
+        this.camera.bottom,
+        this.camera.top,
+        w,
+      );
+      this._annotations?.updateLayout(
+        nowMs,
+        this.laneGeometry,
+        this._strikeLineY,
+        this.camera.bottom,
+        this.camera.top,
+        w,
+      );
+    } else {
+      for (const group of this._bars) {
+        const data = group.userData as NoteUserData;
+        if (data.isLava) {
+          setLavaBarTime(data.bar.material as THREE.ShaderMaterial, t);
+        }
+        const hPx = barHeightPx(data.durationMs, this.pxPerMs, BAR_VERTICAL_GAP_PX);
+        const y =
+          yForNote({ nowMs, pxPerMs: this.pxPerMs, startMs: data.startMs }) +
+          hPx / 2 +
+          this._strikeLineY;
+        const x = this.laneGeometry.laneCenterPx(data.pitch) - w / 2;
+        group.position.set(x, y, 0);
+        group.visible = y > this.camera.bottom - 50 && y < this.camera.top + 50;
+      }
+    }
+
+    if (this._heldPitches.length > 0) {
+      const xs: number[] = [];
+      for (const p of this._heldPitches) {
+        xs.push(this.laneGeometry.laneCenterPx(p) - w * 0.5);
+      }
+      this._impacts.streamHeldLanes(xs, this._strikeLineY, dt, 36);
+    }
   }
 
   private _canvasWidthPx(): number {
@@ -356,45 +443,7 @@ export class WaterfallRenderer {
     const dt = this._lastFrameT > 0 ? t - this._lastFrameT : 0;
     this._lastFrameT = t;
 
-    const nowMs = this.playhead.getVirtualNowMs();
-    const w = this._canvasWidthPx();
-
-    if (this._instanced) {
-      this._instanced.setLavaTime(t);
-      this._instanced.updateLayout(
-        nowMs,
-        this.laneGeometry,
-        this.pxPerMs,
-        this._strikeLineY,
-        this.camera.bottom,
-        this.camera.top,
-        w,
-      );
-    } else {
-      for (const group of this.noteMeshes.values()) {
-        const data = group.userData as NoteUserData;
-        if (data.isLava) {
-          setLavaBarTime(data.bar.material as THREE.ShaderMaterial, t);
-        }
-        const hPx = barHeightPx(data.durationMs, this.pxPerMs, BAR_VERTICAL_GAP_PX);
-        const y =
-          yForNote({ nowMs, pxPerMs: this.pxPerMs, startMs: data.startMs }) +
-          hPx / 2 +
-          this._strikeLineY;
-        const x = this.laneGeometry.laneCenterPx(data.pitch) - w / 2;
-        group.position.set(x, y, 0);
-        group.visible = y > this.camera.bottom - 50 && y < this.camera.top + 50;
-      }
-    }
-
-    if (this._heldPitches.length > 0) {
-      const xs: number[] = [];
-      for (const p of this._heldPitches) {
-        xs.push(this.laneGeometry.laneCenterPx(p) - w * 0.5);
-      }
-      this._impacts.streamHeldLanes(xs, this._strikeLineY, dt, 36);
-    }
-
+    this.syncBarLayout(t, dt);
     this._impacts.tick(dt);
     this._reactiveBg.tick(dt);
     this._bloom.composer.render();

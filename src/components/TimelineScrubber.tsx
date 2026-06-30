@@ -70,12 +70,14 @@ export function TimelineScrubber(props: Props) {
   }
 
   function onPointerDown(e: PointerEvent) {
-    if (!props.enabled) return;
+    if (!props.enabled || !railRef) return;
+    railRef.setPointerCapture(e.pointerId);
     const targetMs = positionToMs(e.clientX);
     setDragMs(targetMs);
 
     const onMove = (ev: PointerEvent) => setDragMs(positionToMs(ev.clientX));
     const onUp = (ev: PointerEvent) => {
+      railRef?.releasePointerCapture(ev.pointerId);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       const next = Number.isFinite(ev.clientX) ? positionToMs(ev.clientX) : targetMs;
@@ -83,7 +85,7 @@ export function TimelineScrubber(props: Props) {
       props.onSeek(next);
     };
     window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp, { once: true });
+    window.addEventListener("pointerup", onUp);
   }
 
   return (
