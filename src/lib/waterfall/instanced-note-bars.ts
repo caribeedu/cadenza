@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import type { LaneGeometry } from "../geometry";
 import { BAR_VERTICAL_GAP_PX, barHeightPx, noteMeshKey, yForNote } from "../timeline";
 import { feedbackColor, type WaterfallTheme } from "./theme";
@@ -161,7 +162,7 @@ export class InstancedNoteBars {
   ) {
     const depth = theme.noteBarGeometry.depth;
     this._laneWidthFactor = theme.noteBarGeometry.laneWidthFactor;
-    const geom = new THREE.BoxGeometry(1, 1, depth);
+    const geom = new RoundedBoxGeometry(1, 1, depth, 2, 0.07);
     const mat = createInstancedLavaMaterial(theme);
     this.mesh = new THREE.InstancedMesh(geom, mat, notes.length);
     this.mesh.frustumCulled = false;
